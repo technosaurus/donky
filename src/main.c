@@ -32,17 +32,21 @@ void showHelp(int bye);
  */
 int main(int argc, char **argv)
 {
-        int version = 0, help = 0, debug = 0;
-        getArgs(argc, argv, &version, &help, &debug);
-
-        if (version)
-                showVersion(1);
-        else if (help)
-                showHelp(1);
-        else if (debug)
-                printf("Look at all this sweet debuggin'.\n");
-        else if (argc > 1)
-                showHelp(1);
+        if (argc > 1)
+        {
+                int version = 0, help = 0, debug = 0;
+                
+                getArgs(argc, argv, &version, &help, &debug);
+                
+                if (version)
+                        showVersion(1);
+                else if (help)
+                        showHelp(1);
+                else if (debug)
+                        printf("Look at all this sweet debuggin'.\n");
+                else
+                        showHelp(1);
+        }
 
         return 0;
 }
