@@ -15,15 +15,100 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void getArgs(int argc, char **argv, int *version, int *help, int *debug);
+void showVersion(int bye);
+void showHelp(int bye);
+
 /**
- * Program entry point.
+ * @brief Program entry point.
+ *
  * @param argc Argument count
  * @param argv Array of arguments
  * @return Exit status
  */
 int main(int argc, char **argv)
 {
+        int version = 0, help = 0, debug = 0;
+        getArgs(argc, argv, &version, &help, &debug);
 
-        
+        if (version)
+                showVersion(1);
+        else if (help)
+                showHelp(1);
+        else if (debug)
+                printf("Look at all this sweet debuggin'.\n");
+        else if (argc > 1)
+                showHelp(1);
+
         return 0;
+}
+
+/** 
+ * @brief Parse arguments.
+ * 
+ * @param argc Argument count
+ * @param *argv Array of arguments
+ * @param version Show version?
+ * @param help Show help output?
+ * @param debug Enable debugging?
+ */
+void getArgs(int argc, char **argv, int *version, int *help, int *debug)
+{
+        int i;
+
+        for (i = 1; i < argc; i++)
+        {
+                if (argv[i][0] == '-')
+                {
+                        if (!strcmp(argv[i], "--version"))
+                        {
+                                *version = 1;
+                                return;
+                        }
+
+                        else if (!strcmp(argv[i], "--help"))
+                        {
+                                *help = 1;
+                                return;
+                        }
+
+                        else if (!strcmp(argv[i], "--debug"))
+                                *debug = 1;
+                }
+        }
+}
+
+/** 
+ * @brief Print version
+ * 
+ * @param bye Exit program if 1
+ */
+void showVersion(int bye)
+{
+        printf("donky 0.00\n");
+
+        if (bye)
+                exit(0);
+}
+
+/** 
+ * @brief Print help
+ * 
+ * @param bye Exit program if 1
+ */
+void showHelp(int bye)
+{
+        showVersion(0);
+
+        printf( "\nOptions:\n"
+                        "  --version    Show donky's current version.\n"
+                        "  --help       Show this message.\n"
+                        "  --debug      Enable debugging output.\n");
+
+        if (bye)
+                exit(0);
 }
