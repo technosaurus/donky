@@ -17,11 +17,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <getopt.h>
 
-void getArgs(int argc, char **argv, int *version, int *help, int *debug);
-void showVersion(int bye);
-void showHelp(int bye);
+#include "../config.h"
+
+#define HELP \
+        "donky usage:\n" \
+        "  -v, --version        Show donky version\n" \
+        "  -h, --help           Show this information\n" \
+        "  -c, --config=FILE    Use alternate configuration file\n" \
+        "  -d, --debug          Show debugging messages\n"
 
 /**
  * @brief Program entry point.
@@ -32,87 +37,41 @@ void showHelp(int bye);
  */
 int main(int argc, char **argv)
 {
-        if (argc > 1)
-        {
-                int version = 0, help = 0, debug = 0;
-                
-                getArgs(argc, argv, &version, &help, &debug);
-                
-                if (version)
-                        showVersion(1);
-                else if (help)
-                        showHelp(1);
-                else if (debug)
-                        printf("Look at all this sweet debuggin'.\n");
-                else
-                        showHelp(1);
-        }
+        static struct option long_options[] = {
+                { "version", no_argument,       0, 'v' },
+                { "help",    no_argument,       0, 'h' },
+                { "config",  required_argument, 0, 'c' },
+                { "debug",   no_argument,       0, 'd' },
+                { 0, 0, 0, 0 }
+        };
 
-        return 0;
-}
+        int option_index = 0;
+        int c = 0;
 
-/** 
- * @brief Parse arguments.
- * 
- * @param argc Argument count
- * @param *argv Array of arguments
- * @param version Show version?
- * @param help Show help output?
- * @param debug Enable debugging?
- */
-void getArgs(int argc, char **argv, int *version, int *help, int *debug)
-{
-        int i;
+        while (1) {
+                c = getopt_long(argc, argv, "vhc:d",
+                                long_options, &option_index);
 
-        for (i = 1; i < argc; i++)
-        {
-                if (argv[i][0] == '-')
-                {
-                        if (!strcmp(argv[i], "--version"))
-                        {
-                                *version = 1;
-                                return;
-                        }
+                if (c == -1)
+                        break;
 
-                        else if (!strcmp(argv[i], "--help"))
-                        {
-                                *help = 1;
-                                return;
-                        }
+                switch (c) {
+                case 'v':
+                        printf("donky %s\n", VERSION);
+                        return 0;
+                case 'h':
+                        printf(HELP);
+                        return 0;
+                case 'c':
+                        printf("Using alternate config file: %s\n", optarg);
+                        break;
+                case 'd':
+                        printf("Debug mode enabled.");
+                        break;
 
-                        else if (!strcmp(argv[i], "--debug"))
-                                *debug = 1;
+                default:
+                        printf("\n" HELP);
+                        return 1;
                 }
         }
-}
-
-/** 
- * @brief Print version
- * 
- * @param bye Exit program if 1
- */
-void showVersion(int bye)
-{
-        printf("donky 0.00\n");
-
-        if (bye)
-                exit(0);
-}
-
-/** 
- * @brief Print help
- * 
- * @param bye Exit program if 1
- */
-void showHelp(int bye)
-{
-        showVersion(0);
-
-        printf( "\nOptions:\n"
-                        "  --version    Show donky's current version.\n"
-                        "  --help       Show this message.\n"
-                        "  --debug      Enable debugging output.\n");
-
-        if (bye)
-                exit(0);
 }
