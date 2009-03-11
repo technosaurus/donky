@@ -1,5 +1,6 @@
 bin_PROGRAMS = donky
 donky_SOURCES = \
-	main.c
+	main.c \
+	text.c text.h
 INCLUDES = $(DEPS_CFLAGS)
 LIBS = $(DEPS_LIBS)

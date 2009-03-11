@@ -20,6 +20,7 @@
 #include <getopt.h>
 
 #include "../config.h"
+#include "text.h"
 
 #define HELP \
         "donky usage:\n" \
@@ -28,11 +29,15 @@
         "  -c, --config=FILE    Use alternate configuration file\n" \
         "  -d, --debug          Show debugging messages\n"
 
+void initialize_stuff(void);
+int main(int, char **);
+
 /**
  * @brief Program entry point.
  *
  * @param argc Argument count
  * @param argv Array of arguments
+ * 
  * @return Exit status
  */
 int main(int argc, char **argv)
@@ -75,5 +80,15 @@ int main(int argc, char **argv)
                 }
         }
 
+        /* Start donky initialization. */
+        initialize_stuff();
+
         return 0;
+}
+/**
+ * @brief Initialize everything donky needs to next begin drawing.
+ */
+void initialize_stuff(void)
+{
+        parse_text();
 }
