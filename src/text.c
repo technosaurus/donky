@@ -24,10 +24,10 @@
 
 #define MAX_TEXT_SIZE 1024
 #define IS_ALPHA(c) ( \
-        ((c) >= 65 && (c) <= 90) || \
-        ((c) >= 48 && (c) <= 57) || \
-        ((c) >= 97 && (c) <= 122) || \
-        ((c) == 95) \
+        ((c) >= 'a' && (c) <= 'z') || \
+        ((c) >= 'A' && (c) <= 'Z') || \
+        ((c) >= '0' && (c) <= '9') || \
+        ((c) == '_') \
 )
 
 const char *config_text = "($time) | $$5 $$ [$command] arg1\\ arg2 Testing and |${shit 0 0}| $mpd_smart\nHello world!\n$test:$test2 \\\nTest.\nfarting and washing\\\nturds\n";
