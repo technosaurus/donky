@@ -253,7 +253,3 @@ void parse_cfg(void)
         free(int_value);
 }
 
-int main(void)
-{
-        parse_cfg();
-}
