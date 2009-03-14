@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-#include "../config.h"
+#include "config.h"
 #include "text.h"
 
 #define HELP \
