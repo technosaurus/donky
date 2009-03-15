@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#include "../config.h"
 #include "config.h"
 #include "text.h"
 
@@ -91,7 +92,7 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
-        //parse_config();
+        parse_cfg();
         parse_text();
 }
 

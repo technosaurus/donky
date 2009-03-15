@@ -202,7 +202,8 @@ void parse_cfg(void)
         char *char_value;
         int *int_value = malloc(sizeof(int));
 
-        char *config_text = NULL;
+        /*char *config_text = NULL;*/
+        config_text = NULL;
 
         while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
 

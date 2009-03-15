@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "text.h"
+#include "config.h"
 
 #define MAX_TEXT_SIZE 1024
 #define IS_ALPHA(c) ( \
@@ -30,7 +31,7 @@
         ((c) == '_') \
 )
 
-char *config_text = "($time) | $$5 $$ [$command] arg1\\ arg2 Testing and |${shit 0 0}| $mpd_smart\nHello world!\n$test:$test2 \\\nTest.\nfarting and washing\\\nturds\n";
+//char *example = "($time) | $$5 $$ [$command] arg1\\ arg2 Testing and |${shit 0 0}| $mpd_smart\nHello world!\n$test:$test2 \\\nTest.\nfarting and washing\\\nturds\n";
 
 enum text_section_type {
         TEXT_STATIC,
@@ -57,6 +58,8 @@ void parse_text(void);
  */
 void parse_text(void)
 {
+        //printf("%s", example);
+        
         text_section_split(config_text);
 
         struct text_section *cur = ts_start;
@@ -104,7 +107,7 @@ void text_section_split(char *text)
                         /* New lines mark the end of a section, so add
                          * all data preceding it as a section. */
                         if ((s - ts) > 0)
-                                text_section_add(ts, s - ts, line, TEXT_STATIC);
+                                text_section_add(ts, s - ts - 1, line, TEXT_STATIC);
 
                         /* Update the pointer to the beginning of the
                          * next text section. */
@@ -175,12 +178,14 @@ void text_section_split(char *text)
 void text_section_add(char *value, int len, int line, enum text_section_type type)
 {
         struct text_section *n = malloc(sizeof(struct text_section));
-        
+
         n->value = malloc(sizeof(char) * len);
         strncpy(n->value, value, len);
         n->line = line;
         n->type = type;
         n->next = NULL;
+
+        printf("Adding: [%s] Len:[%d]\n", n->value, len);
 
         if (ts_start == NULL) {
                 ts_start = n;
