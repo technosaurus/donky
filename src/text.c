@@ -30,7 +30,7 @@
         ((c) == '_') \
 )
 
-const char *config_text = "($time) | $$5 $$ [$command] arg1\\ arg2 Testing and |${shit 0 0}| $mpd_smart\nHello world!\n$test:$test2 \\\nTest.\nfarting and washing\\\nturds\n";
+char *config_text = "($time) | $$5 $$ [$command] arg1\\ arg2 Testing and |${shit 0 0}| $mpd_smart\nHello world!\n$test:$test2 \\\nTest.\nfarting and washing\\\nturds\n";
 
 enum text_section_type {
         TEXT_STATIC,
@@ -46,20 +46,49 @@ struct text_section {
         struct text_section *next;
 } *ts_start = NULL, *ts_end = NULL;
 
+/* Function prototypes. */
+void text_clear(void);
+void text_section_split(char *);
 void text_section_add(char *, int, int, enum text_section_type);
 void parse_text(void);
 
 /**
- * @brief Parse the output text into lines and sections.
+ * @brief Start up the output text parsing.
  */
 void parse_text(void)
+{
+        text_section_split(config_text);
+
+        struct text_section *cur = ts_start;
+
+        while (cur != NULL) {
+                printf("LINE %d STR = [%s]\n", cur->line, cur->value);
+                cur = cur->next;
+        }
+
+        text_clear();
+
+        cur = ts_start;
+
+        while (cur != NULL) {
+                printf("LINE %d STR = [%s]\n", cur->line, cur->value);
+                cur = cur->next;
+        }
+}
+
+/**
+ * @brief Split text into sections based on variables and other special symbols.
+ *
+ * @param text Character array pointer of text to parse.
+ */
+void text_section_split(char *text)
 {
         char *dup;
         char *s;
         char *ts;
         int line = 0;
 
-        dup = strndup(config_text, MAX_TEXT_SIZE);
+        dup = strndup(text, MAX_TEXT_SIZE);
         s = ts = dup;
 
         for (; *s; s++) {
@@ -133,13 +162,6 @@ void parse_text(void)
         }
 
         free(dup);
-
-        struct text_section *cur = ts_start;
-
-        while (cur != NULL) {
-                printf("LINE %d STR = [%s]\n", cur->line, cur->value);
-                cur = cur->next;
-        }
 }
 
 /**
@@ -167,4 +189,23 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                 ts_end->next = n;
                 ts_end = n;
         }
+}
+
+/**
+ * @brief Clear out the text sections linked list and free any allocated memory.
+ */
+void text_clear(void)
+{
+        struct text_section *cur = ts_start, *to_free;
+
+        while (cur != NULL) {
+                to_free = cur;
+                cur = cur->next;
+
+                free(to_free->value);
+                free(to_free);
+        }
+
+        ts_start = NULL;
+        ts_end = NULL;
 }

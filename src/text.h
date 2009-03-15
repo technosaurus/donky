@@ -19,5 +19,6 @@
 #define TEXT_H
 
 void parse_text(void);
+void text_clear(void);
 
 #endif /* TEXT_H */

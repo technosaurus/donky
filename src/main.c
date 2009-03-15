@@ -80,8 +80,9 @@ int main(int argc, char **argv)
                 }
         }
 
-        /* Start donky initialization. */
+        /* Initialize, then start donky. */
         initialize_stuff();
+        //free_your_mind();
 
         return 0;
 }
@@ -90,5 +91,15 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
+        //parse_config();
         parse_text();
+}
+
+/**
+ * @brief Run all cleanup methods for (each) source file.
+ */
+void clean_up_everything(void)
+{
+        //config_clear();
+        text_clear();
 }
