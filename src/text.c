@@ -103,7 +103,7 @@ void text_section_split(char *text)
                         /* New lines mark the end of a section, so add
                          * all data preceding it as a section. */
                         if ((s - ts) > 0)
-                                text_section_add(ts, s - ts - 1, line, TEXT_STATIC);
+                                text_section_add(ts, s - ts, line, TEXT_STATIC);
 
                         /* Update the pointer to the beginning of the
                          * next text section. */
