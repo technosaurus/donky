@@ -31,8 +31,6 @@
         ((c) == '_') \
 )
 
-//char *example = "($time) | $$5 $$ [$command] arg1\\ arg2 Testing and |${shit 0 0}| $mpd_smart\nHello world!\n$test:$test2 \\\nTest.\nfarting and washing\\\nturds\n";
-
 enum text_section_type {
         TEXT_STATIC,
         TEXT_VARIABLE
@@ -58,8 +56,6 @@ void parse_text(void);
  */
 void parse_text(void)
 {
-        //printf("%s", example);
-        
         text_section_split(config_text);
 
         struct text_section *cur = ts_start;
@@ -179,13 +175,10 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
 {
         struct text_section *n = malloc(sizeof(struct text_section));
 
-        n->value = malloc(sizeof(char) * len);
-        strncpy(n->value, value, len);
+        n->value = strndup(value, len);
         n->line = line;
         n->type = type;
         n->next = NULL;
-
-        printf("Adding: [%s] Len:[%d]\n", n->value, len);
 
         if (ts_start == NULL) {
                 ts_start = n;
