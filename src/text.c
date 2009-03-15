@@ -113,7 +113,8 @@ void text_section_split(char *text)
                 } else if (*s == '$') {
                         /* $$ will be just $ */
                         if (*(s + 1) == '$') {
-                                text_section_add(ts, s - ts, line, TEXT_STATIC);
+                                if ((s - ts) > 0)
+                                        text_section_add(ts, s - ts, line, TEXT_STATIC);
                                 s++;
                                 ts = s;
                                 continue;
@@ -159,6 +160,11 @@ void text_section_split(char *text)
                         }
                 }
         }
+
+        if ((s - ts) > 0)
+                text_section_add(ts, s - ts,
+                                 line,
+                                 TEXT_STATIC);
 
         free(dup);
 }
