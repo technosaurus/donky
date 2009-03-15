@@ -152,6 +152,8 @@ char *get_char_key(char *mod, char *key)
 
                 cur_set = cur_set->next;
         }
+
+        return NULL;
 }
 
 /** 
@@ -177,6 +179,8 @@ int get_int_key(char *mod, char *key)
 
                 cur_set = cur_set->next;
         }
+
+        return -1;
 }
 
 /** 

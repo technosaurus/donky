@@ -173,19 +173,27 @@ void text_section_split(char *text)
  */
 void text_section_add(char *value, int len, int line, enum text_section_type type)
 {
-        struct text_section *n = malloc(sizeof(struct text_section));
-
-        n->value = strndup(value, len);
-        n->line = line;
-        n->type = type;
-        n->next = NULL;
-
-        if (ts_start == NULL) {
-                ts_start = n;
-                ts_end = n;
+        char *copy_val = strndup(value, len);
+        char *alias_contents = get_char_key("alias", copy_val);
+        
+        if (type == TEXT_VARIABLE && alias_contents) {
+                text_section_split(alias_contents);
+                free(copy_val);
         } else {
-                ts_end->next = n;
-                ts_end = n;
+                struct text_section *n = malloc(sizeof(struct text_section));
+
+                n->value = copy_val;
+                n->line = line;
+                n->type = type;
+                n->next = NULL;
+
+                if (ts_start == NULL) {
+                        ts_start = n;
+                        ts_end = n;
+                } else {
+                        ts_end->next = n;
+                        ts_end = n;
+                }
         }
 }
 

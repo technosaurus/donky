@@ -20,6 +20,8 @@
 
 char *config_text;
 void parse_cfg(void);
+char *get_char_key(char *, char *);
+int get_int_key(char *, char *);
 
 #endif /* CONFIG_H */
 
