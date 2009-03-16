@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include "config.h"
 #include <stdio.h>
 #include <string.h>
@@ -212,38 +213,40 @@ void parse_cfg(void)
 
                 char_value = NULL; key = NULL; *int_value = 0;
 
-                /*     [mod]                  */
-                if (sscanf(str, " [%a[^]]] ", &mod) == 1)
-                        add_mod(mod);
+                /*     [mod]                  */ /* don't add_mod if [text] */
+                if (sscanf(str, " [%a[^]]] ", &mod) == 1) {
+                        if (strcmp(mod, "text") != 0)
+                                add_mod(mod);
+                }
 
+                /* handle [text] - store all lines 'til next [mod] into config_text */
                 else if (!strcmp(mod, "text")) {
-                        if (!config_text) {
-                                config_text = malloc(strlen(str) + sizeof(char));
-                                strncpy(config_text, str, (strlen(str) + sizeof(char)));
-                        }
+                        if (!config_text)
+                                config_text = strndup(str, strlen(str));
                         else {
+                                /* resize config_text so we can add more to it */
                                 config_text = realloc(config_text, (strlen(config_text) + strlen(str)) + (2 * sizeof(char)));
                                 strncat(config_text, str, strlen(str));
                         }
                 }
 
-                /*     key = "int_value"         */
+                /*     key = "int_value"     */
                 else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%d\" \n", &key, int_value) == 2)
                         add_key(mod, key, char_value, int_value);
 
-                /*     key = int_value           */
+                /*     key = int_value       */
                 else if (sscanf(str, "%a[0-9a-zA-Z_] = %d \n", &key, int_value) == 2 )
                         add_key(mod, key, char_value, int_value);
 
-                /*     key = "char_value"        */
+                /*     key = "char_value"    */
                 else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%a[^\"]\" \n", &key, &char_value) == 2)
                         add_key(mod, key, char_value, int_value);
 
-                /*     key = char_value          */
+                /*     key = char_value      */
                 else if (sscanf(str, "%a[0-9a-zA-Z_] = %a[^\n]", &key, &char_value) == 2)
                         add_key(mod, key, char_value, int_value);
 
-                /*     key                       */ /* assumes an int_value of 1 */
+                /*     key                   */ /* assumes an int_value of 1 */
                 else if (sscanf(str, " %a[0-9a-zA-Z_] \n", &key) == 1) {
                         *int_value = 1;
                         add_key(mod, key, char_value, int_value);
@@ -255,5 +258,6 @@ void parse_cfg(void)
         }
 
         free(int_value);
+        fclose(cfg_file);
 }
 
