@@ -266,15 +266,31 @@ void parse_cfg(void)
 /** 
  * @brief Free all cfg nodes from memory
  */
-void config_clear(void)
+void clear_cfg(void)
 {
-        struct cfg *cur = first_cfg;
-        struct cfg *next;
+        struct cfg *cur_cfg = first_cfg;
+        struct cfg *next_cfg;
+        
+        struct setting *cur_setting;
+        struct setting *next_setting;
 
-        while (cur) {       
-                next = cur->next;
-                free(cur);
+        while (cur_cfg) {
+                next_cfg = cur_cfg->next;
+                
+                cur_setting = cur_cfg->first_setting;
 
-                cur = next;
+                while (cur_setting) {
+                        next_setting = cur_setting->next;
+
+                        free(cur_setting->key);
+                        free(cur_setting);
+
+                        cur_setting = next_setting;
+                }
+
+                free(cur_cfg->mod);
+                free(cur_cfg);
+
+                cur_cfg = next_cfg;
         }
 }

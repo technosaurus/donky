@@ -46,7 +46,7 @@ struct text_section {
 } *ts_start = NULL, *ts_end = NULL;
 
 /* Function prototypes. */
-void text_clear(void);
+void clear_text(void);
 void text_section_split(char *);
 void text_section_add(char *, int, int, enum text_section_type);
 void parse_text(void);
@@ -65,7 +65,7 @@ void parse_text(void)
                 cur = cur->next;
         }
 
-        text_clear();
+        clear_text();
 
         cur = ts_start;
 
@@ -206,7 +206,7 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
 /**
  * @brief Clear out the text sections linked list and free any allocated memory.
  */
-void text_clear(void)
+void clear_text(void)
 {
         struct text_section *cur = ts_start, *to_free;
 

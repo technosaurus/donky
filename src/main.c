@@ -103,6 +103,6 @@ void initialize_stuff(void)
  */
 void clean_up_everything(void)
 {
-        config_clear();
-        text_clear();
+        clear_cfg();
+        clear_text();
 }
