@@ -31,6 +31,7 @@
         "  -d, --debug          Show debugging messages\n"
 
 void initialize_stuff(void);
+void clean_up_everything(void);
 int main(int, char **);
 
 /**
@@ -64,10 +65,10 @@ int main(int argc, char **argv)
                 switch (c) {
                 case 'v':
                         printf("donky %s\n", VERSION);
-                        return 0;
+                        exit(EXIT_SUCCESS);
                 case 'h':
                         printf(HELP);
-                        return 0;
+                        exit(EXIT_SUCCESS);
                 case 'c':
                         printf("Using alternate config file: %s\n", optarg);
                         break;
@@ -77,7 +78,7 @@ int main(int argc, char **argv)
 
                 default:
                         printf("\n" HELP);
-                        return 1;
+                        exit(EXIT_FAILURE);
                 }
         }
 
@@ -87,7 +88,7 @@ int main(int argc, char **argv)
         
         clean_up_everything();
 
-        return 0;
+        exit(EXIT_SUCCESS);
 }
 /**
  * @brief Initialize everything donky needs to next begin drawing.
