@@ -142,6 +142,7 @@ void add_key(char *mod, char *key, char *char_value, int *int_value)
 char *get_char_key(char *mod, char *key)
 {
         struct cfg *cur;
+        
         cur = find_mod(mod);
 
         if (!cur)
@@ -199,7 +200,7 @@ void parse_cfg(void)
 
         if (cfg_file == NULL) {
                 printf("Error: ~/.donkyrc file not found.\n");
-                exit(1);
+                exit(EXIT_FAILURE);
         }
 
         char str[MAX_LINE_SIZE];
@@ -232,31 +233,18 @@ void parse_cfg(void)
                         }
                 }
 
-                /*     key = "int_value"     */
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%d\" \n", &key, int_value) == 2)
-                        add_key(mod, key, char_value, int_value);
-
-                /*     key = int_value       */
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = %d \n", &key, int_value) == 2 )
-                        add_key(mod, key, char_value, int_value);
-
-                /*     key = "char_value"    */
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%a[^\"]\" \n", &key, &char_value) == 2)
-                        add_key(mod, key, char_value, int_value);
-
-                /*     key = char_value      */
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = %a[^\n]", &key, &char_value) == 2)
-                        add_key(mod, key, char_value, int_value);
-
-                /*     key                   */ /* assumes an int_value of 1 */
-                else if (sscanf(str, " %a[0-9a-zA-Z_] \n", &key) == 1) {
+                else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%d\" \n", &key, int_value) == 2) { }
+                else if (sscanf(str, "%a[0-9a-zA-Z_] = %d \n", &key, int_value) == 2 ) { }
+                else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%a[^\"]\" \n", &key, &char_value) == 2) { }
+                else if (sscanf(str, "%a[0-9a-zA-Z_] = %a[^\n]", &key, &char_value) == 2) { }
+                else if (sscanf(str, "%a[0-9a-zA-Z_] \n", &key) == 1) 
                         *int_value = 1;
+
+                if (mod && key && (int_value || char_value))
                         add_key(mod, key, char_value, int_value);
-                }
 
                 if (char_value)
                         free(char_value);
-
         }
 
         free(int_value);
