@@ -22,16 +22,11 @@
 #include <stdlib.h>
 #define MAX_LINE_SIZE 1024
 
-union key_value {
-        int int_value;
-        char char_value[256];
-};
-
 struct setting {
         struct setting *next;
         
         char *key;
-        union key_value value;
+        char *value;
 };
 
 struct cfg {
@@ -46,9 +41,11 @@ struct cfg {
 /* function prototypes */
 void add_mod(char *mod);
 struct cfg *find_mod(char *mod);
-void add_key(char *mod, char *key, char *char_value, int *int_value);
+void add_key(char *mod, char *key, char *value);
 char *get_char_key(char *mod, char *key);
 int get_int_key(char *mod, char *key);
+double get_double_key(char *mod, char *key);
+int get_bool_key(char *mod, char *key);
 void parse_cfg (void);
 void config_clear(void);
 
@@ -102,10 +99,10 @@ struct cfg *find_mod(char *mod)
  * 
  * @param mod Name of mod to add key to
  * @param key Name of key
- * @param char_value Value of the char key or NULL
+ * @param value Value of the char key or NULL
  * @param int_value Value of the int key or NULL
  */
-void add_key(char *mod, char *key, char *char_value, int *int_value)
+void add_key(char *mod, char *key, char *value)
 {
         struct cfg *cur = find_mod(mod);
 
@@ -113,13 +110,10 @@ void add_key(char *mod, char *key, char *char_value, int *int_value)
                 return; // @fixme
 
         struct setting *new_set = malloc(sizeof(struct setting));
+        
         new_set->key = key;
-        
-        if (!char_value)
-                new_set->value.int_value = *int_value;
-        else
-                strncpy(new_set->value.char_value, char_value, sizeof(new_set->value.char_value));
-        
+        new_set->value = value;
+
         new_set->next = NULL;
 
         if (cur->last_setting) {
@@ -152,7 +146,7 @@ char *get_char_key(char *mod, char *key)
 
         while (cur_set) {
                 if(!strcmp(cur_set->key, key))
-                        return cur_set->value.char_value;
+                        return cur_set->value;
 
                 cur_set = cur_set->next;
         }
@@ -168,6 +162,7 @@ char *get_char_key(char *mod, char *key)
  * 
  * @return The int value of key
  */
+
 int get_int_key(char *mod, char *key)
 {
         struct cfg *cur = find_mod(mod);
@@ -179,7 +174,81 @@ int get_int_key(char *mod, char *key)
 
         while (cur_set) {
                 if(!strcmp(cur_set->key, key))
-                        return cur_set->value.int_value;
+                        return strtol(cur_set->value, NULL, 0);
+
+                cur_set = cur_set->next;
+        }
+
+        return -1;
+}
+
+/** 
+ * @brief Get the double value of a key of a mod
+ * 
+ * @param mod Name of mod
+ * @param key Name of key
+ * 
+ * @return The double value of key
+ */
+
+double get_double_key(char *mod, char *key)
+{
+        struct cfg *cur = find_mod(mod);
+
+        if (!cur)
+                return -1;
+
+        struct setting *cur_set = cur->first_setting;
+
+        while (cur_set) {
+                if(!strcmp(cur_set->key, key))
+                        return atof(cur_set->value);
+
+                cur_set = cur_set->next;
+        }
+
+        return -1;
+}
+
+/** 
+ * @brief Get the boolean value of a key of a mod
+ * 
+ * @param mod Name of mod
+ * @param key Name of key
+ * 
+ * @return The boolean value of key
+ */
+
+int get_bool_key(char *mod, char *key)
+{
+        struct cfg *cur = find_mod(mod);
+
+        int b;
+
+        if (!cur)
+                return -1;
+
+        struct setting *cur_set = cur->first_setting;
+
+        while (cur_set) {
+                if(!strcmp(cur_set->key, key)) {
+                        if (cur_set->value[0] == 'y' ||
+                            cur_set->value[0] == 'Y' ||
+                            cur_set->value[0] == 't' ||
+                            cur_set->value[0] == 'T' ||
+                            cur_set->value[0] == '1')
+                                b = 1;
+                        else if (cur_set->value[0] == 'n' ||
+                                 cur_set->value[0] == 'N' ||
+                                 cur_set->value[0] == 'f' ||
+                                 cur_set->value[0] == 'F' ||
+                                 cur_set->value[0] == '0')
+                                b = 0;
+                        else
+                                b = -1;
+                        
+                        return b;
+                }
 
                 cur_set = cur_set->next;
         }
@@ -207,17 +276,17 @@ void parse_cfg(void)
 
         char *mod = NULL;
         char *key;
-        char *char_value;
-        int *int_value = malloc(sizeof(int));
+        char *value;
 
         config_text = NULL;
 
         while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
 
-                char_value = NULL; key = NULL; *int_value = 0;
+                value = NULL;
+                key = NULL;
 
                 /*     [mod]                  */ /* don't add_mod if [text] */
-                if (sscanf(str, " [%a[^]]] ", &mod) == 1) {
+                if (sscanf(str, "[%a[^]]]", &mod) == 1) {
                         if (strcmp(mod, "text") != 0)
                                 add_mod(mod);
                 }
@@ -233,21 +302,22 @@ void parse_cfg(void)
                         }
                 }
 
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%d\" \n", &key, int_value) == 2) { }
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = %d \n", &key, int_value) == 2 ) { }
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = \"%a[^\"]\" \n", &key, &char_value) == 2) { }
-                else if (sscanf(str, "%a[0-9a-zA-Z_] = %a[^\n]", &key, &char_value) == 2) { }
-                else if (sscanf(str, "%a[0-9a-zA-Z_] \n", &key) == 1) 
-                        *int_value = 1;
+                else if (sscanf(str, "%a[^= ] = \" %a[^\"]\"", &key, &value) == 2) { }
+                else if (sscanf(str, "%a[^= ] = ' %a[^\']'", &key, &value) == 2) { }
+                else if (sscanf(str, "%a[^= ] = %a[^#=\n]", &key, &value) == 2) { }
+                else if (sscanf(str, "%a[^#=\n ]", &key) == 1)
+                        value = strndup("True", (sizeof(char) * 4));
+                
+                if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''")))
+                        value = strndup("False", (sizeof(char) * 5));
 
-                if (mod && key && (int_value || char_value))
-                        add_key(mod, key, char_value, int_value);
-
-                if (char_value)
-                        free(char_value);
+                if (mod && key && value) {
+                        trim(mod); trim(key); trim(value);
+                        add_key(mod, key, value);
+                        printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
+                }
         }
 
-        free(int_value);
         fclose(cfg_file);
 }
 
@@ -271,6 +341,7 @@ void clear_cfg(void)
                         next_setting = cur_setting->next;
 
                         free(cur_setting->key);
+                        free(cur_setting->value);
                         free(cur_setting);
 
                         cur_setting = next_setting;
