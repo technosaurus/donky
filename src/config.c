@@ -278,7 +278,6 @@ void parse_cfg(void)
 
         /* these will hold/point to lines in .donkyrc */
         char str[MAX_LINE_SIZE];
-        char *pstr = str;
         
         /* these will hold successfully parsed... stuff */
         char *mod = NULL;
@@ -288,16 +287,10 @@ void parse_cfg(void)
         /* used by [text] */
         config_text = NULL;
 
-        while (fgets(pstr, MAX_LINE_SIZE, cfg_file) != NULL) {
-
-                /* skip any whitespace on the front of a line
-                 * unless [text] is the current mod */
-                if (!mod || (strcmp(mod, "text"))) {
-                        while (isspace(*pstr)) { pstr++; }
-                }
+        while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
 
                 /* scan for [mods] - don't add_mod if [text] */
-                if (sscanf(pstr, "[%a[a-zA-Z0-9_-]]", &mod) == 1) {
+                if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcmp(mod, "text") != 0)
                                 add_mod(mod);
                 }
@@ -305,19 +298,19 @@ void parse_cfg(void)
                 /* handle [text] - store all lines 'til next [mod] into config_text */
                 else if (!strcmp(mod, "text")) {
                         if (!config_text)
-                                config_text = strndup(pstr, (strlen(pstr) * sizeof(char)));
+                                config_text = strndup(str, (strlen(str) * sizeof(char)));
                         else {
                                 /* resize config_text so we can add more to it */
-                                config_text = realloc(config_text, ((strlen(config_text) + strlen(pstr) + 2) * sizeof(char)));
-                                strncat(config_text, pstr, (strlen(pstr) * sizeof(char)));
+                                config_text = realloc(config_text, ((strlen(config_text) + strlen(str) + 2) * sizeof(char)));
+                                strncat(config_text, str, (strlen(str) * sizeof(char)));
                         }
                 }
 
                 /* scan lines for keys and their values */
-                else if (sscanf(pstr, "%a[a-zA-Z0-9_-] = \" %a[^\"]\"", &key, &value) == 2) { }
-                else if (sscanf(pstr, "%a[a-zA-Z0-9_-] = ' %a[^\']'", &key, &value) == 2) { }
-                else if (sscanf(pstr, "%a[a-zA-Z0-9_-] = %a[^#\n]", &key, &value) == 2) { }
-                else if (sscanf(pstr, "%a[a-zA-Z0-9_-]", &key) == 1)
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = \" %a[^\"]\"", &key, &value) == 2) { }
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = ' %a[^\']'", &key, &value) == 2) { }
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^#\n]", &key, &value) == 2) { }
+                else if (sscanf(str, " %a[a-zA-Z0-9_-]", &key) == 1)
                         value = strndup("True", (sizeof(char) * 4));
                 
                 /* if the value is "" or '', set it to False */
