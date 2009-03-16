@@ -272,21 +272,28 @@ void parse_cfg(void)
                 exit(EXIT_FAILURE);
         }
 
+        /* these will hold/point to lines in .donkyrc */
         char str[MAX_LINE_SIZE];
-
+        char *pstr = str;
+        
+        /* these will hold successfully parsed... stuff */
         char *mod = NULL;
-        char *key;
-        char *value;
+        char *key = NULL;
+        char *value = NULL;
 
+        /* used by [text] */
         config_text = NULL;
 
-        while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
+        while (fgets(pstr, MAX_LINE_SIZE, cfg_file) != NULL) {
 
-                value = NULL;
-                key = NULL;
+                /* skip any whitespace on the front of a line
+                 * unless [text] is the current mod */
+                if (!mod || (strcmp(mod, "text"))) {
+                        while (isspace(*pstr)) { pstr++; }
+                }
 
-                /*     [mod]                  */ /* don't add_mod if [text] */
-                if (sscanf(str, "[%a[^]]]", &mod) == 1) {
+                /* scan for [mods] - don't add_mod if [text] */
+                if (sscanf(pstr, "[%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcmp(mod, "text") != 0)
                                 add_mod(mod);
                 }
@@ -294,28 +301,35 @@ void parse_cfg(void)
                 /* handle [text] - store all lines 'til next [mod] into config_text */
                 else if (!strcmp(mod, "text")) {
                         if (!config_text)
-                                config_text = strndup(str, strlen(str));
+                                config_text = strndup(pstr, (strlen(pstr) * sizeof(char)));
                         else {
                                 /* resize config_text so we can add more to it */
-                                config_text = realloc(config_text, (strlen(config_text) + strlen(str)) + (2 * sizeof(char)));
-                                strncat(config_text, str, strlen(str));
+                                config_text = realloc(config_text, ((strlen(config_text) + strlen(pstr) + 2) * sizeof(char)));
+                                strncat(config_text, pstr, (strlen(pstr) * sizeof(char)));
                         }
                 }
 
-                else if (sscanf(str, "%a[^= ] = \" %a[^\"]\"", &key, &value) == 2) { }
-                else if (sscanf(str, "%a[^= ] = ' %a[^\']'", &key, &value) == 2) { }
-                else if (sscanf(str, "%a[^= ] = %a[^#=\n]", &key, &value) == 2) { }
-                else if (sscanf(str, "%a[^#=\n ]", &key) == 1)
+                /* scan lines for keys and their values */
+                else if (sscanf(pstr, "%a[a-zA-Z0-9_-] = \" %a[^\"]\"", &key, &value) == 2) { }
+                else if (sscanf(pstr, "%a[a-zA-Z0-9_-] = ' %a[^\']'", &key, &value) == 2) { }
+                else if (sscanf(pstr, "%a[a-zA-Z0-9_-] = %a[^#\n]", &key, &value) == 2) { }
+                else if (sscanf(pstr, "%a[a-zA-Z0-9_-]", &key) == 1)
                         value = strndup("True", (sizeof(char) * 4));
                 
+                /* if the value is "" or '', set it to False */
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''")))
                         value = strndup("False", (sizeof(char) * 5));
 
+                /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
                         trim(mod); trim(key); trim(value);
                         add_key(mod, key, value);
                         printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
                 }
+
+                /* reset pointers */
+                value = NULL;
+                key = NULL;
         }
 
         fclose(cfg_file);
