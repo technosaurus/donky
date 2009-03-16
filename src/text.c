@@ -22,6 +22,7 @@
 
 #include "text.h"
 #include "config.h"
+#include "util.h"
 
 #define MAX_TEXT_SIZE 1024
 #define IS_ALPHA(c) ( \
@@ -59,15 +60,6 @@ void parse_text(void)
         text_section_split(config_text);
 
         struct text_section *cur = ts_start;
-
-        while (cur != NULL) {
-                printf("LINE %d STR = [%s]\n", cur->line, cur->value);
-                cur = cur->next;
-        }
-
-        clear_text();
-
-        cur = ts_start;
 
         while (cur != NULL) {
                 printf("LINE %d STR = [%s]\n", cur->line, cur->value);
