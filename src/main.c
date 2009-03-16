@@ -84,6 +84,8 @@ int main(int argc, char **argv)
         /* Initialize, then start donky. */
         initialize_stuff();
         //free_your_mind();
+        
+        clean_up_everything();
 
         return 0;
 }
@@ -101,6 +103,6 @@ void initialize_stuff(void)
  */
 void clean_up_everything(void)
 {
-        //config_clear();
+        config_clear();
         text_clear();
 }

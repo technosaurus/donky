@@ -43,12 +43,14 @@ struct cfg {
         struct setting *last_setting;
 } *first_cfg = NULL, *last_cfg = NULL;
 
+/* function prototypes */
 void add_mod(char *mod);
 struct cfg *find_mod(char *mod);
 void add_key(char *mod, char *key, char *char_value, int *int_value);
 char *get_char_key(char *mod, char *key);
 int get_int_key(char *mod, char *key);
 void parse_cfg (void);
+void config_clear(void);
 
 /** 
  * @brief Add a mod to the configuration list
@@ -261,3 +263,18 @@ void parse_cfg(void)
         fclose(cfg_file);
 }
 
+/** 
+ * @brief Free all cfg nodes from memory
+ */
+void config_clear(void)
+{
+        struct cfg *cur = first_cfg;
+        struct cfg *next;
+
+        while (cur) {       
+                next = cur->next;
+                free(cur);
+
+                cur = next;
+        }
+}
