@@ -22,6 +22,18 @@
 #include <stdlib.h>
 #define MAX_LINE_SIZE 1024
 
+#define IS_TRUE(c) ( \
+        ((c) == 'y') || ((c) == 'Y') || \
+        ((c) == 't') || ((c) == 'T') || \
+        ((c) == '1') \
+)
+
+#define IS_FALSE(c) ( \
+        ((c) == 'n') || ((c) == 'N') || \
+        ((c) == 'f') || ((c) == 'F') || \
+        ((c) == '0') \
+)
+
 struct setting {
         struct setting *next;
         
@@ -232,21 +244,13 @@ int get_bool_key(char *mod, char *key)
 
         while (cur_set) {
                 if(!strcmp(cur_set->key, key)) {
-                        if (cur_set->value[0] == 'y' ||
-                            cur_set->value[0] == 'Y' ||
-                            cur_set->value[0] == 't' ||
-                            cur_set->value[0] == 'T' ||
-                            cur_set->value[0] == '1')
+                        if (IS_TRUE(cur_set->value[0]))
                                 b = 1;
-                        else if (cur_set->value[0] == 'n' ||
-                                 cur_set->value[0] == 'N' ||
-                                 cur_set->value[0] == 'f' ||
-                                 cur_set->value[0] == 'F' ||
-                                 cur_set->value[0] == '0')
+                        else if (IS_FALSE(cur_set->value[0]))
                                 b = 0;
                         else
                                 b = -1;
-                        
+
                         return b;
                 }
 
@@ -325,6 +329,9 @@ void parse_cfg(void)
                         trim(mod); trim(key); trim(value);
                         add_key(mod, key, value);
                         printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
+                        printf("char: %s || int: %d || double: %f || bool: %d ||\n\n",
+                                get_char_key(mod, key), get_int_key(mod, key),
+                                get_double_key(mod, key), get_bool_key(mod, key));
                 }
 
                 /* reset pointers */
