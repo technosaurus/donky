@@ -19,5 +19,8 @@
 #define UTIL_H
 
 char *trim(char *);
+char *trim_l(char *);
+void trim_t(char *);
+int is_comment(char *);
 
 #endif /* UTIL_H */

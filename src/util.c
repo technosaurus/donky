@@ -19,6 +19,11 @@
 
 #include "util.h"
 
+char *trim(char *);
+char *trim_l(char *);
+void trim_t(char *);
+int is_comment(char *);
+
 /**
  * @brief Trim leading and trailing whitespace from a string.
  *
@@ -28,17 +33,59 @@
  */
 char *trim(char *str)
 {
+        str = trim_l(str);
+        trim_t(str);
+
+        return str;
+}
+
+/** 
+ * @brief Trim leading whitespace only
+ * 
+ * @param str Char pointer
+ * 
+ * @return New offset location in string
+ */
+char *trim_l(char *str)
+{
+        while(isspace(*str))
+                str++;
+
+        return str;
+}
+
+/** 
+ * @brief Trim trailing whitespace only
+ * 
+ * @param str Char pointer
+ */
+void trim_t(char *str)
+{
         int i;
-        
-        for (; isspace(*str); str++) { }
-        
+
         for (i = strlen(str) - 1; i >= 0; i--) {
                 if (!isspace(str[i])) {
                         str[i + 1] = '\0';
                         break;
                 }
         }
+}
 
-        return str;
+/** 
+ * @brief Is the current string a comment?
+ * 
+ * @param str String we're checking
+ * 
+ * @return 1 if comment, 0 if not
+ */
+int is_comment(char *str)
+{
+        str = trim_l(str);
+
+        if (*str == ';')
+                return 1;
+
+        else
+                return 0;
 }
 

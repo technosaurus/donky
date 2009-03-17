@@ -16,10 +16,13 @@
  */
 
 #define _GNU_SOURCE
-#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "config.h"
+#include "util.h"
+
 #define MAX_LINE_SIZE 1024
 
 #define IS_TRUE(c) ( \
@@ -278,6 +281,7 @@ void parse_cfg(void)
 
         /* these will hold/point to lines in .donkyrc */
         char str[MAX_LINE_SIZE];
+        char *p;
         
         /* these will hold successfully parsed... stuff */
         char *mod = NULL;
@@ -289,8 +293,10 @@ void parse_cfg(void)
 
         while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
 
+                if (is_comment(str)) { } /* let comment lines pass */
+
                 /* scan for [mods] - don't add_mod if [text] */
-                if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
+                else if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcmp(mod, "text") != 0)
                                 add_mod(mod);
                 }
@@ -309,7 +315,7 @@ void parse_cfg(void)
                 /* scan lines for keys and their values */
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] = \" %a[^\"]\"", &key, &value) == 2) { }
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] = ' %a[^\']'", &key, &value) == 2) { }
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^#\n]", &key, &value) == 2) { }
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n]", &key, &value) == 2) { }
                 else if (sscanf(str, " %a[a-zA-Z0-9_-]", &key) == 1)
                         value = strndup("True", (sizeof(char) * 4));
                 
