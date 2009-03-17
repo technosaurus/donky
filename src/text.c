@@ -25,6 +25,7 @@
 #include "util.h"
 
 #define MAX_TEXT_SIZE 1024
+
 #define IS_ALPHA(c) ( \
         ((c) >= 'a' && (c) <= 'z') || \
         ((c) >= 'A' && (c) <= 'Z') || \
@@ -59,6 +60,9 @@ void parse_text(void);
 void parse_text(void)
 {
         text_section_split(config_text);
+
+        /* We don't need this anymore! */
+        free(config_text);
 
         struct text_section *cur = ts_start;
 
