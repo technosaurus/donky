@@ -305,16 +305,14 @@ void parse_cfg(void)
 
                 /* handle [text] - store all lines 'til next [mod] into config_text */
                 if (!strcmp(mod, "text")) {
-                        if (!config_text) {
+                        if (!config_text)
                                 config_text = strndup(str, (strlen(str) * sizeof(char)));
-                                continue;
-                        }
                         else {
                                 /* resize config_text so we can add more to it */
                                 config_text = realloc(config_text, ((strlen(config_text) + strlen(str) + 2) * sizeof(char)));
                                 strncat(config_text, str, (strlen(str) * sizeof(char)));
-                                continue;
                         }
+                        continue;
                 }
 
                 /* scan lines for keys and their values */
