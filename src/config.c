@@ -318,10 +318,11 @@ void parse_cfg(void)
                 }
 
                 /* scan lines for keys and their values */
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = \" %a[^\"]\"", &key, &value) == 2) { }
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = ' %a[^\']'", &key, &value) == 2) { }
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n]", &key, &value) == 2) { }
-                else if (sscanf(str, " %a[a-zA-Z0-9_-]", &key) == 1)
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", &key, &value) == 2) { }
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", &key, &value) == 2) { }
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value) == 2)
+                        trim_t(value);
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
                         value = strndup("True", (sizeof(char) * 4));
                 
                 /* if the value is "" or '', set it to False */
@@ -330,7 +331,6 @@ void parse_cfg(void)
 
                 /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
-                        trim(mod); trim(key); trim(value);
                         add_key(mod, key, value);
                         printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
                         printf("char: %s || int: %d || double: %f || bool: %d ||\n\n",
