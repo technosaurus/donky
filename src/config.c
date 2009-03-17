@@ -297,14 +297,14 @@ void parse_cfg(void)
                         continue;
 
                 /* scan for [mods] - don't add_mod if [text] */
-                else if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
+                if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcmp(mod, "text") != 0)
                                 add_mod(mod);
                         continue;
                 }
 
                 /* handle [text] - store all lines 'til next [mod] into config_text */
-                else if (!strcmp(mod, "text")) {
+                if (!strcmp(mod, "text")) {
                         if (!config_text) {
                                 config_text = strndup(str, (strlen(str) * sizeof(char)));
                                 continue;

@@ -22,5 +22,6 @@ char *trim(char *);
 char *trim_l(char *);
 void trim_t(char *);
 int is_comment(char *);
+int is_all_spaces(char *);
 
 #endif /* UTIL_H */

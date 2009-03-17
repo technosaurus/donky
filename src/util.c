@@ -89,3 +89,20 @@ int is_comment(char *str)
                 return 0;
 }
 
+/**
+ * @brief Is this string all spaces?
+ *
+ * @param str String to check
+ *
+ * @return 1 for yes, 0 for no
+ */
+int is_all_spaces(char *str)
+{
+        int i;
+
+        for (i = 0; i < strlen(str); i++)
+                if (!isspace(str[i]))
+                        return 0;
+
+        return 1;
+}

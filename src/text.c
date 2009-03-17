@@ -39,6 +39,7 @@ enum text_section_type {
 
 struct text_section {
         char *value;
+        char *args;
         int line;
 
         enum text_section_type type;
@@ -127,9 +128,7 @@ void text_section_split(char *text)
                                 s++;
                                 ts = s;
 
-                                for (; *s &&
-                                     (IS_ALPHA(*s) || *s == ' ') &&
-                                     *s != '}'; s++) { }
+                                for (; *s && *s != '}'; s++) { }
 
                                 if ((s - ts) > 0) {
                                         text_section_add(ts, s - ts,
@@ -153,6 +152,7 @@ void text_section_split(char *text)
                 }
         }
 
+        /* Add remaining text... */
         if ((s - ts) > 0)
                 text_section_add(ts, s - ts,
                                  line,
@@ -170,9 +170,10 @@ void text_section_split(char *text)
  * @param type Section type (TEXT_VARIABLE, TEXT_STATIC)
  */
 void text_section_add(char *value, int len, int line, enum text_section_type type)
-{
+{        
         char *copy_val = strndup(value, len);
         char *alias_contents = get_char_key("alias", copy_val);
+        char *args = NULL;
         
         if (type == TEXT_VARIABLE && alias_contents) {
                 text_section_split(alias_contents);
@@ -180,11 +181,28 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
         } else {
                 struct text_section *n = malloc(sizeof(struct text_section));
 
+                /* We need to check if this string is all spaces so that the
+                 * arg splitting code doesn't null it. */
+                if (type == TEXT_VARIABLE && !is_all_spaces(copy_val)) {
+                        /* Split value from arguments. */
+                        args = strchr(copy_val, ' ');
+
+                        /* Trim the arguments list. */
+                        if (args) {
+                                *args = '\0';
+                                args++;
+                                args = trim(args);
+                        }
+                }
+
+                /* Fill in the text_section structure. */
                 n->value = copy_val;
+                n->args = args;
                 n->line = line;
                 n->type = type;
                 n->next = NULL;
 
+                /* Add to linked list. */
                 if (ts_start == NULL) {
                         ts_start = n;
                         ts_end = n;
@@ -206,7 +224,9 @@ void clear_text(void)
                 to_free = cur;
                 cur = cur->next;
 
-                free(to_free->value);
+                if (to_free->value)
+                        free(to_free->value);
+                
                 free(to_free);
         }
 
