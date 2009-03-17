@@ -63,7 +63,7 @@ void parse_text(void)
         struct text_section *cur = ts_start;
 
         while (cur != NULL) {
-                printf("LINE %d STR = [%s]\n", cur->line, cur->value);
+                printf("LINE %d STR = [%s], ARGS = [%s]\n", cur->line, cur->value, cur->args);
                 cur = cur->next;
         }
 }
