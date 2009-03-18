@@ -152,7 +152,10 @@ char *chomp(char *str)
  */
 char *substr(char *str, int offset, int length)
 {
+        /* EFFICIENCY TESTED TO THE FUCKING MAXIMUM BY A MAN IN A LAB COAT */
         str += offset;
-        char *dup = strndup(str, length);
+        char *dup = malloc(length + 1);
+        strncpy(dup, str, length);
+        dup[length] = '\0';
         return dup;
 }
