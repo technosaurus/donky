@@ -23,5 +23,8 @@ char *trim_l(char *);
 void trim_t(char *);
 int is_comment(char *);
 int is_all_spaces(char *);
+char *chop(char *);
+char *chomp(char *);
+char *substr(char *, int, int);
 
 #endif /* UTIL_H */
