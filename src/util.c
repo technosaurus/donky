@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <string.h>
 
 #include "util.h"
@@ -84,9 +85,8 @@ int is_comment(char *str)
 
         if (*str == ';')
                 return 1;
-
-        else
-                return 0;
+                
+        return 0;
 }
 
 /**
@@ -105,4 +105,50 @@ int is_all_spaces(char *str)
                         return 0;
 
         return 1;
+}
+
+/**
+ * @brief Chop off the last character of a string.
+ *
+ * @param str Source string
+ *
+ * @return Pointer to string
+ */
+char *chop(char *str)
+{
+        str[strlen(str) - 1] = '\0';
+        return str;
+}
+
+/**
+ * @brief Chop off new line from string.
+ *
+ * @param str Source string
+ *
+ * @return Pointer to string
+ */
+char *chomp(char *str)
+{
+        int len = strlen(str) - 1;
+
+        if (str[len] == '\n')
+                str[len] = '\0';
+
+        return str;
+}
+
+/**
+ * @brief Return a substring of a string.
+ *
+ * @param str Source string
+ * @param offset Offset to start at
+ * @param length Length after offset to retrieve
+ *
+ * @return Substring of source string
+ */
+char *substr(char *str, int offset, int length)
+{
+        str += offset;
+        char *dup = strndup(str, length);
+        return dup;
 }
