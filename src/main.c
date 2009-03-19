@@ -97,6 +97,7 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
+        init_X_connection();
         parse_cfg();
         parse_text();
         module_load_all();
@@ -114,6 +115,8 @@ void initialize_stuff(void)
                 total = get_time() - start;
                 printf("OUTPUT: [%s] time: %f\n", output, total);
         }
+
+        test_event();
 }
 
 /**
