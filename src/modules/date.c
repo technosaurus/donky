@@ -65,23 +65,18 @@ char *get_date(char *args)
         if (ret_value)
                 free(ret_value);
         
-        char outstr[200];
+        ret_value = malloc(200 * sizeof(char));
         time_t t;
         struct tm *tmp;
 
         t = time(NULL);
         tmp = localtime(&t);
 
-        if (tmp == NULL) {
-                ret_value = strdup("n/a");
-                return ret_value;
-        }
+        if (tmp == NULL)
+                return strncpy(ret_value, "n/a", 200);
 
-        if (strftime(outstr, sizeof(outstr), args, tmp) == 0) {
-                ret_value = strdup("n/a");
-                return ret_value;
-        }
+        if (strftime(ret_value, 200, args, tmp) == 0)
+                return strncpy(ret_value, "n/a", 200);
 
-        ret_value = strdup(outstr);
         return ret_value;
 }

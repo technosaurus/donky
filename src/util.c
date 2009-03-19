@@ -17,6 +17,7 @@
 
 #define _GNU_SOURCE
 #include <string.h>
+#include <sys/time.h>
 
 #include "util.h"
 
@@ -28,6 +29,7 @@ int is_all_spaces(char *);
 char *chop(char *);
 char *chomp(char *);
 char *substr(char *, int, int);
+double get_time(void);
 
 /**
  * @brief Trim leading and trailing whitespace from a string.
@@ -158,4 +160,16 @@ char *substr(char *str, int offset, int length)
         strncpy(dup, str, length);
         dup[length] = '\0';
         return dup;
+}
+
+/**
+ * @brief Get the current time in seconds, to a bunch of decimal places.
+ *
+ * @return Time in seconds
+ */
+double get_time(void)
+{
+        struct timeval timev;           
+        gettimeofday(&timev, NULL);
+        return (double) timev.tv_sec + (((double) timev.tv_usec) / 1000000);
 }

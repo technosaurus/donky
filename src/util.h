@@ -26,5 +26,6 @@ int is_all_spaces(char *);
 char *chop(char *);
 char *chomp(char *);
 char *substr(char *, int, int);
+double get_time(void);
 
 #endif /* UTIL_H */

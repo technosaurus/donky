@@ -23,6 +23,7 @@
 #include "config.h"
 #include "text.h"
 #include "module.h"
+#include "util.h"
 
 #define HELP \
         "donky usage:\n" \
@@ -103,11 +104,15 @@ void initialize_stuff(void)
         /* test stuff... */
         struct module_var *m = module_var_find("date");
         if (m != NULL) {
+                char *output;
+                double start, total;
                 char *(*sym)(char *);
                 sym = m->sym;
-        
-                char *output = sym("%b %d, %R");
-                printf("OUTPUT: [%s]\n", output);
+
+                start = get_time();
+                output = sym("%b %d, %R");
+                total = get_time() - start;
+                printf("OUTPUT: [%s] time: %f\n", output, total);
         }
 }
 
