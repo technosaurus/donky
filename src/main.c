@@ -22,6 +22,7 @@
 #include "../config.h"
 #include "config.h"
 #include "text.h"
+#include "module.h"
 
 #define HELP \
         "donky usage:\n" \
@@ -97,6 +98,17 @@ void initialize_stuff(void)
 {
         parse_cfg();
         parse_text();
+        module_load_all();
+
+        /* test stuff... */
+        struct module_var *m = module_var_find("date");
+        if (m != NULL) {
+                char *(*sym)(char *);
+                sym = m->sym;
+        
+                char *output = sym("%b %d, %R");
+                printf("OUTPUT: [%s]\n", output);
+        }
 }
 
 /**
@@ -106,4 +118,5 @@ void clean_up_everything(void)
 {
         clear_cfg();
         clear_text();
+        clear_module();
 }

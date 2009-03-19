@@ -15,15 +15,35 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef MODULE_H
+#define MODULE_H
 
-enum text_section_type {
-        TEXT_STATIC,
-        TEXT_VARIABLE
+enum variable_type {
+        VARIABLE_STR,
+        VARIABLE_BAR,
+        VARIABLE_CUSTOM
 };
 
-void parse_text(void);
-void clear_text(void);
+struct module {
+        char name[64];
+        void *handle;
+        void *destroy;
 
-#endif /* TEXT_H */
+        struct module *next;
+};
+
+struct module_var {
+        char name[64];
+        char method[64];
+        enum variable_type type;
+        void *sym;
+
+        struct module *parent;
+        struct module_var *next;
+};
+
+struct module_var *module_var_find(char *);
+void module_load_all(void);
+void clear_module(void);
+
+#endif /* MODULE_H */

@@ -7,4 +7,4 @@ AC_PROG_LIBTOOL
 PKG_CHECK_MODULES(DEPS, xcb)
 AC_SUBST(DEPS_CFLAGS)
 AC_SUBST(DEPS_LIBS)
-AC_OUTPUT(Makefile src/Makefile)
+AC_OUTPUT(Makefile src/Makefile src/modules/Makefile)

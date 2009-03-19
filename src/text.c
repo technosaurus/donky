@@ -33,15 +33,12 @@
         ((c) == '_') \
 )
 
-enum text_section_type {
-        TEXT_STATIC,
-        TEXT_VARIABLE
-};
-
 struct text_section {
         char *value;
         char *args;
-        int line;
+        
+        unsigned int line;
+        unsigned int pixel_width;
 
         enum text_section_type type;
 
@@ -82,7 +79,7 @@ void text_section_split(char *text)
         char *dup;
         char *s;
         char *ts;
-        int line = 0;
+        unsigned int line = 0;
 
         dup = strndup(text, MAX_TEXT_SIZE);
         s = ts = dup;

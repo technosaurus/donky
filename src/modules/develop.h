@@ -15,15 +15,18 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TEXT_H
-#define TEXT_H
+#ifndef DEVELOP_H
+#define DEVELOP_H
 
-enum text_section_type {
-        TEXT_STATIC,
-        TEXT_VARIABLE
+enum variable_type {
+        VARIABLE_STR,
+        VARIABLE_BAR,
+        VARIABLE_CUSTOM
 };
 
-void parse_text(void);
-void clear_text(void);
+extern int module_var_add(char *parent,
+                          char *name,
+                          char *method,
+                          enum variable_type type);
 
-#endif /* TEXT_H */
+#endif /* DEVELOP_H */
