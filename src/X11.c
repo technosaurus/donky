@@ -95,11 +95,10 @@ void draw_window(void)
                 printf("Didn't find BarHeight\n");
         }
 
+        /* TODO - learn how to do colors from cfg */
         bg_color = screen->white_pixel;
         fg_color = screen->black_pixel;
 
-        /* TODO - this should only be if OwnWindow is set,
-         *        otherwise draw to root */
         window = xcb_generate_id(connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         values[0] = bg_color;
@@ -141,9 +140,6 @@ void draw_window(void)
  */
 void X_event_loop(void)
 {
-        char *str = "testing.";
-        xcb_flush(connection);
-
         while (1) {
                 event = xcb_poll_for_event(connection);
                 if (event) {
@@ -165,4 +161,5 @@ void X_event_loop(void)
                 }
         }
 }
+
 

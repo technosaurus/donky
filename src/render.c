@@ -110,7 +110,7 @@ static xcb_font_t get_font(const char *font_name)
                 xcb_disconnect(connection);
                 exit(EXIT_FAILURE);
         }
-        xcb_flush(connection);
+
         return font;
 }
 
