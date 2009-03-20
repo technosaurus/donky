@@ -24,7 +24,7 @@
 #include "config.h"
 #include "util.h"
 
-#define MAX_TEXT_SIZE 1024
+#define MAX_TEXT_SIZE 10240
 
 #define IS_ALPHA(c) ( \
         ((c) >= 'a' && (c) <= 'z') || \
