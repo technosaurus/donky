@@ -27,7 +27,7 @@
 /* Function prototypes. */
 int module_add(char *name, void *handle, void *destroy);
 struct module *module_find(char *name);
-int module_var_add(char *parent, char *name, char *method, enum variable_type type);
+int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type);
 struct module_var *module_var_find(char *name);
 int module_load(char *path);
 void *module_get_sym(void *handle, char *name);
@@ -98,7 +98,7 @@ struct module *module_find(char *name)
  *
  * @return 0 for utter phail, 1 for success
  */
-int module_var_add(char *parent, char *name, char *method, enum variable_type type)
+int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type)
 {
         struct module *mod = module_find(parent);
 
@@ -114,8 +114,17 @@ int module_var_add(char *parent, char *name, char *method, enum variable_type ty
         strncpy(n->method, method, sizeof(n->method) - 1);
         n->type = type;
         n->sym = module_get_sym(mod->handle, method);
+        n->last_update = 0.0;
         n->parent = mod;
         n->next = NULL;
+
+        /* Set the timeout.  User configured timeouts take precedence over
+         * module defined default! */
+        double user_timeout = get_double_key("timeout", name);
+        if (user_timeout == -1)
+                n->timeout = timeout;
+        else
+                n->timeout = user_timeout;
 
         /* Add to linked list. */
         if (mv_start == NULL) {

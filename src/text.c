@@ -39,6 +39,8 @@ struct text_section {
         
         unsigned int line;              /* Line number, starts at 0. */
         unsigned int pixel_width;       /* Pixel width of this section. */
+        unsigned int xpos;              /* Current x position. */
+        unsigned int ypos;              /* Current y position. */
 
         enum text_section_type type;    /* See the definition of this enum in text.h */
 

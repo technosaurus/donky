@@ -28,6 +28,7 @@ enum variable_type {
 extern int module_var_add(char *parent,
                           char *name,
                           char *method,
+                          double timeout,
                           enum variable_type type);
 
 #endif /* DEVELOP_H */

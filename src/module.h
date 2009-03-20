@@ -38,6 +38,9 @@ struct module_var {
         char method[64];                /* Method name to call. */
         enum variable_type type;        /* Type of method.  See the enum above. */
         void *sym;                      /* Pointer to the function. */
+        
+        double timeout;                 /* How often to check for updates. */
+        double last_update;             /* Time of the last update. */
 
         struct module *parent;          /* Parent of this module. */
         struct module_var *next;        /* Next node in linked list. */

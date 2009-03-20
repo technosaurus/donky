@@ -41,7 +41,7 @@ char *ret_value = NULL;
  */
 void module_init(void)
 {
-        module_var_add(module_name, "date", "get_date", VARIABLE_STR);
+        module_var_add(module_name, "date", "get_date", 1.0, VARIABLE_STR);
 }
 
 /**
