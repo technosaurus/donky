@@ -21,6 +21,7 @@
 enum variable_type {
         VARIABLE_STR,
         VARIABLE_BAR,
+        VARIABLE_GRAPH,
         VARIABLE_CUSTOM
 };
 

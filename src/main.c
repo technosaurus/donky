@@ -34,7 +34,7 @@
 
 void initialize_stuff(void);
 void clean_up_everything(void);
-int main(int, char **);
+int main(int argc, char **argv);
 
 /**
  * @brief Program entry point.

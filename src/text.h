@@ -19,8 +19,10 @@
 #define TEXT_H
 
 enum text_section_type {
-        TEXT_STATIC,
-        TEXT_VARIABLE
+        TEXT_STATIC,    /* This is static text.  It does not need to be evaluated. */
+        TEXT_VARIABLE,  /* Needs further evaluation before drawing! */
+        TEXT_FONT,      /* This is a font, args will be either a font name or NULL. */
+        TEXT_COLOR      /* Color, args will be a color name/hex val or NULL. */
 };
 
 void parse_text(void);
