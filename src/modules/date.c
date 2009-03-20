@@ -31,7 +31,7 @@ void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes. */
-char *get_date(char *);
+char *get_date(char *args);
 
 /* Globals. */
 char *ret_value = NULL;

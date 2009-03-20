@@ -19,30 +19,31 @@
 #define MODULE_H
 
 enum variable_type {
-        VARIABLE_STR,
-        VARIABLE_BAR,
-        VARIABLE_CUSTOM
+        VARIABLE_STR,           /* Function should return char * */
+        VARIABLE_BAR,           /* Function should return int between 0 and 100 */
+        VARIABLE_GRAPH,         /* TBA */
+        VARIABLE_CUSTOM         /* TBA */
 };
 
 struct module {
-        char name[64];
-        void *handle;
-        void *destroy;
+        char name[64];          /* Unique identifier, value really doesn't matter. */
+        void *handle;           /* Handle to the code in memory. */
+        void *destroy;          /* Pointer to the module_destroy function. */
 
-        struct module *next;
+        struct module *next;    /* Next node in linked list. */
 };
 
 struct module_var {
-        char name[64];
-        char method[64];
-        enum variable_type type;
-        void *sym;
+        char name[64];                  /* Name of the variable. */
+        char method[64];                /* Method name to call. */
+        enum variable_type type;        /* Type of method.  See the enum above. */
+        void *sym;                      /* Pointer to the function. */
 
-        struct module *parent;
-        struct module_var *next;
+        struct module *parent;          /* Parent of this module. */
+        struct module_var *next;        /* Next node in linked list. */
 };
 
-struct module_var *module_var_find(char *);
+struct module_var *module_var_find(char *name);
 void module_load_all(void);
 void clear_module(void);
 

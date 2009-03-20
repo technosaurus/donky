@@ -34,21 +34,21 @@
 )
 
 struct text_section {
-        char *value;
-        char *args;
+        char *value;                    /* Value of this text section. */
+        char *args;                     /* Arguments given to a variable. ${...} */
         
-        unsigned int line;
-        unsigned int pixel_width;
+        unsigned int line;              /* Line number, starts at 0. */
+        unsigned int pixel_width;       /* Pixel width of this section. */
 
-        enum text_section_type type;
+        enum text_section_type type;    /* See the definition of this enum in text.h */
 
-        struct text_section *next;
+        struct text_section *next;      /* Next node in this linked list. */
 } *ts_start = NULL, *ts_end = NULL;
 
 /* Function prototypes. */
 void clear_text(void);
-void text_section_split(char *);
-void text_section_add(char *, int, int, enum text_section_type);
+void text_section_split(char *text);
+void text_section_add(char *value, int len, int line, enum text_section_type type);
 void parse_text(void);
 
 /**
@@ -200,8 +200,16 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                 n->value = copy_val;
                 n->args = args;
                 n->line = line;
-                n->type = type;
                 n->next = NULL;
+
+                /* Set the type.  We do a little interception here to find
+                 * some built-in variables. */
+                if (!strcmp(n->value, "font"))
+                        n->type = TEXT_FONT;
+                else if (!strcmp(n->value, "color"))
+                        n->type = TEXT_COLOR;
+                else
+                        n->type = type;
 
                 /* Add to linked list. */
                 if (ts_start == NULL) {

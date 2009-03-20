@@ -25,12 +25,12 @@
 #include "module.h"
 
 /* Function prototypes. */
-int module_add(char *, void *, void *);
-struct module *module_find(char *);
-int module_var_add(char *, char *, char *, enum variable_type);
-struct module_var *module_var_find(char *);
-int module_load(char *);
-void *module_get_sym(void *, char *);
+int module_add(char *name, void *handle, void *destroy);
+struct module *module_find(char *name);
+int module_var_add(char *parent, char *name, char *method, enum variable_type type);
+struct module_var *module_var_find(char *name);
+int module_load(char *path);
+void *module_get_sym(void *handle, char *name);
 void module_load_all(void);
 void clear_module(void);
 
