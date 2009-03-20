@@ -8,6 +8,7 @@ donky_SOURCES = \
 	text.c text.h \
 	config.c config.h \
 	util.c util.h \
-	module.c module.h
+	module.c module.h \
+	render.c render.h
 INCLUDES = $(DEPS_CFLAGS)
 LIBS = $(DEPS_LIBS)
