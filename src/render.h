@@ -18,14 +18,9 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-xcb_connection_t *connection;
-xcb_screen_iterator_t screen_iter;
-const xcb_setup_t *setup;
-xcb_screen_t *screen;
-xcb_generic_error_t *error;
-int screen_number;
-xcb_window_t window;
-xcb_generic_event_t *event;
+int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y);
+static xcb_font_t get_font(const char *font_name);
+static xcb_gc_t get_font_gc(xcb_font_t font);
 
 #endif /* RENDER_H */
 

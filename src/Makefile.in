@@ -46,7 +46,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_donky_OBJECTS = main.$(OBJEXT) text.$(OBJEXT) config.$(OBJEXT) \
-	util.$(OBJEXT) module.$(OBJEXT) render.$(OBJEXT)
+	util.$(OBJEXT) module.$(OBJEXT) X11.$(OBJEXT) render.$(OBJEXT)
 donky_OBJECTS = $(am_donky_OBJECTS)
 donky_LDADD = $(LDADD)
 donky_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -201,6 +201,7 @@ donky_SOURCES = \
 	config.c config.h \
 	util.c util.h \
 	module.c module.h \
+	X11.c X11.h \
 	render.c render.h
 
 INCLUDES = $(DEPS_CFLAGS)
@@ -275,6 +276,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/X11.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/module.Po@am__quote@

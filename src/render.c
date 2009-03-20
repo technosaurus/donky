@@ -15,123 +15,141 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//include <string.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <xcb/xcb.h>
-#include <render.h>
 
-/** 
- * @brief Connects to the X server and stores all relevant information
- */
-void init_X_connection(void)
+#include "X11.h"
+#include "render.h"
+#include "config.h"
+
+int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y);
+static xcb_font_t get_font(const char *font_name);
+static xcb_gc_t get_font_gc(xcb_font_t font);
+
+int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y)
 {
-        xcb_void_cookie_t window_cookie;
-        xcb_void_cookie_t map_cookie;
-        uint32_t mask;
-        uint32_t values[2];
+        xcb_void_cookie_t cookie_gc;
+        xcb_void_cookie_t cookie_text;
+        xcb_font_t font;
+
+        xcb_query_text_extents_cookie_t cookie_extents;
+        xcb_query_text_extents_reply_t *extents_reply;
+        int32_t extents_length = 1;
+
+        xcb_gcontext_t gc;
         
-        /* TODO - specified colors from cfg
-        char *fg_color, *bg_color; */
+        uint8_t length;
+        length = strlen(str);
 
-        /* connect to X server */
-        connection = xcb_connect(NULL, &screen_number);
+        font = get_font(font_name);
 
-        if (!connection) {
-                printf("Can't connect to X server.\n");
-                exit(EXIT_FAILURE);
-        }
+/*
+        cookie_extents = xcb_query_text_extents(connection,
+                                                font,
+                                                strlen(str),
+                                                str);
 
-        setup = xcb_get_setup(connection);
+        extents_reply = xcb_query_text_extents_reply(connection,
+                                                     cookie_extents,
+                                                     error);
 
-        screen = NULL;
-        
-        screen_iter = xcb_setup_roots_iterator(setup);
-
-        /* find our current screen */        
-        for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter))
-                if (screen_number == 0) {
-                        screen = screen_iter.data;
-                        break;
-                }
-
-        if (!screen) {
-                printf("Can't find the current screen.\n");
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
-        }
-
-        /* TODO - this should only be if OwnWindow is set,
-         *        otherwise draw to root(?) */
-        window = xcb_generate_id(connection);
-        mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
-        values[0] = screen->white_pixel;
-        values[1] = 
-                XCB_EVENT_MASK_KEY_RELEASE |
-                XCB_EVENT_MASK_BUTTON_PRESS |
-                XCB_EVENT_MASK_EXPOSURE;
-        window_cookie = xcb_create_window(
-                        connection,
-                        screen->root_depth,
-                        window,
-                        screen->root,
-                        20, 20,   /* TODO - x/y offset from cfg */
-                        1024, 50, /* TODO - width/height from cfg */
-                        0,
-                        XCB_WINDOW_CLASS_INPUT_OUTPUT, /* learn this */
-                        screen->root_visual,
-                        mask, values);
-        map_cookie = xcb_map_window_checked(connection, window);
-
-        /* some error management */
-        error = xcb_request_check(connection, window_cookie);
         if (error) {
-                printf("Can't create window. Error: %d\n", error->error_code);
+                printf("render_text: Can't get extents reply. Error: %d\n", error->error_code);
                 xcb_disconnect(connection);
                 exit(EXIT_FAILURE);
         }
-        
-        error = xcb_request_check(connection, map_cookie);
+
+        extents_length = extents_reply->overall_width;
+*/
+
+        gc = get_font_gc(font);
+
+        cookie_text = xcb_image_text_8_checked(connection,
+                                               length,
+                                               window,
+                                               gc,
+                                               x, y,
+                                               str);
+
+        error = xcb_request_check(connection, cookie_text);
         if (error) {
-                printf("Can't map window. Error: %d\n", error->error_code);
+                printf("render_text: Can't paste text. Error: %d\n", error->error_code);
                 xcb_disconnect(connection);
                 exit(EXIT_FAILURE);
         }
+
+        cookie_gc = xcb_free_gc(connection, gc);
+
+        error = xcb_request_check(connection, cookie_gc);
+        if (error) {
+                printf("render_text: Can't free gc. Error: %d\n", error->error_code);
+                xcb_disconnect(connection);
+                exit(EXIT_FAILURE);
+        }
+
+        return extents_length;
+
 }
 
-/** 
- * @brief Keep the window open til we hit Escape.
- *        Just for testing purposes.
- */
-void test_event(void)
+static xcb_font_t get_font(const char *font_name)
 {
-        xcb_flush(connection);
+        xcb_font_t font;
+        xcb_void_cookie_t cookie_font;
 
-        while (1) {
-                event = xcb_poll_for_event(connection);
-                if (event) {
-                switch (event->response_type & ~0x80) {
-                        case XCB_EXPOSE: {
-                                printf("Press ESC in window to exit.\n");
-                                break;
-                        }
-                        case XCB_KEY_RELEASE: {
-                                xcb_key_release_event_t *ev;
+        font = xcb_generate_id(connection);
+        cookie_font = xcb_open_font_checked(connection,
+                                            font,
+                                            strlen(font_name),
+                                            font_name);
 
-                                ev = (xcb_key_release_event_t *)event;
-
-                                switch (ev->detail) {
-                                        /* ESC */
-                                        case 9:
-                                        free(event);
-                                        xcb_disconnect(connection);
-                                        return 0;
-                                }
-                        }
-                }
-                
-                free(event);
-                }
+        error = xcb_request_check(connection, cookie_font);
+        if (error) {
+                printf("get_font: Can't open font. Error: %d\n", error->error_code);
+                xcb_disconnect(connection);
+                exit(EXIT_FAILURE);
         }
+        xcb_flush(connection);
+        return font;
+}
+
+static xcb_gc_t get_font_gc(xcb_font_t font)
+{
+        xcb_gcontext_t gc;
+        xcb_void_cookie_t cookie_gc;
+        
+        xcb_void_cookie_t cookie_font;
+
+        uint32_t mask;
+        uint32_t value_list[3];
+
+        gc = xcb_generate_id(connection);
+        
+        mask = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
+        value_list[0] = fg_color;
+        value_list[1] = bg_color;
+        value_list[2] = font;
+
+        cookie_gc = xcb_create_gc_checked(connection,
+                                          gc,
+                                          window,
+                                          mask, value_list);
+        error = xcb_request_check(connection, cookie_gc);
+        if (error) {
+                printf("get_font: Can't create graphic context. Error: %d\n", error->error_code);
+                xcb_disconnect(connection);
+                exit(EXIT_FAILURE);
+        }
+
+        cookie_font = xcb_close_font_checked(connection, font);
+        error = xcb_request_check(connection, cookie_font);
+        if (error) {
+                printf("get_font: Can't close font. Error: %d\n", error->error_code);
+                xcb_disconnect(connection);
+                exit(EXIT_FAILURE);
+        }
+
+        return gc;
 }
 

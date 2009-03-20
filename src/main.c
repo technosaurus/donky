@@ -18,12 +18,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <xcb/xcb.h>
 
 #include "../config.h"
 #include "config.h"
 #include "text.h"
 #include "module.h"
 #include "util.h"
+#include "X11.h"
+#include "render.h"
 
 #define HELP \
         "donky usage:\n" \
@@ -102,6 +105,11 @@ void initialize_stuff(void)
         parse_text();
         module_load_all();
 
+        /* if own_window, etc. */
+        draw_window();  /* allow to pass override if in cfg */
+        /* else */
+        //draw_root();
+
         /* test stuff... */
         struct module_var *m = module_var_find("date");
         if (m != NULL) {
@@ -116,7 +124,7 @@ void initialize_stuff(void)
                 printf("OUTPUT: [%s] time: %f\n", output, total);
         }
 
-        test_event();
+        X_event_loop();
 }
 
 /**
@@ -127,4 +135,5 @@ void clean_up_everything(void)
         clear_cfg();
         clear_text();
         clear_module();
+        //clear_X();
 }

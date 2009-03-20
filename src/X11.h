@@ -15,16 +15,24 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef X11_H
+#define X11_H
 
-char *config_text;
-void parse_cfg(void);
-void clear_cfg(void);
-char *get_char_key(char *mod, char *key);
-int get_int_key(char *mod, char *key);
-double get_double_key(char *mod, char *key);
-int get_bool_key(char *mod, char *key);
+xcb_connection_t *connection;
+xcb_screen_iterator_t screen_iter;
+const xcb_setup_t *setup;
+xcb_screen_t *screen;
+xcb_generic_error_t *error;
+int screen_number;
+xcb_window_t window;
+xcb_generic_event_t *event;
+char *X11mod;
 
-#endif /* CONFIG_H */
+uint32_t bg_color;
+uint32_t fg_color;
+
+int x_offset;
+int y_offset;
+
+#endif /* X11_H */
 
