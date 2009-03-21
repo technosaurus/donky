@@ -57,6 +57,12 @@ date_la_OBJECTS = $(am_date_la_OBJECTS)
 date_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(date_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+sysinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_sysinfo_la_OBJECTS = sysinfo.lo
+sysinfo_la_OBJECTS = $(am_sysinfo_la_OBJECTS)
+sysinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(sysinfo_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -69,8 +75,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(date_la_SOURCES)
-DIST_SOURCES = $(date_la_SOURCES)
+SOURCES = $(date_la_SOURCES) $(sysinfo_la_SOURCES)
+DIST_SOURCES = $(date_la_SOURCES) $(sysinfo_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -189,11 +195,15 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 moduledir = $(libdir)/donky
 date_la_LDFLAGS = -module -avoid-version
+sysinfo_la_LDFLAGS = -module -avoid-version
 module_LTLIBRARIES = \
-	date.la
+	date.la \
+	sysinfo.la
 
 date_la_SOURCES = date.c develop.h
+sysinfo_la_SOURCES = sysinfo.c develop.h
 date_la_LIBADD = $(DEPS_LIBS)
+sysinfo_la_LIBADD = $(DEPS_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -256,6 +266,8 @@ clean-moduleLTLIBRARIES:
 	done
 date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES) 
 	$(date_la_LINK) -rpath $(moduledir) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
+sysinfo.la: $(sysinfo_la_OBJECTS) $(sysinfo_la_DEPENDENCIES) 
+	$(sysinfo_la_LINK) -rpath $(moduledir) $(sysinfo_la_OBJECTS) $(sysinfo_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -264,6 +276,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sysinfo.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

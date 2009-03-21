@@ -51,6 +51,7 @@ struct text_section {
 void clear_text(void);
 void text_section_split(char *text);
 void text_section_add(char *value, int len, int line, enum text_section_type type);
+struct text_section *text_section_var_find(char *value);
 void parse_text(void);
 
 /**
@@ -222,6 +223,27 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                         ts_end = n;
                 }
         }
+}
+
+/**
+ * @brief Find a text section of TEXT_VARIABLE type by value.
+ *
+ * @param value Value string
+ *
+ * @return Text section node.
+ */
+struct text_section *text_section_var_find(char *value)
+{
+        struct text_section *cur = ts_start;
+
+        while (cur != NULL) {
+                if (cur->type == TEXT_VARIABLE && !strcmp(cur->value, value))
+                    return cur;
+                
+                cur = cur->next;
+        }
+        
+        return NULL;
 }
 
 /**

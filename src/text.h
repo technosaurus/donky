@@ -28,4 +28,6 @@ enum text_section_type {
 void parse_text(void);
 void clear_text(void);
 
+struct text_section *text_section_var_find(char *value);
+
 #endif /* TEXT_H */

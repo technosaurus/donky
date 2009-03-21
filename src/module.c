@@ -30,6 +30,7 @@ struct module *module_find(char *name);
 int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type);
 struct module_var *module_var_find(char *name);
 int module_load(char *path);
+void module_unload(char *name);
 void *module_get_sym(void *handle, char *name);
 void module_load_all(void);
 void clear_module(void);
@@ -37,6 +38,7 @@ void clear_module(void);
 /* Globals. */
 struct module *m_start = NULL, *m_end = NULL;
 struct module_var *mv_start = NULL, *mv_end = NULL;
+int module_var_used = 0;
 
 /**
  * @brief Add a new link to the "module" linked list.
@@ -105,6 +107,14 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         if (mod == NULL)
                 return 0;
 
+        /* Check that this variable is used in the [text] section.  If it isn't,
+         * we won't even add it to the linked list.  Memorah efficiencah! */
+        if (text_section_var_find(name) == NULL) {
+                printf("Var [%s] was not used.\n", name);
+                return 0;
+        }
+
+        module_var_used = 1; /* Trigger that a module var was used from this module. */
         struct module_var *n = malloc(sizeof(struct module_var));
 
         /* Fill in module_var structure. */
@@ -152,6 +162,8 @@ struct module_var *module_var_find(char *name)
         while (cur != NULL) {
                 if (!strcmp(cur->name, name))
                         return cur;
+
+                cur = cur->next;
         }
 
         return NULL;
@@ -187,9 +199,48 @@ int module_load(char *path)
         }
 
         module_add(module_name, handle, module_destroy);
+        module_var_used = 0;
         module_init();
 
+        /* No module vars were loaded from this module, so lets unload it. */
+        if (!module_var_used) {
+                printf("Nobody's using module [%s], unloading!\n", module_name);
+                module_unload(module_name);
+        }
+        
         return 1;
+}
+
+/**
+ * @brief Unload a module.
+ *
+ * @param name Unique name of the module
+ */
+void module_unload(char *name)
+{
+        struct module *cur = m_start, *prev = NULL;
+        void (*module_destroy)(void);
+
+        while (cur != NULL) {
+                if (!strcmp(cur->name, name)) {
+                        if (prev)
+                                prev->next = cur->next;
+                        if (cur == m_start)
+                                m_start = cur->next;
+                        if (cur == m_end)
+                                m_end = prev;
+
+                        module_destroy = cur->destroy;
+                        module_destroy();
+                        dlclose(cur->handle);
+                        free(cur);
+                        
+                        return;
+                }
+                
+                cur = cur->next;
+                prev = cur;
+        }
 }
 
 /**
