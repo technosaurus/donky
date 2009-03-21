@@ -24,16 +24,25 @@
 #include "render.h"
 #include "config.h"
 
-int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y);
-xcb_font_t get_font(const char *font_name);
+int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y);
+xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font);
-xcb_char2b_t *build_chars(const char *str, uint8_t length);
+xcb_char2b_t *build_chars(char *str, uint8_t length);
 
-int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y)
+/** 
+ * @brief Print a string to donky
+ * 
+ * @param str String to render
+ * @param font Opened font to use
+ * @param x where to render string on X axis
+ * @param y where to render string on Y axis
+ * 
+ * @return Pixel length of printed string
+ */
+int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y)
 {
         xcb_void_cookie_t cookie_gc;
         xcb_void_cookie_t cookie_text;
-        xcb_font_t font;
 
         xcb_char2b_t *chars;
         xcb_query_text_extents_cookie_t cookie_extents;
@@ -45,8 +54,7 @@ int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y
         uint8_t length;
         length = strlen(str);
 
-        font = get_font(font_name);
-        chars = build_chars(str,length);
+        chars = build_chars(str, length);
 
         cookie_extents = xcb_query_text_extents(connection,
                                                 font,
@@ -96,7 +104,14 @@ int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y
 
 }
 
-xcb_font_t get_font(const char *font_name)
+/** 
+ * @brief Open and return a font
+ * 
+ * @param font_name Name of font to open
+ * 
+ * @return Opened font
+ */
+xcb_font_t get_font(char *font_name)
 {
         xcb_font_t font;
         xcb_void_cookie_t cookie_font;
@@ -117,12 +132,17 @@ xcb_font_t get_font(const char *font_name)
         return font;
 }
 
+/** 
+ * @brief Create a font graphic context
+ * 
+ * @param font Font to use in creation
+ * 
+ * @return Font graphic context
+ */
 xcb_gc_t get_font_gc(xcb_font_t font)
 {
         xcb_gcontext_t gc;
         xcb_void_cookie_t cookie_gc;
-        
-        xcb_void_cookie_t cookie_font;
 
         uint32_t mask;
         uint32_t value_list[3];
@@ -145,18 +165,39 @@ xcb_gc_t get_font_gc(xcb_font_t font)
                 exit(EXIT_FAILURE);
         }
 
+        //close_font(font);
+
+        return gc;
+}
+
+/** 
+ * @brief Closes an open font
+ * 
+ * @param font Font to close
+ */
+void close_font(xcb_font_t font)
+{
+        xcb_void_cookie_t cookie_font;
+
         cookie_font = xcb_close_font_checked(connection, font);
         error = xcb_request_check(connection, cookie_font);
+
         if (error) {
                 printf("get_font: Can't close font. Error: %d\n", error->error_code);
                 xcb_disconnect(connection);
                 exit(EXIT_FAILURE);
         }
-
-        return gc;
 }
 
-xcb_char2b_t *build_chars(const char *str, uint8_t length)
+/** 
+ * @brief Uh... what lobo said...
+ * 
+ * @param str String to convert
+ * @param length Length of string
+ * 
+ * @return Insanity
+ */
+xcb_char2b_t *build_chars(char *str, uint8_t length)
 {
         xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
         int i;
@@ -168,5 +209,4 @@ xcb_char2b_t *build_chars(const char *str, uint8_t length)
 
         return ret;
 }
-
 

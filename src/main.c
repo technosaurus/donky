@@ -124,7 +124,7 @@ void initialize_stuff(void)
                 printf("OUTPUT: [%s] time: %f\n", output, total);
         }
 
-        x_event_loop();
+        donky_loop();
 }
 
 /**

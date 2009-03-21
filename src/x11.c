@@ -19,11 +19,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <xcb/xcb.h>
+#include <unistd.h>
 
 #include "x11.h"
 #include "config.h"
 #include "render.h"
 #include "text.h"
+#include "module.h"
+#include "util.h"
 
 /** 
  * @brief Connects to the X server and stores all relevant information.
@@ -60,6 +63,9 @@ void init_x_connection(void)
         }
 }
 
+/** 
+ * @brief Draw donky's window
+ */
 void draw_window(void)
 {
         xcb_void_cookie_t window_cookie;
@@ -136,62 +142,88 @@ void draw_window(void)
 
 
 /** 
- * @brief Keep the window open til we hit Escape.
- *        Just for testing purposes.
+ * @brief Main donky loop.
  */
-void x_event_loop(void)
+void donky_loop(void)
 {
-        char *font = "fixed";
+        char *font_name = "fixed";
+        xcb_font_t font;
+
         int offset;
 
         char *str;
         char *(*sym)(char *);
+        struct module_var *mod;
 
         struct text_section *cur;
         struct text_section *next;
-
+        
         cur = ts_start;
-
         cur->xpos = 3;
         cur->ypos = 10;
 
         while (1) {
-                event = xcb_poll_for_event(connection);
-                if (event) {
-                switch (event->response_type & ~0x80) {
-                        case XCB_EXPOSE:
-                                while (cur) {
-                                        next = cur->next;
-                                        printf("xpos = %d\n", cur->xpos);
-
-                                        switch (cur->type) {
-                                                case TEXT_STATIC:
-                                                        printf("got into TEXT_STATIC\n");
-                                                        offset = render_text(cur->value, font, cur->xpos, cur->ypos);
-                                                        printf("made it past offset = %d\n", offset);
-                                                        if (next)
-                                                                next->xpos = cur->xpos + offset;
-                                                        printf("set next x offset\n");
-                                                        xcb_flush(connection);
-                                                        break;
-                                                default:
-                                                        break;
-                                        }
-
-                                        cur = cur->next;
-                                        printf("set cur->next\n");
-                                }
-                                xcb_flush(connection); 
-                                printf("flushed\n");
-                                sleep(1);
-                                break; 
-                        default:
-                                break;
-                }
+                font = get_font(font_name);
                 
-                free(event);
+                while (cur) {
+                        next = cur->next;
+                        printf("xpos = %d\n", cur->xpos);
+
+                        switch (cur->type) {
+                                case TEXT_FONT:
+                                        close_font(font);
+                                        font = get_font(cur->value);
+                                        break;
+                                case TEXT_COLOR:
+                                        break;
+                                case TEXT_STATIC:
+                                        printf("got into TEXT_STATIC\n");
+                                        offset = render_text(cur->value, font, cur->xpos, cur->ypos);
+                                        printf("made it past offset = %d\n", offset);
+                                        break;
+                                case TEXT_VARIABLE:
+                                        mod = module_var_find(cur->value);
+                                        if (mod != NULL) {
+                                                if ((get_time() - mod->last_update) < mod->timeout) {
+                                                        printf("WAITING...\n");
+                                                        /* save old x offset */
+                                                        offset = cur->xpos;
+                                                        break;
+                                                }
+
+                                                mod->last_update = get_time();
+                                                printf("updating... %s\n", mod->name);
+                                                sym = mod->sym;
+                                                switch (mod->type) {
+                                                        case VARIABLE_STR:
+                                                                str = sym(cur->args);
+                                                                offset = render_text(str, font, cur->xpos, cur->ypos);
+                                                }
+                                        }
+                                        break;
+                                default:
+                                        printf("incorrect text_section type\n");
+                                        break;
+                        }
+
+                        /* if we have a following node, we need 
+                           to know where to start drawing it */
+                        if (next) {
+                                next->xpos = cur->xpos + offset;
+                                next->ypos = cur->ypos;
+                        }
+
+                        cur = cur->next;
+                        printf("set cur->next\n");
                 }
+
+                /* close font & flush everything to X server */
+                close_font(font);
+                xcb_flush(connection);
+
+                cur = ts_start;
+                printf("sleeping...\n");
+                sleep(1);
         }
 }
-
 
