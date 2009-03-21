@@ -37,7 +37,10 @@ struct text_section {
         enum text_section_type type;    /* See the definition of this enum in text.h */
 
         struct text_section *next;      /* Next node in this linked list. */
-} *ts_start, *ts_end;
+};
+
+struct text_section *ts_start;
+struct text_section *ts_end;
 
 void parse_text(void);
 void clear_text(void);

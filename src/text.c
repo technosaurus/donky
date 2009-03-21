@@ -41,8 +41,8 @@ struct text_section *text_section_var_find(char *value);
 void parse_text(void);
 
 /* Globals. */
-ts_start = NULL;
-ts_end = NULL;
+struct text_section *ts_start = NULL;
+struct text_section *ts_end = NULL;
 
 /**
  * @brief Start up the output text parsing.
