@@ -20,13 +20,14 @@
 #include <stdio.h>
 #include <xcb/xcb.h>
 
-#include "X11.h"
+#include "x11.h"
 #include "render.h"
 #include "config.h"
 
 int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y);
-static xcb_font_t get_font(const char *font_name);
-static xcb_gc_t get_font_gc(xcb_font_t font);
+xcb_font_t get_font(const char *font_name);
+xcb_gc_t get_font_gc(xcb_font_t font);
+xcb_char2b_t *build_chars(const char *str, uint8_t length);
 
 int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y)
 {
@@ -34,9 +35,10 @@ int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y
         xcb_void_cookie_t cookie_text;
         xcb_font_t font;
 
+        xcb_char2b_t *chars;
         xcb_query_text_extents_cookie_t cookie_extents;
         xcb_query_text_extents_reply_t *extents_reply;
-        int32_t extents_length = 1;
+        int32_t extents_length;
 
         xcb_gcontext_t gc;
         
@@ -44,16 +46,16 @@ int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y
         length = strlen(str);
 
         font = get_font(font_name);
+        chars = build_chars(str,length);
 
-/*
         cookie_extents = xcb_query_text_extents(connection,
                                                 font,
                                                 strlen(str),
-                                                str);
+                                                chars);
 
         extents_reply = xcb_query_text_extents_reply(connection,
                                                      cookie_extents,
-                                                     error);
+                                                     &error);
 
         if (error) {
                 printf("render_text: Can't get extents reply. Error: %d\n", error->error_code);
@@ -62,7 +64,8 @@ int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y
         }
 
         extents_length = extents_reply->overall_width;
-*/
+        printf("extents length: %d\n", extents_length);
+        free(chars);
 
         gc = get_font_gc(font);
 
@@ -93,7 +96,7 @@ int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y
 
 }
 
-static xcb_font_t get_font(const char *font_name)
+xcb_font_t get_font(const char *font_name)
 {
         xcb_font_t font;
         xcb_void_cookie_t cookie_font;
@@ -114,7 +117,7 @@ static xcb_font_t get_font(const char *font_name)
         return font;
 }
 
-static xcb_gc_t get_font_gc(xcb_font_t font)
+xcb_gc_t get_font_gc(xcb_font_t font)
 {
         xcb_gcontext_t gc;
         xcb_void_cookie_t cookie_gc;
@@ -152,4 +155,18 @@ static xcb_gc_t get_font_gc(xcb_font_t font)
 
         return gc;
 }
+
+xcb_char2b_t *build_chars(const char *str, uint8_t length)
+{
+        xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
+        int i;
+        
+        for (i = 0; i < length; i++) {
+                ret[0].byte1 = 0;
+                ret[0].byte2 = str[i];
+        }
+
+        return ret;
+}
+
 

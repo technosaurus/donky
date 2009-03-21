@@ -19,8 +19,8 @@
 #define RENDER_H
 
 int32_t render_text(const char *str, const char *font_name, int16_t x, int16_t y);
-static xcb_font_t get_font(const char *font_name);
-static xcb_gc_t get_font_gc(xcb_font_t font);
+xcb_font_t get_font(const char *font_name);
+xcb_gc_t get_font_gc(xcb_font_t font);
 
 #endif /* RENDER_H */
 
