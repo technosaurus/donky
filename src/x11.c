@@ -20,15 +20,16 @@
 #include <stdio.h>
 #include <xcb/xcb.h>
 
-#include "X11.h"
+#include "x11.h"
 #include "config.h"
 #include "render.h"
+#include "text.h"
 
 /** 
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
  */
-void init_X_connection(void)
+void init_x_connection(void)
 {
         /* connect to X server */
         connection = xcb_connect(NULL, &screen_number);
@@ -138,23 +139,54 @@ void draw_window(void)
  * @brief Keep the window open til we hit Escape.
  *        Just for testing purposes.
  */
-void X_event_loop(void)
+void x_event_loop(void)
 {
+        char *font = "fixed";
+        int offset;
+
+        char *str;
+        char *(*sym)(char *);
+
+        struct text_section *cur;
+        struct text_section *next;
+
+        cur = ts_start;
+
+        cur->xpos = 3;
+        cur->ypos = 10;
+
         while (1) {
                 event = xcb_poll_for_event(connection);
                 if (event) {
                 switch (event->response_type & ~0x80) {
-                        case XCB_EXPOSE: {
-                                
-                                /* excitement happens here */
-                                render_text("We're effin' gettin there.",
-                                            "fixed",
-                                            3, 10);
-                               
+                        case XCB_EXPOSE:
+                                while (cur) {
+                                        next = cur->next;
+                                        printf("xpos = %d\n", cur->xpos);
+
+                                        switch (cur->type) {
+                                                case TEXT_STATIC:
+                                                        printf("got into TEXT_STATIC\n");
+                                                        offset = render_text(cur->value, font, cur->xpos, cur->ypos);
+                                                        printf("made it past offset = %d\n", offset);
+                                                        if (next)
+                                                                next->xpos = cur->xpos + offset;
+                                                        printf("set next x offset\n");
+                                                        xcb_flush(connection);
+                                                        break;
+                                                default:
+                                                        break;
+                                        }
+
+                                        cur = cur->next;
+                                        printf("set cur->next\n");
+                                }
                                 xcb_flush(connection); 
+                                printf("flushed\n");
                                 sleep(1);
+                                break; 
+                        default:
                                 break;
-                        }
                 }
                 
                 free(event);

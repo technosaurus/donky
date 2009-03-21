@@ -33,19 +33,7 @@
         ((c) == '_') \
 )
 
-struct text_section {
-        char *value;                    /* Value of this text section. */
-        char *args;                     /* Arguments given to a variable. ${...} */
-        
-        unsigned int line;              /* Line number, starts at 0. */
-        unsigned int pixel_width;       /* Pixel width of this section. */
-        unsigned int xpos;              /* Current x position. */
-        unsigned int ypos;              /* Current y position. */
-
-        enum text_section_type type;    /* See the definition of this enum in text.h */
-
-        struct text_section *next;      /* Next node in this linked list. */
-} *ts_start = NULL, *ts_end = NULL;
+struct text_section *ts_start = NULL, *ts_end = NULL;
 
 /* Function prototypes. */
 void clear_text(void);

@@ -25,7 +25,7 @@
 #include "text.h"
 #include "module.h"
 #include "util.h"
-#include "X11.h"
+#include "x11.h"
 #include "render.h"
 
 #define HELP \
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
-        init_X_connection();
+        init_x_connection();
         parse_cfg();
         parse_text();
         module_load_all();
@@ -124,7 +124,7 @@ void initialize_stuff(void)
                 printf("OUTPUT: [%s] time: %f\n", output, total);
         }
 
-        X_event_loop();
+        x_event_loop();
 }
 
 /**
@@ -135,5 +135,5 @@ void clean_up_everything(void)
         clear_cfg();
         clear_text();
         clear_module();
-        //clear_X();
+        //clear_x();
 }
