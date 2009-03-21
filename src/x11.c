@@ -70,48 +70,41 @@ void init_x_connection(void)
  */
 void draw_window(void)
 {
+        uint32_t window_bgcolor, window_fgcolor;
+        int window_width, window_height;
+        
+        int x_gap, y_gap;
+        int x_offset, y_offset;
+
+        char *alignment = get_char_key("X11", "alignment");;
+
         xcb_void_cookie_t window_cookie;
         uint32_t mask;
         uint32_t values[3];
 
         xcb_void_cookie_t map_cookie;
         
-        char *X11mod = "X11";
-
-        unsigned int window_width, window_height;
-        int x_gap, y_gap;
-        int x_offset, y_offset;
-
-        char *alignment = get_char_key(X11mod, "alignment");;
-        int free_me;
-
-        uint32_t window_bgcolor, window_fgcolor;
+        /* TODO - learn how to do colors from cfg */
+        window_bgcolor = screen->black_pixel;
+        window_fgcolor = screen->white_pixel;
 
         /* get window dimensions from cfg or set to defaults */
-        window_width = get_int_key(X11mod, "window_width");
-        window_height = get_int_key(X11mod, "window_height");
+        window_width = get_int_key("X11", "window_width");
+        window_height = get_int_key("X11", "window_height");
 
-        if (window_width <= 0) {
+        if (window_width <= 0)
                 window_width = DEFAULT_WINDOW_WIDTH;
-                printf("Using default window width.\n");
-        }
-        if (window_height <= 0) {
+        if (window_height <= 0)
                 window_height = DEFAULT_WINDOW_HEIGHT;
-                printf("Using default window height.\n");
-        }
 
         /* get gaps from cfg or set to defaults */
-        x_gap = get_int_key(X11mod, "x_gap");
-        y_gap = get_int_key(X11mod, "y_gap");
+        x_gap = get_int_key("X11", "x_gap");
+        y_gap = get_int_key("X11", "y_gap");
 
-        if (x_gap < 0) {
+        if (x_gap < 0)
                 x_gap = DEFAULT_X_GAP;
-                printf("Using default x offset.\n");
-        }
-        if (y_gap < 0) {
+        if (y_gap < 0)
                 y_gap = DEFAULT_Y_GAP;
-                printf("Using default y offset.\n");
-        }
 
         /* calculate alignment */
         if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
@@ -138,10 +131,6 @@ void draw_window(void)
                 x_offset = 0 + x_gap;
                 y_offset = screen->height_in_pixels - window_height - y_gap;
         }
-
-        /* TODO - learn how to do colors from cfg */
-        window_bgcolor = screen->black_pixel;
-        window_fgcolor = screen->white_pixel;
 
         window = xcb_generate_id(connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
@@ -214,16 +203,14 @@ void donky_loop(void)
                                 case TEXT_COLOR:
                                         break;
                                 case TEXT_STATIC:
-                                        printf("got into TEXT_STATIC\n");
                                         offset = render_text(cur->value, font, cur->xpos, cur->ypos);
                                         cur->pixel_width = offset;
-                                        printf("made it past offset = %d\n", offset);
                                         break;
                                 case TEXT_VARIABLE:
                                         mod = module_var_find(cur->value);
                                         if (mod != NULL) {
                                                 if ((get_time() - mod->last_update) < mod->timeout) {
-                                                        printf("WAITING...\n");
+                                                        printf("WAITING... %s\n", mod->name);
                                                         /* save old x offset */
                                                         offset = cur->pixel_width;
                                                         break;
@@ -253,7 +240,6 @@ void donky_loop(void)
                         }
 
                         cur = cur->next;
-                        printf("set cur->next\n");
                 }
 
                 /* close font & flush everything to X server */
@@ -261,7 +247,6 @@ void donky_loop(void)
                 xcb_flush(connection);
 
                 cur = ts_start;
-                printf("sleeping...\n");
                 offset = 0;
                 sleep(1);
         }
