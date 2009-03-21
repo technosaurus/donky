@@ -24,6 +24,7 @@
 
 #include "module.h"
 #include "text.h"
+#include "config.h"
 
 /* Function prototypes. */
 int module_add(char *name, void *handle, void *destroy);
