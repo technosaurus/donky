@@ -147,11 +147,17 @@ xcb_gc_t get_font_gc(xcb_font_t font)
         uint32_t mask;
         uint32_t value_list[3];
 
+        uint32_t font_bgcolor;
+        uint32_t font_fgcolor;
+
+        font_bgcolor = screen->black_pixel;
+        font_fgcolor = screen->white_pixel;
+
         gc = xcb_generate_id(connection);
         
         mask = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
-        value_list[0] = fg_color;
-        value_list[1] = bg_color;
+        value_list[0] = font_fgcolor;
+        value_list[1] = font_bgcolor;
         value_list[2] = font;
 
         cookie_gc = xcb_create_gc_checked(connection,

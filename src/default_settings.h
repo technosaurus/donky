@@ -15,17 +15,15 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef X11_H
-#define X11_H
+#define DEFAULT_WINDOW_WIDTH 1024
+#define DEFAULT_WINDOW_HEIGHT 32
+#define DEFAULT_WINDOW_BGCOLOR "black"
+#define DEFAULT_WINDOW_FGCOLOR "white"
 
-xcb_connection_t *connection;
-xcb_screen_iterator_t screen_iter;
-const xcb_setup_t *setup;
-xcb_screen_t *screen;
-xcb_generic_error_t *error;
-int screen_number;
-xcb_window_t window;
-xcb_generic_event_t *event;
+#define DEFAULT_FONT "fixed"
+#define DEFAULT_FONT_BGCOLOR "black"
+#define DEFAULT_FONT_FGCOLOR "white"
 
-#endif /* X11_H */
+#define DEFAULT_X_GAP 0
+#define DEFAULT_Y_GAP 0
 
