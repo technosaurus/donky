@@ -68,8 +68,8 @@ char *ret_usedhigh = NULL;
  */
 void module_init(void)
 {
-        /*module_var_add(module_name, "uptime", "get_uptime", 1.0, VARIABLE_STR);
-        module_var_add(module_name, "loadavg", "get_loadavg", 30.0, VARIABLE_STR);*/
+        module_var_add(module_name, "uptime", "get_uptime", 1.0, VARIABLE_STR);
+        module_var_add(module_name, "loadavg", "get_loadavg", 30.0, VARIABLE_STR);
         module_var_add(module_name, "totalram", "get_totalram", 0.0, VARIABLE_STR);
         module_var_add(module_name, "freeram", "get_freeram", 15.0, VARIABLE_STR);
         module_var_add(module_name, "usedram", "get_usedram", 15.0, VARIABLE_STR);
@@ -158,19 +158,52 @@ char *bytes_to_bigger(unsigned long bytes)
 
 char *get_uptime(char *args)
 {
+        freeif(ret_uptime);
+        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
                 ret_uptime = strdup("n/a");
                 return ret_uptime;
         }
 
-        return NULL;
+        unsigned long cur_up = info.uptime;
+        unsigned long days = cur_up / 86400;
+        cur_up -= days * 86400;
+        int hours = cur_up / 3600;
+        cur_up -= hours * 3600;
+        int mins = cur_up / 60;
+        cur_up -= mins * 60;
+        int secs = cur_up;
+
+        ret_uptime = malloc(32 * sizeof(char));
+        snprintf(ret_uptime, 32, "%ld day%s, %02d:%02d:%02d",
+                 days, (days != 1) ? "s" : "",
+                 hours, mins, secs);
+
+        return ret_uptime;
 }
 
 
 char *get_loadavg(char *args)
 {
-        return NULL;
+        freeif(ret_loadavg);
+
+        struct sysinfo info;
+        if (sysinfo(&info) == -1) {
+                ret_loadavg = strdup("n/a");
+                return ret_loadavg;
+        }
+
+        float load0, load1, load2;
+        load0 = info.loads[0] / 65536.0;
+        load1 = info.loads[1] / 65536.0;
+        load2 = info.loads[2] / 65536.0;
+
+        ret_loadavg = malloc(32 * sizeof(char));
+        snprintf(ret_loadavg, 32, "%2.2f, %2.2f, %2.2f",
+                 load0, load1, load2);
+
+        return ret_loadavg;
 }
 
 char *get_totalram(char *args)
@@ -211,7 +244,8 @@ char *get_usedram(char *args)
                 return ret_usedram;
         }
         
-        ret_usedram = bytes_to_bigger((info.totalram - info.freeram) * info.mem_unit);
+        ret_usedram = bytes_to_bigger((info.totalram - info.freeram) *
+                                       info.mem_unit);
         return ret_usedram;
 }
 
