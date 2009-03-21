@@ -182,7 +182,6 @@ void donky_loop(void)
         struct module_var *mod;
 
         struct text_section *cur;
-        struct text_section *next;
         
         cur = ts_start;
         cur->xpos = 3;
@@ -192,7 +191,7 @@ void donky_loop(void)
                 font = get_font(font_name);
                 
                 while (cur) {
-                        next = cur->next;
+                        offset = 0;
                         printf("xpos = %d\n", cur->xpos);
 
                         switch (cur->type) {
@@ -234,9 +233,9 @@ void donky_loop(void)
 
                         /* if we have a following node, we need 
                            to know where to start drawing it */
-                        if (next) {
-                                next->xpos = cur->xpos + offset;
-                                next->ypos = cur->ypos;
+                        if (cur->next) {
+                                cur->next->xpos = cur->xpos + offset;
+                                cur->next->ypos = cur->ypos;
                         }
 
                         cur = cur->next;
@@ -247,7 +246,6 @@ void donky_loop(void)
                 xcb_flush(connection);
 
                 cur = ts_start;
-                offset = 0;
                 sleep(1);
         }
 }
