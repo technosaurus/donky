@@ -244,13 +244,18 @@ void donky_loop(void)
                         case TEXT_STATIC:
                                 extents = get_extents(cur->value, font);
                                 offset = extents->overall_width;
-                                //if (prev->xpos && (cur->xpos != (prev->xpos + offset))) {
+                                /* only redraw static text if it has been
+                                 * spatially displaced since the last update */
+                                //if (cur->prev->xpos && (cur->xpos != (cur->prev->xpos + cur->prev->pixel_width))) {
                                         render_text(cur->value,
                                                     font,
                                                     color,
                                                     cur->xpos,
                                                     cur->ypos);
-                                        cur->pixel_width = offset;
+                                        /* static text section dimensions do not
+                                         * change, so we set once and never again */
+                                        if (!cur->pixel_width)
+                                                cur->pixel_width = offset;
                                 //}
                                 break;
                         case TEXT_VARIABLE:
@@ -266,7 +271,7 @@ void donky_loop(void)
                                         printf("WAITING... %s\n", mod->name);
                                         /* save old x offset */
                                         offset = cur->pixel_width;
-                                        mod->last_update = 1.0;
+                                        //mod->last_update = 1.0;
                                         break;
                                 }
 
@@ -311,6 +316,7 @@ void donky_loop(void)
                 close_font(font);
                 xcb_flush(connection);
 
+                /* reset cur and take a nap */
                 cur = ts_start;
                 sleep(1);
         }

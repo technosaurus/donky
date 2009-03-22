@@ -21,7 +21,7 @@
 #include "develop.h"
 #include "../util.h"
 
-/* module name */
+/* Module name */
 char module_name[] = "cpu_info";
 
 /* Required function prototypes. */
@@ -38,15 +38,15 @@ char *ret_cpufreq = NULL;
 char *ret_cpuname = NULL;
 char *ret_cpucache = NULL;
 
-/* is run on module startup */
+/* These run on module startup */
 int module_init(void)
 {
-        module_var_add(module_name, "cpufreq", "get_cpufreq", 2.0, VARIABLE_STR);
+        module_var_add(module_name, "cpufreq", "get_cpufreq", 1.0, VARIABLE_STR);
         module_var_add(module_name, "cpuname", "get_cpuname", 0.0, VARIABLE_STR);
         module_var_add(module_name, "cpucache", "get_cpucache", 0.0, VARIABLE_STR);
 }
 
-/* is run on module unload */
+/* These run on module unload */
 void module_destroy(void)
 {
         freeif(ret_cpufreq);
@@ -58,10 +58,10 @@ char *get_cpufreq(char *args)
 {
         FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
         
-        size_t n = (64 * sizeof(char));
-        char *str = malloc(n);
+        int n = 16;
+        char *str = malloc(n * sizeof(char));
 
-        char *core;
+        char *core = NULL;
         int found = 0;
 
         freeif(ret_cpufreq);
@@ -76,8 +76,17 @@ char *get_cpufreq(char *args)
                 if (strncmp((str + 12), core, 1) == 0)
                         found = 1;
                 if (found && (strncmp(str, "cpu MHz", 7) == 0)) {
-                        ret_cpufreq = d_strncpy((str + 11), 8);
+                        /* Copy up until the decimal point,
+                         * possibly including it. */
+                        ret_cpufreq = d_strncpy((str + 11), 4);
+
+                        /* Remove the new line, else it prints junk */
                         chomp(ret_cpufreq);
+
+                        /* Remove decimal point if it's there. */
+                        if (ret_cpufreq[3] == '.')
+                                ret_cpufreq[3] = '\0';
+                        
                         break;
                 }
         }
@@ -95,10 +104,10 @@ char *get_cpuname(char *args)
 {
         FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
         
-        size_t n = (64 * sizeof(char));
-        char *str = malloc(n);
+        int n = 64;
+        char *str = malloc(n * sizeof(char));
 
-        char *core;
+        char *core = NULL;
         int found = 0;
 
         freeif(ret_cpuname);
@@ -132,10 +141,10 @@ char *get_cpucache(char *args)
 {
         FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
         
-        size_t n = (64 * sizeof(char));
-        char *str = malloc(n);
+        int n = 16;
+        char *str = malloc(n * sizeof(char));
 
-        char *core;
+        char *core = NULL;
         int found = 0;
 
         freeif(ret_cpucache);
@@ -164,3 +173,4 @@ char *get_cpucache(char *args)
 
         return ret_cpucache;
 }
+
