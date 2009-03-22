@@ -30,6 +30,8 @@ char *chop(char *);
 char *chomp(char *);
 char *substr(char *, int, int);
 double get_time(void);
+void freeif(void *ptr);
+char *d_strncpy(const char *str, int n);
 
 /**
  * @brief Trim leading and trailing whitespace from a string.
@@ -182,3 +184,20 @@ void freeif(void *ptr)
         if (ptr)
                 free(ptr);
 }
+
+/** 
+ * @brief A quicker alternative to strndup
+ * 
+ * @param str String to duplicate
+ * @param n Number of chars to duplicate
+ * 
+ * @return Duplicated string
+ */
+char *d_strncpy(const char *str, int n)
+{
+        char *newstr = malloc((n + 1) * sizeof(char));
+        strncpy(newstr, str, (n * sizeof(char)));
+        newstr[n] = '\0';
+        return newstr;
+}
+

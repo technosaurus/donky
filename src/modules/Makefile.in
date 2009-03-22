@@ -51,6 +51,12 @@ am__installdirs = "$(DESTDIR)$(moduledir)"
 moduleLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(module_LTLIBRARIES)
 am__DEPENDENCIES_1 =
+cpuinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_cpuinfo_la_OBJECTS = cpuinfo.lo
+cpuinfo_la_OBJECTS = $(am_cpuinfo_la_OBJECTS)
+cpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(cpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
 date_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_date_la_OBJECTS = date.lo
 date_la_OBJECTS = $(am_date_la_OBJECTS)
@@ -75,8 +81,10 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(date_la_SOURCES) $(sysinfo_la_SOURCES)
-DIST_SOURCES = $(date_la_SOURCES) $(sysinfo_la_SOURCES)
+SOURCES = $(cpuinfo_la_SOURCES) $(date_la_SOURCES) \
+	$(sysinfo_la_SOURCES)
+DIST_SOURCES = $(cpuinfo_la_SOURCES) $(date_la_SOURCES) \
+	$(sysinfo_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -196,14 +204,18 @@ top_srcdir = @top_srcdir@
 moduledir = $(libdir)/donky
 date_la_LDFLAGS = -module -avoid-version
 sysinfo_la_LDFLAGS = -module -avoid-version
+cpuinfo_la_LDFLAGS = -module -avoid-version
 module_LTLIBRARIES = \
 	date.la \
-	sysinfo.la
+	sysinfo.la \
+	cpuinfo.la
 
 date_la_SOURCES = date.c develop.h
 sysinfo_la_SOURCES = sysinfo.c develop.h
+cpuinfo_la_SOURCES = cpuinfo.c develop.h
 date_la_LIBADD = $(DEPS_LIBS)
 sysinfo_la_LIBADD = $(DEPS_LIBS)
+cpuinfo_la_LIBADD = $(DEPS_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -264,6 +276,8 @@ clean-moduleLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+cpuinfo.la: $(cpuinfo_la_OBJECTS) $(cpuinfo_la_DEPENDENCIES) 
+	$(cpuinfo_la_LINK) -rpath $(moduledir) $(cpuinfo_la_OBJECTS) $(cpuinfo_la_LIBADD) $(LIBS)
 date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES) 
 	$(date_la_LINK) -rpath $(moduledir) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
 sysinfo.la: $(sysinfo_la_OBJECTS) $(sysinfo_la_DEPENDENCIES) 
@@ -275,6 +289,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpuinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sysinfo.Plo@am__quote@
 
