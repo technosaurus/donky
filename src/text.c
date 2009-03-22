@@ -207,9 +207,9 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
 
                 /* Set the type.  We do a little interception here to find
                  * some built-in variables. */
-                if (!strcmp(n->value, "font"))
+                if (!strcasecmp(n->value, "font"))
                         n->type = TEXT_FONT;
-                else if (!strcmp(n->value, "color"))
+                else if (!strcasecmp(n->value, "color"))
                         n->type = TEXT_COLOR;
                 else
                         n->type = type;
@@ -238,7 +238,7 @@ struct text_section *text_section_var_find(char *value)
         struct text_section *cur = ts_start;
 
         while (cur != NULL) {
-                if (cur->type == TEXT_VARIABLE && !strcmp(cur->value, value))
+                if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value))
                     return cur;
                 
                 cur = cur->next;
@@ -258,7 +258,7 @@ void text_section_var_modvar(char *value, struct module_var *mvar)
         struct text_section *cur = ts_start;
 
         while (cur != NULL) {
-                if (cur->type == TEXT_VARIABLE && !strcmp(cur->value, value))
+                if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value))
                     cur->mod_var = mvar;
                 
                 cur = cur->next;

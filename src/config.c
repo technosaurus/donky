@@ -98,7 +98,7 @@ struct cfg *find_mod(char *mod)
         struct cfg *cur = first_cfg;
 
         while (cur) {
-                if (!strcmp(cur->mod, mod))
+                if (!strcasecmp(cur->mod, mod))
                         return cur;
 
                 cur = cur->next;
@@ -157,7 +157,7 @@ char *get_char_key(char *mod, char *key)
         struct setting *cur_set = cur->first_setting;
 
         while (cur_set) {
-                if(!strcmp(cur_set->key, key))
+                if(!strcasecmp(cur_set->key, key))
                         return strdup(cur_set->value);
 
                 cur_set = cur_set->next;
@@ -185,7 +185,7 @@ int get_int_key(char *mod, char *key)
         struct setting *cur_set = cur->first_setting;
 
         while (cur_set) {
-                if(!strcmp(cur_set->key, key))
+                if(!strcasecmp(cur_set->key, key))
                         return strtol(cur_set->value, NULL, 0);
 
                 cur_set = cur_set->next;
@@ -213,7 +213,7 @@ double get_double_key(char *mod, char *key)
         struct setting *cur_set = cur->first_setting;
 
         while (cur_set) {
-                if(!strcmp(cur_set->key, key))
+                if(!strcasecmp(cur_set->key, key))
                         return atof(cur_set->value);
 
                 cur_set = cur_set->next;
@@ -243,7 +243,7 @@ int get_bool_key(char *mod, char *key)
         struct setting *cur_set = cur->first_setting;
 
         while (cur_set) {
-                if(!strcmp(cur_set->key, key)) {
+                if(!strcasecmp(cur_set->key, key)) {
                         if (IS_TRUE(cur_set->value[0]))
                                 b = 1;
                         else if (IS_FALSE(cur_set->value[0]))
@@ -295,13 +295,13 @@ void parse_cfg(void)
 
                 /* scan for [mods] - don't add_mod if [text] */
                 if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
-                        if (strcmp(mod, "text") != 0)
+                        if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
                         continue;
                 }
 
                 /* handle [text] - store all lines 'til next [mod] into config_text */
-                if (!strcmp(mod, "text")) {
+                if (!strcasecmp(mod, "text")) {
                         if (!config_text)
                                 config_text = strndup(str, (strlen(str) * sizeof(char)));
                         else {

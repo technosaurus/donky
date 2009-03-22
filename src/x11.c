@@ -106,6 +106,9 @@ void draw_window(void)
         window_bgcolor = get_color(window_bgcolor_name);
         window_fgcolor = get_color(window_fgcolor_name);
 
+        freeif(window_bgcolor_name);
+        freeif(window_fgcolor_name);
+
         /* get window dimensions from cfg or set to defaults */
         window_width = get_int_key("X11", "window_width");
         window_height = get_int_key("X11", "window_height");

@@ -83,7 +83,7 @@ struct module *module_find(char *name)
         struct module *cur = m_start;
 
         while (cur != NULL) {
-                if (!strcmp(cur->name, name))
+                if (!strcasecmp(cur->name, name))
                         return cur;
 
                 cur = cur->next;
@@ -165,7 +165,7 @@ struct module_var *module_var_find(char *name)
         struct module_var *cur = mv_start;
 
         while (cur != NULL) {
-                if (!strcmp(cur->name, name))
+                if (!strcasecmp(cur->name, name))
                         return cur;
 
                 cur = cur->next;
@@ -227,7 +227,7 @@ void module_unload(char *name)
         void (*module_destroy)(void);
 
         while (cur != NULL) {
-                if (!strcmp(cur->name, name)) {
+                if (!strcasecmp(cur->name, name)) {
                         if (prev)
                                 prev->next = cur->next;
                         if (cur == m_start)
@@ -272,7 +272,7 @@ void module_load_all(void)
                         continue;
 
                 sptr = strrchr(dir->d_name, '.');
-                if (sptr && !strcmp(sptr, ".so")) {
+                if (sptr && !strcasecmp(sptr, ".so")) {
                         snprintf(full_path,
                                  sizeof(full_path),
                                  "%s/%s",
