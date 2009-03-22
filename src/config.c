@@ -289,8 +289,8 @@ void parse_cfg(void)
         config_text = NULL;
 
         while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
-
-                if (is_comment(str)) /* let comment lines pass */
+                /* Skip comments. */
+                if (is_comment(str))
                         continue;
 
                 /* scan for [mods] - don't add_mod if [text] */
@@ -301,7 +301,7 @@ void parse_cfg(void)
                 }
 
                 /* handle [text] - store all lines 'til next [mod] into config_text */
-                if (!strcasecmp(mod, "text")) {
+                if (mod && !strcasecmp(mod, "text")) {
                         if (!config_text)
                                 config_text = strndup(str, (strlen(str) * sizeof(char)));
                         else {
