@@ -244,6 +244,8 @@ void donky_loop(void)
         /* Setup minimum sleep time. */
         struct timespec tspec;
         double min_sleep = get_double_key("X11", "global_sleep");
+        if (min_sleep < 0)
+                min_sleep = 1.0;
         int min_seconds = floor(min_sleep);
         long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
         tspec.tv_sec = min_seconds;

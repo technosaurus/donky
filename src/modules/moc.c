@@ -56,7 +56,7 @@ char *get_moc(char *args)
         freeif(ret_moc);
         ret_moc = malloc(160 * sizeof(char));
 
-        char *mocp_line = d_strncpy("mocp -Q ", 8);
+        char *mocp_line = d_strcpy("mocp -Q ");
         mocp_line = realloc(mocp_line, (sizeof(char) * (strlen(mocp_line) + strlen(args) + 1)));
         strncat(mocp_line, args, (strlen(args) * sizeof(char)));
 

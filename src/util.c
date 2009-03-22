@@ -33,6 +33,7 @@ char *chomp(char *);
 char *substr(char *, int, int);
 double get_time(void);
 void freeif(void *ptr);
+char *d_strcpy(const char *str);
 char *d_strncpy(const char *str, int n);
 
 /**
@@ -188,6 +189,23 @@ void freeif(void *ptr)
 }
 
 /** 
+ * @brief A quicker alternative to strdup
+ * 
+ * @param str String to duplicate
+ * @param n Number of chars to duplicate
+ * 
+ * @return Duplicated string
+ */
+char *d_strcpy(const char *str)
+{
+        int n = strlen(str);
+        char *newstr = malloc((n + 1) * sizeof(char));
+        strncpy(newstr, str, (n * sizeof(char)));
+        newstr[n] = '\0';
+        return newstr;
+}
+
+/** 
  * @brief A quicker alternative to strndup
  * 
  * @param str String to duplicate
@@ -202,4 +220,3 @@ char *d_strncpy(const char *str, int n)
         newstr[n] = '\0';
         return newstr;
 }
-
