@@ -132,6 +132,8 @@ void draw_window(void)
                 y_offset = screen->height_in_pixels - window_height - y_gap;
         }
 
+        freeif(alignment);
+
         window = xcb_generate_id(connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         values[0] = window_bgcolor;
@@ -173,15 +175,12 @@ void draw_window(void)
 void donky_loop(void)
 {
         xcb_font_t font;
+        char *font_name;
         xcb_query_text_extents_reply_t *extents;
-
-        char *font_name = get_char_key("X11", "default_font");
-        int free_font = 0;
-
-        if (font_name == NULL) {
-                font_name = strndup(DEFAULT_FONT, (sizeof(char) * strlen(DEFAULT_FONT)));
-                free_font = 1;
-        }
+        
+        struct donky_color color;
+        char *color_name_bg;
+        char *color_name_fg;
 
         int offset;
 
@@ -190,8 +189,24 @@ void donky_loop(void)
         struct module_var *mod;
 
         struct text_section *cur;
-        cur = ts_start;
 
+        /* Set up user configured font or default font. */
+        font_name = get_char_key("X11", "default_font");
+
+        if (font_name == NULL)
+                font_name = strndup(DEFAULT_FONT, (sizeof(char) * strlen(DEFAULT_FONT)));
+
+        /* Set up user configured or default font colors. */
+        color_name_bg = get_char_key("X11", "font_bgcolor");
+        color_name_fg = get_char_key("X11", "font_fgcolor");
+
+        if (color_name_bg == NULL)
+                color_name_bg = strdup(DEFAULT_FONT_BGCOLOR);
+        if (color_name_bg == NULL)
+                color_name_fg = strdup(DEFAULT_FONT_FGCOLOR);
+
+        /* Setup the position of the starting text section. */
+        cur = ts_start;
         cur->xpos = get_int_key("X11", "font_x_offset");
         cur->ypos = get_int_key("X11", "font_y_offset");
 
@@ -200,54 +215,76 @@ void donky_loop(void)
         if (cur->ypos < 0)
                 cur->ypos = 0;
 
+        /* Infinite donky loop! (TM) :o */
         while (1) {
                 font = get_font(font_name);
+                color.pixel_bg = get_color(color_name_bg);
+                color.pixel_fg = get_color(color_name_fg);
                 
                 while (cur) {
+                        extents = NULL;
                         offset = 0;
                         printf("xpos = %d\n", cur->xpos);
 
                         switch (cur->type) {
-                                case TEXT_FONT:
-                                        close_font(font);
-                                        font = get_font(cur->value);
-                                        break;
-                                case TEXT_COLOR:
-                                        break;
-                                case TEXT_STATIC:
-                                        extents = get_extents(cur->value, font);
-                                        offset = extents->overall_width;
-                                        //if (prev->xpos && (cur->xpos != (prev->xpos + offset))) {
-                                                render_text(cur->value, font, cur->xpos, cur->ypos);
-                                                cur->pixel_width = offset;
-                                        //}
-                                        break;
-                                case TEXT_VARIABLE:
-                                        mod = module_var_find(cur->value);
-                                        if (mod != NULL) {
-                                                if ((get_time() - mod->last_update) < mod->timeout) {
-                                                        printf("WAITING... %s\n", mod->name);
-                                                        /* save old x offset */
-                                                        offset = cur->pixel_width;
-                                                        break;
-                                                }
+                        case TEXT_FONT:
+                                close_font(font);
 
-                                                mod->last_update = get_time();
-                                                printf("updating... %s\n", mod->name);
-                                                sym = mod->sym;
-                                                switch (mod->type) {
-                                                        case VARIABLE_STR:
-                                                                str = sym(cur->args);
-                                                                extents = get_extents(str, font);
-                                                                offset = extents->overall_width;
-                                                                render_text(str, font, cur->xpos, cur->ypos);
-                                                                cur->pixel_width = offset;
-                                                }
-                                        }
+                                if (cur->args == NULL)
+                                        font = get_font(font_name);
+                                else
+                                        font = get_font(cur->args);
+                                break;
+                        case TEXT_COLOR:
+                                if (cur->args == NULL)
+                                        color.pixel_fg = get_color(color_name_fg);
+                                else
+                                        color.pixel_fg = get_color(cur->args);
+                                break;
+                        case TEXT_STATIC:
+                                extents = get_extents(cur->value, font);
+                                offset = extents->overall_width;
+                                //if (prev->xpos && (cur->xpos != (prev->xpos + offset))) {
+                                        render_text(cur->value,
+                                                    font,
+                                                    color,
+                                                    cur->xpos,
+                                                    cur->ypos);
+                                        cur->pixel_width = offset;
+                                //}
+                                break;
+                        case TEXT_VARIABLE:
+                                mod = module_var_find(cur->value);
+                                if (mod == NULL)
                                         break;
-                                default:
-                                        printf("incorrect text_section type\n");
+                                        
+                                if (get_time() - mod->last_update < mod->timeout) {
+                                        printf("WAITING... %s\n", mod->name);
+                                        /* save old x offset */
+                                        offset = cur->pixel_width;
                                         break;
+                                }
+
+                                mod->last_update = get_time();
+                                printf("updating... %s\n", mod->name);
+                                sym = mod->sym;
+                                switch (mod->type) {
+                                case VARIABLE_STR:
+                                        str = sym(cur->args);
+                                        extents = get_extents(str, font);
+                                        offset = extents->overall_width;
+                                        render_text(str,
+                                                    font,
+                                                    color,
+                                                    cur->xpos,
+                                                    cur->ypos);
+                                        cur->pixel_width = offset;
+                                        break;
+                                }
+                                break;
+                        default:
+                                printf("incorrect text_section type\n");
+                                break;
                         }
 
                         /* if we have a following node, we need 
@@ -257,16 +294,24 @@ void donky_loop(void)
                                 cur->next->ypos = cur->ypos;
                         }
 
+                        /* Make sure we free this mother, was leaking on me
+                         * earlier! */
+                        freeif(extents);
+
+                        /* Next node... */
                         cur = cur->next;
                 }
 
                 /* close font & flush everything to X server */
-                free(extents);
                 close_font(font);
                 xcb_flush(connection);
 
                 cur = ts_start;
                 sleep(1);
         }
+
+        freeif(font_name);
+        freeif(color_name_bg);
+        freeif(color_name_fg);
 }
 

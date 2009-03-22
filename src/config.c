@@ -160,7 +160,7 @@ char *get_char_key(char *mod, char *key)
 
         while (cur_set) {
                 if(!strcmp(cur_set->key, key))
-                        return cur_set->value;
+                        return strdup(cur_set->value);
 
                 cur_set = cur_set->next;
         }
@@ -329,9 +329,10 @@ void parse_cfg(void)
                 /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
                         add_key(mod, key, value);
+                        char *chrkey = get_char_key(mod, key);
                         printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
                         printf("char: %s || int: %d || double: %f || bool: %d ||\n\n",
-                                get_char_key(mod, key), get_int_key(mod, key),
+                                chrkey, get_int_key(mod, key),
                                 get_double_key(mod, key), get_bool_key(mod, key));
                 }
 
@@ -362,15 +363,15 @@ void clear_cfg(void)
                 while (cur_setting) {
                         next_setting = cur_setting->next;
 
-                        free(cur_setting->key);
-                        free(cur_setting->value);
-                        free(cur_setting);
+                        freeif(cur_setting->key);
+                        freeif(cur_setting->value);
+                        freeif(cur_setting);
 
                         cur_setting = next_setting;
                 }
 
-                free(cur_cfg->mod);
-                free(cur_cfg);
+                freeif(cur_cfg->mod);
+                freeif(cur_cfg);
 
                 cur_cfg = next_cfg;
         }

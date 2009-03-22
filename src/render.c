@@ -23,10 +23,15 @@
 #include "x11.h"
 #include "render.h"
 #include "config.h"
+#include "util.h"
 
-int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y);
+void render_text(char *str,
+                 xcb_font_t font,
+                 struct donky_color color,
+                 int16_t x,
+                 int16_t y);
 xcb_font_t get_font(char *font_name);
-xcb_gc_t get_font_gc(xcb_font_t font);
+xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
 xcb_char2b_t *build_chars(char *str, uint8_t length);
 
 /** 
@@ -39,7 +44,11 @@ xcb_char2b_t *build_chars(char *str, uint8_t length);
  * 
  * @return Pixel length of printed string
  */
-int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y)
+void render_text(char *str,
+                 xcb_font_t font,
+                 struct donky_color color,
+                 int16_t x,
+                 int16_t y)
 {
         xcb_void_cookie_t cookie_gc;
         xcb_void_cookie_t cookie_text;
@@ -49,7 +58,7 @@ int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y)
         uint8_t length;
         length = strlen(str);
 
-        gc = get_font_gc(font);
+        gc = get_font_gc(font, color.pixel_bg, color.pixel_fg);
 
         cookie_text = xcb_image_text_8_checked(connection,
                                                length,
@@ -61,18 +70,45 @@ int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y)
         error = xcb_request_check(connection, cookie_text);
         if (error) {
                 printf("render_text: Can't paste text. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
+                return;
         }
 
         cookie_gc = xcb_free_gc(connection, gc);
 
         error = xcb_request_check(connection, cookie_gc);
-        if (error) {
+        if (error)
                 printf("render_text: Can't free gc. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
+}
+
+/**
+ * @brief Allocate and return a friggin' color.
+ *
+ * @param name Color name
+ *
+ * @return Color's pixel.
+ */
+uint32_t get_color(char *name)
+{
+        xcb_alloc_named_color_reply_t *reply = xcb_alloc_named_color_reply(
+                connection,
+                xcb_alloc_named_color(connection,
+                                      screen->default_colormap,
+                                      strlen(name),
+                                      name),
+                &error
+        );
+        
+        if (error) {
+                printf("get_color: Can't allocate color. Error: %d\n",
+                       error->error_code);
+                freeif(reply);
+                return screen->black_pixel;
         }
+
+        uint32_t my_pixel = reply->pixel;
+        freeif(reply);
+
+        return my_pixel;
 }
 
 /** 
@@ -94,11 +130,8 @@ xcb_font_t get_font(char *font_name)
                                             font_name);
 
         error = xcb_request_check(connection, cookie_font);
-        if (error) {
+        if (error)
                 printf("get_font: Can't open font. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
-        }
 
         return font;
 }
@@ -110,7 +143,7 @@ xcb_font_t get_font(char *font_name)
  * 
  * @return Font graphic context
  */
-xcb_gc_t get_font_gc(xcb_font_t font)
+xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg)
 {
         xcb_gcontext_t gc;
         xcb_void_cookie_t cookie_gc;
@@ -121,8 +154,8 @@ xcb_gc_t get_font_gc(xcb_font_t font)
         uint32_t font_bgcolor;
         uint32_t font_fgcolor;
 
-        font_bgcolor = screen->black_pixel;
-        font_fgcolor = screen->white_pixel;
+        font_bgcolor = pixel_bg;
+        font_fgcolor = pixel_fg;
 
         gc = xcb_generate_id(connection);
         
@@ -136,13 +169,8 @@ xcb_gc_t get_font_gc(xcb_font_t font)
                                           window,
                                           mask, value_list);
         error = xcb_request_check(connection, cookie_gc);
-        if (error) {
+        if (error)
                 printf("get_font: Can't create graphic context. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
-        }
-
-        //close_font(font);
 
         return gc;
 }
@@ -159,11 +187,8 @@ void close_font(xcb_font_t font)
         cookie_font = xcb_close_font_checked(connection, font);
         error = xcb_request_check(connection, cookie_font);
 
-        if (error) {
+        if (error)
                 printf("get_font: Can't close font. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
-        }
 }
 
 /** 
@@ -187,6 +212,14 @@ xcb_char2b_t *build_chars(char *str, uint8_t length)
         return ret;
 }
 
+/**
+ * @brief Get the text extents of a given string and font.
+ *
+ * @param str String...
+ * @param font Font structure
+ *
+ * @return The text extents reply structure.
+ */
 xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font)
 {
         uint8_t length;
@@ -207,13 +240,10 @@ xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font)
                                                      cookie_extents,
                                                      &error);
 
-        if (error) {
+        if (error)
                 printf("render_text: Can't get extents reply. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
-        }
 
-        free(chars);
+        freeif(chars);
 
         return extents_reply;
 }

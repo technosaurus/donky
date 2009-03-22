@@ -27,5 +27,6 @@ char *chop(char *);
 char *chomp(char *);
 char *substr(char *, int, int);
 double get_time(void);
+void freeif(void *ptr);
 
 #endif /* UTIL_H */

@@ -173,3 +173,12 @@ double get_time(void)
         gettimeofday(&timev, NULL);
         return (double) timev.tv_sec + (((double) timev.tv_usec) / 1000000);
 }
+
+/**
+ * @brief Free a pointer if it is not NULL.
+ */
+void freeif(void *ptr)
+{
+        if (ptr)
+                free(ptr);
+}

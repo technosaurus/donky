@@ -52,7 +52,7 @@ void parse_text(void)
         text_section_split(config_text);
 
         /* We don't need this anymore! */
-        free(config_text);
+        freeif(config_text);
 
         struct text_section *cur = ts_start;
 
@@ -152,7 +152,7 @@ void text_section_split(char *text)
                                  line,
                                  TEXT_STATIC);
 
-        free(dup);
+        freeif(dup);
 }
 
 /**
@@ -171,7 +171,8 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
         
         if (type == TEXT_VARIABLE && alias_contents) {
                 text_section_split(alias_contents);
-                free(copy_val);
+                freeif(copy_val);
+                freeif(alias_contents);
         } else {
                 struct text_section *n = malloc(sizeof(struct text_section));
 
@@ -249,10 +250,8 @@ void clear_text(void)
                 to_free = cur;
                 cur = cur->next;
 
-                if (to_free->value)
-                        free(to_free->value);
-                
-                free(to_free);
+                freeif(to_free->value);
+                freeif(to_free);
         }
 
         ts_start = NULL;
