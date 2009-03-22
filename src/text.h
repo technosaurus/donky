@@ -37,6 +37,7 @@ struct text_section {
         enum text_section_type type;    /* See the definition of this enum in text.h */
 
         struct text_section *next;      /* Next node in this linked list. */
+        struct text_section *prev;      /* Previous node in linked list. */
 };
 
 struct text_section *ts_start;

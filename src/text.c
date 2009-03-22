@@ -194,6 +194,7 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                 n->args = args;
                 n->line = line;
                 n->next = NULL;
+                n->prev = NULL;
 
                 /* Set the type.  We do a little interception here to find
                  * some built-in variables. */
@@ -210,6 +211,7 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                         ts_end = n;
                 } else {
                         ts_end->next = n;
+                        n->prev = ts_end;
                         ts_end = n;
                 }
         }
