@@ -27,5 +27,9 @@ int screen_number;
 xcb_window_t window;
 xcb_generic_event_t *event;
 
+uint32_t color_bg_orig;
+uint32_t color_fg_orig;
+xcb_font_t font_orig;
+
 #endif /* X11_H */
 

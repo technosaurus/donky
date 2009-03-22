@@ -19,8 +19,8 @@
 #define RENDER_H
 
 struct donky_color {
-        int32_t pixel_fg;
-        int32_t pixel_bg;
+        uint32_t pixel_fg;
+        uint32_t pixel_bg;
 };
 
 void render_text(char *str,
@@ -28,6 +28,7 @@ void render_text(char *str,
                  struct donky_color color,
                  int16_t x,
                  int16_t y);
+void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
 xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
 void close_font(xcb_font_t font);

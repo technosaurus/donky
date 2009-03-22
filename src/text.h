@@ -33,8 +33,12 @@ struct text_section {
         unsigned int pixel_width;       /* Pixel width of this section. */
         unsigned int xpos;              /* Current x position. */
         unsigned int ypos;              /* Current y position. */
+        unsigned int old_xpos;          /* Old x position. */
+        unsigned int old_ypos;          /* Old y position. */
 
         enum text_section_type type;    /* See the definition of this enum in text.h */
+
+        struct module_var *mod_var;     /* Pointer to corresponding module var. */
 
         struct text_section *next;      /* Next node in this linked list. */
         struct text_section *prev;      /* Previous node in linked list. */
@@ -47,5 +51,6 @@ void parse_text(void);
 void clear_text(void);
 
 struct text_section *text_section_var_find(char *value);
+void text_section_var_modvar(char *value, struct module_var *mvar);
 
 #endif /* TEXT_H */

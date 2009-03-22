@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <xcb/xcb.h>
 #include <unistd.h>
+#include <time.h>
+#include <math.h>
 
 #include "x11.h"
 #include "config.h"
@@ -29,6 +31,10 @@
 #include "module.h"
 #include "util.h"
 #include "default_settings.h"
+
+/* Globals. */
+int window_width;
+int window_height;
 
 /** 
  * @brief Connects to the X server and stores all relevant information.
@@ -70,11 +76,15 @@ void init_x_connection(void)
  */
 void draw_window(void)
 {
-        uint32_t window_bgcolor, window_fgcolor;
-        int window_width, window_height;
+        uint32_t window_bgcolor;
+        uint32_t window_fgcolor;
+        char *window_bgcolor_name;
+        char *window_fgcolor_name;
         
-        int x_gap, y_gap;
-        int x_offset, y_offset;
+        int x_gap;
+        int y_gap;
+        int x_offset;
+        int y_offset;
 
         char *alignment = get_char_key("X11", "alignment");;
 
@@ -84,9 +94,17 @@ void draw_window(void)
 
         xcb_void_cookie_t map_cookie;
         
-        /* TODO - learn how to do colors from cfg */
-        window_bgcolor = screen->black_pixel;
-        window_fgcolor = screen->white_pixel;
+        /* Set up window bg and fg colors. */
+        window_bgcolor_name = get_char_key("X11", "window_bgcolor");
+        window_fgcolor_name = get_char_key("X11", "window_fgcolor");
+
+        if (window_bgcolor_name == NULL)
+                window_bgcolor_name = strdup(DEFAULT_WINDOW_BGCOLOR);
+        if (window_fgcolor_name == NULL)
+                window_fgcolor_name = strdup(DEFAULT_WINDOW_FGCOLOR);
+                
+        window_bgcolor = get_color(window_bgcolor_name);
+        window_fgcolor = get_color(window_fgcolor_name);
 
         /* get window dimensions from cfg or set to defaults */
         window_width = get_int_key("X11", "window_width");
@@ -196,6 +214,8 @@ void donky_loop(void)
         if (font_name == NULL)
                 font_name = strndup(DEFAULT_FONT, (sizeof(char) * strlen(DEFAULT_FONT)));
 
+        font_orig = get_font(font_name);
+
         /* Set up user configured or default font colors. */
         color_name_bg = get_char_key("X11", "font_bgcolor");
         color_name_fg = get_char_key("X11", "font_fgcolor");
@@ -204,6 +224,9 @@ void donky_loop(void)
                 color_name_bg = strdup(DEFAULT_FONT_BGCOLOR);
         if (color_name_bg == NULL)
                 color_name_fg = strdup(DEFAULT_FONT_FGCOLOR);
+
+        color_bg_orig = get_color(color_name_bg);
+        color_fg_orig = get_color(color_name_fg);
 
         /* Setup the position of the starting text section. */
         cur = ts_start;
@@ -215,23 +238,43 @@ void donky_loop(void)
         if (cur->ypos < 0)
                 cur->ypos = 0;
 
+        /* Setup minimum sleep time. */
+        struct timespec tspec;
+        double min_sleep = get_double_key("X11", "global_sleep");
+        int min_seconds = floor(min_sleep);
+        long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
+        tspec.tv_sec = min_seconds;
+        tspec.tv_nsec = min_nanosec;
+        printf("Orig: %f Seconds: %d, Nanoseconds: %ld\n", min_sleep, min_seconds, min_nanosec);
+
         /* Infinite donky loop! (TM) :o */
         while (1) {
-                font = get_font(font_name);
-                color.pixel_bg = get_color(color_name_bg);
-                color.pixel_fg = get_color(color_name_fg);
+                font = font_orig;
+                color.pixel_bg = color_bg_orig;
+                color.pixel_fg = color_fg_orig;
                 
                 while (cur) {
                         extents = NULL;
                         offset = 0;
                         printf("xpos = %d\n", cur->xpos);
 
+                        /* Clear the area following this decreased xpos, for
+                         * obvious reasons. */
+                        if (cur->old_xpos > cur->xpos)
+                                clear_area(cur->xpos,
+                                           cur->ypos,
+                                           window_width - cur->xpos,
+                                           window_height); /* Change this when we come up with multi-line support. */
+
                         switch (cur->type) {
                         case TEXT_FONT:
-                                close_font(font);
+                                if (font != font_orig)
+                                        close_font(font);
 
                                 if (cur->args == NULL)
-                                        font = get_font(font_name);
+                                        font = font_orig;
+                                else if (!strcasecmp(cur->args, font_name))
+                                        font = font_orig;
                                 else
                                         font = get_font(cur->args);
                                 break;
@@ -242,36 +285,43 @@ void donky_loop(void)
                                         color.pixel_fg = get_color(cur->args);
                                 break;
                         case TEXT_STATIC:
-                                extents = get_extents(cur->value, font);
-                                offset = extents->overall_width;
-                                /* only redraw static text if it has been
-                                 * spatially displaced since the last update */
-                                //if (cur->prev->xpos && (cur->xpos != (cur->prev->xpos + cur->prev->pixel_width))) {
+                                /* If the xpos has changed since last drawn,
+                                 * we will need to redraw this static text.
+                                 * Otherwise, we never redraw it! */
+                                if (cur->old_xpos == -1 || cur->old_xpos != cur->xpos) {
+                                        printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
+                                        if (!cur->pixel_width) {
+                                                extents = get_extents(cur->value, font);
+                                                offset = extents->overall_width;
+                                                cur->pixel_width = offset;
+                                        } else {
+                                                offset = cur->pixel_width;
+                                        }
+
                                         render_text(cur->value,
                                                     font,
                                                     color,
                                                     cur->xpos,
                                                     cur->ypos);
-                                        /* static text section dimensions do not
-                                         * change, so we set once and never again */
-                                        if (!cur->pixel_width)
-                                                cur->pixel_width = offset;
-                                //}
+                                }
                                 break;
                         case TEXT_VARIABLE:
-                                mod = module_var_find(cur->value);
+                                mod = cur->mod_var;
                                 if (mod == NULL)
                                         break;
 
                                 /* We only update the value of this variable
                                  * if it has timed out or if timeout is set to
-                                 * 0, meaning never update. */
+                                 * 0, meaning never update.
+                                 * 
+                                 * NOTE: we should update if our
+                                 * xpos has changed! */
                                 if ((get_time() - mod->last_update < mod->timeout) ||
-                                    (mod->timeout == 0 && mod->last_update != 0)) {
+                                    (mod->timeout == 0 && mod->last_update != 0) &&
+                                    (cur->old_xpos == cur->xpos)) {
                                         printf("WAITING... %s\n", mod->name);
                                         /* save old x offset */
                                         offset = cur->pixel_width;
-                                        //mod->last_update = 1.0;
                                         break;
                                 }
 
@@ -304,6 +354,10 @@ void donky_loop(void)
                                 cur->next->ypos = cur->ypos;
                         }
 
+                        /* Set our current X and Y pos as old. */
+                        cur->old_xpos = cur->xpos;
+                        cur->old_ypos = cur->ypos;
+
                         /* Make sure we free this mother, was leaking on me
                          * earlier! */
                         freeif(extents);
@@ -313,14 +367,23 @@ void donky_loop(void)
                 }
 
                 /* close font & flush everything to X server */
-                close_font(font);
+                if (font != font_orig)
+                        close_font(font);
+                        
                 xcb_flush(connection);
 
                 /* reset cur and take a nap */
                 cur = ts_start;
-                sleep(1);
+
+                /* Sleep set amount of seconds and nanoseconds.  nanosleep
+                 * returns -1 if it detects a signal hander being invoked, so
+                 * we opt to break from the loop since it will probably be the
+                 * reload or kill handler. */
+                if (nanosleep(&tspec, NULL) == -1)
+                        break;
         }
 
+        close_font(font_orig);
         freeif(font_name);
         freeif(color_name_bg);
         freeif(color_name_fg);

@@ -138,6 +138,9 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         else
                 n->timeout = user_timeout;
 
+        /* Set a pointer to this node in all text sections using this variable. */
+        text_section_var_modvar(name, n);
+
         /* Add to linked list. */
         if (mv_start == NULL) {
                 mv_start = n;

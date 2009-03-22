@@ -23,6 +23,7 @@
 #include "text.h"
 #include "config.h"
 #include "util.h"
+#include "module.h"
 
 #define MAX_TEXT_SIZE 10240
 
@@ -38,6 +39,7 @@ void clear_text(void);
 void text_section_split(char *text);
 void text_section_add(char *value, int len, int line, enum text_section_type type);
 struct text_section *text_section_var_find(char *value);
+void text_section_var_modvar(char *value, struct module_var *mvar);
 void parse_text(void);
 
 /* Globals. */
@@ -194,6 +196,12 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                 n->value = copy_val;
                 n->args = args;
                 n->line = line;
+                n->pixel_width = 0;
+                n->xpos = -1;
+                n->ypos = -1;
+                n->old_xpos = -1;
+                n->old_ypos = -1;
+                n->mod_var = NULL;
                 n->next = NULL;
                 n->prev = NULL;
 
@@ -237,6 +245,24 @@ struct text_section *text_section_var_find(char *value)
         }
         
         return NULL;
+}
+
+/**
+ * @brief Set the mod_var field on all nodes matching value.
+ *
+ * @param value Value of the text section
+ * @param mvar Pointer to module_var node
+ */
+void text_section_var_modvar(char *value, struct module_var *mvar)
+{
+        struct text_section *cur = ts_start;
+
+        while (cur != NULL) {
+                if (cur->type == TEXT_VARIABLE && !strcmp(cur->value, value))
+                    cur->mod_var = mvar;
+                
+                cur = cur->next;
+        }
 }
 
 /**

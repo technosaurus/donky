@@ -120,7 +120,7 @@ void add_key(char *mod, char *key, char *value)
         struct cfg *cur = find_mod(mod);
 
         if (!cur)
-                return; // @fixme
+                return;
 
         struct setting *new_set = malloc(sizeof(struct setting));
         
@@ -130,9 +130,7 @@ void add_key(char *mod, char *key, char *value)
         new_set->next = NULL;
 
         if (cur->last_setting) {
-                printf("before segfault...\n");
                 cur->last_setting->next = new_set;
-                printf("after segfault...\n");
                 cur->last_setting = new_set;
         } else {
                 cur->first_setting = cur->last_setting = new_set;

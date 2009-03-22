@@ -30,6 +30,7 @@ void render_text(char *str,
                  struct donky_color color,
                  int16_t x,
                  int16_t y);
+void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
 xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
 xcb_char2b_t *build_chars(char *str, uint8_t length);
@@ -81,6 +82,26 @@ void render_text(char *str,
 }
 
 /**
+ * @brief Clear an area of the window.
+ *
+ * @param x X pos
+ * @param y Y pos
+ * @param w Width
+ * @param h Height
+ */
+void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h)
+{
+        xcb_void_cookie_t cookie_clear;
+        cookie_clear = xcb_clear_area(connection,
+                                      0,
+                                      window,
+                                      x, y, w, h);
+        error = xcb_request_check(connection, cookie_clear);
+        if (error)
+                printf("clear_area: Can't do it captain! %d\n", error->error_code);
+}
+
+/**
  * @brief Allocate and return a friggin' color.
  *
  * @param name Color name
@@ -102,7 +123,7 @@ uint32_t get_color(char *name)
                 printf("get_color: Can't allocate color. Error: %d\n",
                        error->error_code);
                 freeif(reply);
-                return screen->black_pixel;
+                return color_fg_orig;
         }
 
         uint32_t my_pixel = reply->pixel;
@@ -130,8 +151,12 @@ xcb_font_t get_font(char *font_name)
                                             font_name);
 
         error = xcb_request_check(connection, cookie_font);
-        if (error)
-                printf("get_font: Can't open font. Error: %d\n", error->error_code);
+        if (error) {
+                printf("get_font: Can't open font [%s]. Error: %d\n",
+                       font_name,
+                       error->error_code);
+                return font_orig;
+        }
 
         return font;
 }
