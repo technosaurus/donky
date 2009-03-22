@@ -75,15 +75,13 @@ void add_mod(char *mod)
 
         new_mod->mod = mod;
         new_mod->next = NULL;
+        new_mod->first_setting = NULL;
+        new_mod->last_setting = NULL;
 
         if (last_cfg) {
                 last_cfg->next = new_mod;
                 last_cfg = new_mod;
-        }
-        
-        else {
-                new_mod->first_setting = NULL;
-                new_mod->last_setting = NULL;
+        } else {
                 first_cfg = last_cfg = new_mod;
         }
 }
@@ -136,10 +134,9 @@ void add_key(char *mod, char *key, char *value)
                 cur->last_setting->next = new_set;
                 printf("after segfault...\n");
                 cur->last_setting = new_set;
-        }
-        
-        else
+        } else {
                 cur->first_setting = cur->last_setting = new_set;
+        }
 }
 
 /** 
