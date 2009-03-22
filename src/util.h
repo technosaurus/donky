@@ -28,5 +28,6 @@ char *chomp(char *);
 char *substr(char *, int, int);
 double get_time(void);
 void freeif(void *ptr);
+char *d_strncpy(const char *str, int n);
 
 #endif /* UTIL_H */
