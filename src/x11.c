@@ -257,11 +257,16 @@ void donky_loop(void)
                                 mod = module_var_find(cur->value);
                                 if (mod == NULL)
                                         break;
-                                        
-                                if (get_time() - mod->last_update < mod->timeout) {
+
+                                /* We only update the value of this variable
+                                 * if it has timed out or if timeout is set to
+                                 * 0, meaning never update. */
+                                if ((get_time() - mod->last_update < mod->timeout) ||
+                                    (mod->timeout == 0 && mod->last_update != 0)) {
                                         printf("WAITING... %s\n", mod->name);
                                         /* save old x offset */
                                         offset = cur->pixel_width;
+                                        mod->last_update = 1.0;
                                         break;
                                 }
 
