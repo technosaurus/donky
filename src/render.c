@@ -44,36 +44,10 @@ int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y)
         xcb_void_cookie_t cookie_gc;
         xcb_void_cookie_t cookie_text;
 
-        xcb_char2b_t *chars;
-        xcb_query_text_extents_cookie_t cookie_extents;
-        xcb_query_text_extents_reply_t *extents_reply;
-        int32_t extents_length;
-
         xcb_gcontext_t gc;
         
         uint8_t length;
         length = strlen(str);
-
-        chars = build_chars(str, length);
-
-        cookie_extents = xcb_query_text_extents(connection,
-                                                font,
-                                                strlen(str),
-                                                chars);
-
-        extents_reply = xcb_query_text_extents_reply(connection,
-                                                     cookie_extents,
-                                                     &error);
-
-        if (error) {
-                printf("render_text: Can't get extents reply. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
-                exit(EXIT_FAILURE);
-        }
-
-        extents_length = extents_reply->overall_width;
-        printf("extents length: %d\n", extents_length);
-        free(chars);
 
         gc = get_font_gc(font);
 
@@ -99,9 +73,6 @@ int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y)
                 xcb_disconnect(connection);
                 exit(EXIT_FAILURE);
         }
-
-        return extents_length;
-
 }
 
 /** 
@@ -216,3 +187,33 @@ xcb_char2b_t *build_chars(char *str, uint8_t length)
         return ret;
 }
 
+xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font)
+{
+        uint8_t length;
+        length = strlen(str);
+
+        xcb_char2b_t *chars;
+        xcb_query_text_extents_cookie_t cookie_extents;
+        xcb_query_text_extents_reply_t *extents_reply;
+
+        chars = build_chars(str, length);
+
+        cookie_extents = xcb_query_text_extents(connection,
+                                                font,
+                                                strlen(str),
+                                                chars);
+
+        extents_reply = xcb_query_text_extents_reply(connection,
+                                                     cookie_extents,
+                                                     &error);
+
+        if (error) {
+                printf("render_text: Can't get extents reply. Error: %d\n", error->error_code);
+                xcb_disconnect(connection);
+                exit(EXIT_FAILURE);
+        }
+
+        free(chars);
+
+        return extents_reply;
+}

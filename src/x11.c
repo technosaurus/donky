@@ -172,8 +172,16 @@ void draw_window(void)
  */
 void donky_loop(void)
 {
-        char *font_name = "fixed";
         xcb_font_t font;
+        xcb_query_text_extents_reply_t *extents;
+
+        char *font_name = get_char_key("X11", "default_font");
+        int free_font = 0;
+
+        if (font_name == NULL) {
+                font_name = strndup(DEFAULT_FONT, (sizeof(char) * strlen(DEFAULT_FONT)));
+                free_font = 1;
+        }
 
         int offset;
 
@@ -182,10 +190,15 @@ void donky_loop(void)
         struct module_var *mod;
 
         struct text_section *cur;
-        
         cur = ts_start;
-        cur->xpos = 3;
-        cur->ypos = 10;
+
+        cur->xpos = get_int_key("X11", "font_x_offset");
+        cur->ypos = get_int_key("X11", "font_y_offset");
+
+        if (cur->xpos < 0)
+                cur->xpos = 0;
+        if (cur->ypos < 0)
+                cur->ypos = 0;
 
         while (1) {
                 font = get_font(font_name);
@@ -202,8 +215,12 @@ void donky_loop(void)
                                 case TEXT_COLOR:
                                         break;
                                 case TEXT_STATIC:
-                                        offset = render_text(cur->value, font, cur->xpos, cur->ypos);
-                                        cur->pixel_width = offset;
+                                        extents = get_extents(cur->value, font);
+                                        offset = extents->overall_width;
+                                        //if (prev->xpos && (cur->xpos != (prev->xpos + offset))) {
+                                                render_text(cur->value, font, cur->xpos, cur->ypos);
+                                                cur->pixel_width = offset;
+                                        //}
                                         break;
                                 case TEXT_VARIABLE:
                                         mod = module_var_find(cur->value);
@@ -221,7 +238,9 @@ void donky_loop(void)
                                                 switch (mod->type) {
                                                         case VARIABLE_STR:
                                                                 str = sym(cur->args);
-                                                                offset = render_text(str, font, cur->xpos, cur->ypos);
+                                                                extents = get_extents(str, font);
+                                                                offset = extents->overall_width;
+                                                                render_text(str, font, cur->xpos, cur->ypos);
                                                                 cur->pixel_width = offset;
                                                 }
                                         }
@@ -234,7 +253,7 @@ void donky_loop(void)
                         /* if we have a following node, we need 
                            to know where to start drawing it */
                         if (cur->next) {
-                                cur->next->xpos = cur->xpos + offset;
+                                cur->next->xpos = cur->xpos + cur->pixel_width;
                                 cur->next->ypos = cur->ypos;
                         }
 
@@ -242,6 +261,7 @@ void donky_loop(void)
                 }
 
                 /* close font & flush everything to X server */
+                free(extents);
                 close_font(font);
                 xcb_flush(connection);
 

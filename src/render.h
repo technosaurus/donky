@@ -22,6 +22,7 @@ int32_t render_text(char *str, xcb_font_t font, int16_t x, int16_t y);
 xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font);
 void close_font(xcb_font_t font);
+xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font);
 
 #endif /* RENDER_H */
 
