@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "develop.h"
+#include "../util.h"
 
 char module_name[] = "date_shet"; /* Up to 63 characters, any more and it will
                                      be truncated!  Doesn't matter though, just
@@ -49,8 +50,7 @@ int module_init(void)
  */
 void module_destroy(void)
 {
-        if (ret_value)
-                free(ret_value);
+        freeif(ret_value);
 }
 
 /**
@@ -62,8 +62,7 @@ void module_destroy(void)
  */
 char *get_date(char *args)
 {
-        if (ret_value)
-                free(ret_value);
+        freeif(ret_value);
         
         ret_value = calloc(200, sizeof(char));
         time_t t;

@@ -22,6 +22,7 @@
 #include <math.h>
 
 #include "develop.h"
+#include "../util.h"
 
 char module_name[] = "sysinfo"; /* Up to 63 characters, any more and it will
                                    be truncated!  Doesn't matter though, just
@@ -82,15 +83,6 @@ void module_init(void)
         module_var_add(module_name, "totalhigh", "get_totalhigh", 0.0, VARIABLE_STR);
         module_var_add(module_name, "freehigh", "get_freehigh", 15.0, VARIABLE_STR);
         module_var_add(module_name, "usedhigh", "get_usedhigh", 15.0, VARIABLE_STR);
-}
-
-/**
- * @brief Free a pointer if it's not NULL.
- */
-void freeif(char *ptr)
-{
-        if (ptr)
-                free(ptr);
 }
 
 /**
