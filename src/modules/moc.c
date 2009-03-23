@@ -36,11 +36,13 @@ char *get_moc(char *args);
 
 /* Globals */
 char *ret_moc = NULL;
+char home[MAXPATHLEN + 1];
 
 /* These run on module startup */
 int module_init(void)
 {
         module_var_add(module_name, "moc", "get_moc", 10.0, VARIABLE_STR);
+        snprintf(home, MAXPATHLEN, "%s", getenv("HOME"));
 }
 
 /* These run on module unload */
@@ -52,27 +54,27 @@ void module_destroy(void)
 char *get_moc(char *args)
 {
         FILE *mocp;
+        
         char pipe[160];
+        
+        size_t size = strlen(args) + strlen(home) + (sizeof(char) * 19);
+        char mocp_line[size];
+
+        snprintf(mocp_line,
+                 size,
+                 "HOME=\"%s\" mocp -Q \"%s\"",
+                 home, args);
 
         freeif(ret_moc);
         ret_moc = NULL;
 
-        char home[MAXPATHLEN + 1];
-        snprintf(home, MAXPATHLEN, "%s", getenv("HOME"));
-
-        size_t size = strlen(home) + strlen(args) + (sizeof(char) * 19);
-        char *mocp_line = malloc(size);
-        snprintf(mocp_line, size, "HOME=\"%s\" mocp -Q \"%s\"", home, args);
-
         mocp = popen(mocp_line, "r");
         if (mocp == NULL) {
-                free(mocp_line);
                 ret_moc = d_strcpy("Could not query moc.");
                 return ret_moc;
         }
 
         if (fgets(pipe, 160, mocp) == NULL) {
-                free(mocp_line);
                 pclose(mocp);
                 ret_moc = d_strcpy("No music playing.");
                 return ret_moc;
@@ -81,7 +83,6 @@ char *get_moc(char *args)
         /* Copy one char less to remove the \n */
         ret_moc = d_strncpy(pipe, (strlen(pipe) - sizeof(char)));
 
-        free(mocp_line);
         pclose(mocp);
 
         return ret_moc;

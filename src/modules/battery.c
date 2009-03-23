@@ -90,9 +90,9 @@ char *get_battery(char *args)
 
         charge = ((atof(now) / atof(full)) * 100);
         
-        ret_battery = malloc(4 * sizeof(char));
-        snprintf(ret_battery, (3 * sizeof(char)), "%d", charge);
-
+        ret_battery = malloc(5 * sizeof(char));
+        snprintf(ret_battery, (4 * sizeof(char)), "%d", charge);
+        
         fclose(charge_now);
         fclose(charge_full);
 

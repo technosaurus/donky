@@ -266,8 +266,11 @@ int get_bool_key(char *mod, char *key)
  */
 void parse_cfg(void)
 {
-        char cfg_file_path[MAXPATHLEN];
-        snprintf(cfg_file_path, (MAXPATHLEN - 1), "%s/.donkyrc", getenv("HOME"));
+        char cfg_file_path[MAXPATHLEN + 1];
+        snprintf(cfg_file_path,
+                 MAXPATHLEN,
+                 "%s/%s",
+                 getenv("HOME"), ".donkyrc");
 
         FILE *cfg_file = fopen(cfg_file_path, "r");
 
