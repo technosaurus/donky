@@ -261,15 +261,7 @@ void donky_loop(void)
                 while (cur) {
                         extents = NULL;
                         offset = 0;
-                        printf("xpos = %d\n", cur->xpos);
-
-                        /* Clear the area following this decreased xpos, for
-                         * obvious reasons. */
-                        if (cur->old_xpos > cur->xpos)
-                                clear_area(cur->xpos,
-                                           cur->ypos,
-                                           window_width - cur->xpos,
-                                           window_height); /* Change this when we come up with multi-line support. */
+                        printf("X pos = %d\n", cur->xpos);
 
                         switch (cur->type) {
                         case TEXT_FONT:
@@ -298,10 +290,10 @@ void donky_loop(void)
                                         if (!cur->pixel_width) {
                                                 extents = get_extents(cur->value, font);
                                                 offset = extents->overall_width;
-                                                cur->pixel_width = offset;
-                                        } else {
+                                                if (!cur->pixel_width && (!cur->old_pixel_width))
+                                                        cur->pixel_width = cur->old_pixel_width = offset;
+                                        } else
                                                 offset = cur->pixel_width;
-                                        }
 
                                         render_text(cur->value,
                                                     font,
@@ -321,8 +313,8 @@ void donky_loop(void)
                                  * 
                                  * NOTE: we should update if our
                                  * xpos has changed! */
-                                if ((get_time() - cur->last_update < cur->timeout) ||
-                                    (cur->timeout == 0 && cur->last_update != 0) &&
+                                if (((get_time() - cur->last_update < cur->timeout) ||
+                                    (cur->timeout == 0 && cur->last_update != 0)) &&
                                     (cur->old_xpos == cur->xpos)) {
                                         printf("WAITING... %s\n", mod->name);
                                         /* save old x offset */
@@ -331,7 +323,7 @@ void donky_loop(void)
                                 }
 
                                 cur->last_update = get_time();
-                                printf("updating... %s\n", mod->name);
+                                printf("Updating... %s\n", mod->name);
                                 sym = mod->sym;
                                 switch (mod->type) {
                                 case VARIABLE_STR:
@@ -343,12 +335,23 @@ void donky_loop(void)
                                                     color,
                                                     cur->xpos,
                                                     cur->ypos);
+                                        if (cur->pixel_width)
+                                                cur->old_pixel_width = cur->pixel_width;
                                         cur->pixel_width = offset;
+                                        break;
+                                case VARIABLE_BAR:
+                                        break;
+                                case VARIABLE_GRAPH:
+                                        break;
+                                case VARIABLE_CUSTOM:
+                                        break;
+                                default:
+                                        printf("Invalid module variable_type\n");
                                         break;
                                 }
                                 break;
                         default:
-                                printf("incorrect text_section type\n");
+                                printf("Invalid text_section type.\n");
                                 break;
                         }
 
@@ -359,25 +362,33 @@ void donky_loop(void)
                                 cur->next->ypos = cur->ypos;
                         }
 
+                        /* Clear the area after the last node in the list
+                         * if the end of the text has shifted inward */
+                        if (cur->next == NULL && ((cur->old_xpos + cur->old_pixel_width) > (cur->xpos + cur->pixel_width)))
+                                clear_area(cur->xpos + cur->pixel_width,
+                                           cur->ypos,
+                                           window_width - (cur->xpos + cur->pixel_width),
+                                           window_height); /* Change this when we come up with multi-line support. */
+
                         /* Set our current X and Y pos as old. */
                         cur->old_xpos = cur->xpos;
                         cur->old_ypos = cur->ypos;
 
-                        /* Make sure we free this mother, was leaking on me
-                         * earlier! */
+                        /* Make sure we free this mother,
+                         * was leaking on me earlier! */
                         freeif(extents);
 
                         /* Next node... */
                         cur = cur->next;
                 }
 
-                /* close font & flush everything to X server */
+                /* Close font & flush everything to X server. */
                 if (font != font_orig)
                         close_font(font);
                         
                 xcb_flush(connection);
 
-                /* reset cur and take a nap */
+                /* Reset cur and take a nap. */
                 cur = ts_start;
 
                 /* Sleep set amount of seconds and nanoseconds.  nanosleep

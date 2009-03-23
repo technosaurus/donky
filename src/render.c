@@ -92,10 +92,10 @@ void render_text(char *str,
 void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h)
 {
         xcb_void_cookie_t cookie_clear;
-        cookie_clear = xcb_clear_area(connection,
-                                      0,
-                                      window,
-                                      x, y, w, h);
+        cookie_clear = xcb_clear_area_checked(connection,
+                                              0,
+                                              window,
+                                              x, y, w, h);
         error = xcb_request_check(connection, cookie_clear);
         if (error)
                 printf("clear_area: Can't do it captain! %d\n", error->error_code);

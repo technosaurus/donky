@@ -53,40 +53,37 @@ char *get_moc(char *args)
 {
         FILE *mocp;
         char pipe[160];
-        char *p;
 
-        printf("in moc\n");
-        
         freeif(ret_moc);
         ret_moc = NULL;
 
-        char home[MAXPATHLEN];
-        snprintf(home, (MAXPATHLEN - 1), "%s", getenv("HOME"));
+        char home[MAXPATHLEN + 1];
+        snprintf(home, MAXPATHLEN, "%s", getenv("HOME"));
 
         size_t size = strlen(home) + strlen(args) + (sizeof(char) * 19);
         char *mocp_line = malloc(size);
         snprintf(mocp_line, size, "HOME=\"%s\" mocp -Q \"%s\"", home, args);
-        printf("%s", mocp_line);
 
         mocp = popen(mocp_line, "r");
         if (mocp == NULL) {
+                free(mocp_line);
                 ret_moc = d_strcpy("Could not query moc.");
                 return ret_moc;
         }
 
         if (fgets(pipe, 160, mocp) == NULL) {
-                ret_moc = d_strcpy("Could not query moc.");
+                free(mocp_line);
+                pclose(mocp);
+                ret_moc = d_strcpy("No music playing.");
                 return ret_moc;
         }
 
-        ret_moc = d_strcpy(pipe);
+        /* Copy one char less to remove the \n */
+        ret_moc = d_strncpy(pipe, (strlen(pipe) - sizeof(char)));
 
-        if ((p = strrchr(ret_moc, '\n')))
-                *p = '\0';
-
-        //freeif(p);
-        freeif(mocp_line);
+        free(mocp_line);
         pclose(mocp);
 
         return ret_moc;
 }
+

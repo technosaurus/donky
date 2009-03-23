@@ -31,43 +31,48 @@ void module_destroy(void);
 
 /* My function prototypes */
 char *get_cpufreq(char *args);
-//char *get_cpuname(char *args);
-//char *get_cpucache(char *args);
+char *get_cpuname(char *args);
+char *get_cpucache(char *args);
 
 /* Globals */
 char *ret_cpufreq = NULL;
-//char *ret_cpuname = NULL;
-//char *ret_cpucache = NULL;
+char *ret_cpuname = NULL;
+char *ret_cpucache = NULL;
 
 /* These run on module startup */
 int module_init(void)
 {
         module_var_add(module_name, "cpufreq", "get_cpufreq", 1.0, VARIABLE_STR);
-        //module_var_add(module_name, "cpuname", "get_cpuname", 0.0, VARIABLE_STR);
-        //module_var_add(module_name, "cpucache", "get_cpucache", 0.0, VARIABLE_STR);
+        module_var_add(module_name, "cpuname", "get_cpuname", 0.0, VARIABLE_STR);
+        module_var_add(module_name, "cpucache", "get_cpucache", 0.0, VARIABLE_STR);
 }
 
 /* These run on module unload */
 void module_destroy(void)
 {
         freeif(ret_cpufreq);
-        //freeif(ret_cpuname);
-        //freeif(ret_cpucache);
+        freeif(ret_cpuname);
+        freeif(ret_cpucache);
 }
 
 char *get_cpufreq(char *args)
 {
         FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
-        
+
+        freeif(ret_cpufreq);
+        ret_cpufreq = NULL;
+
+        if (cpuinfo == NULL) {
+                ret_cpufreq = d_strcpy("Can't open /proc/cpuinfo\n");
+                return ret_cpufreq;
+        }
+
         char str[16];
 
         char core;
         int found = 0;
-        char *p = NULL;
+        char *p;
         
-        freeif(ret_cpufreq);
-        ret_cpufreq = NULL;
-
         if (args == NULL)
                 core = '0';
         else
@@ -79,7 +84,7 @@ char *get_cpufreq(char *args)
                 if (found && (strncmp(str, "cpu MHz", 7) == 0)) {
                         ret_cpufreq = d_strncpy((str + 11), 4);
 
-                        /* Put a null at the decimal point. */
+                        /* Null the decimal point if it's there. */
                         if (p = strchr((ret_cpufreq + 3), '.'))
                                 *p = '\0';
                         
@@ -87,7 +92,6 @@ char *get_cpufreq(char *args)
                 }
         }
 
-        //freeif(p);
         fclose(cpuinfo);
 
         if (ret_cpufreq == NULL)
@@ -95,39 +99,43 @@ char *get_cpufreq(char *args)
 
         return ret_cpufreq;
 }
-/*
+
 char *get_cpuname(char *args)
 {
         FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
-        
-        char str[64];
-
-        char *core = NULL;
-        int found = 0;
 
         freeif(ret_cpuname);
         ret_cpuname = NULL;
 
+        if (cpuinfo == NULL) {
+                ret_cpuname = d_strcpy("Can't open /proc/cpuinfo\n");
+                return ret_cpuname;
+        }       
+
+        char str[64];
+
+        char core;
+        int found = 0;
+
         if (args == NULL)
-                core = d_strncpy("0");
+                core = '0';
         else
-                core = args;
+                core = args[0];
         
         while (fgets(str, 64, cpuinfo) != NULL) {
-                if (strncmp((str + 12), core, 1) == 0)
+                if (strchr((str + 12), core) != NULL)
                         found = 1;
                 if (found && (strncmp(str, "model name", 10) == 0)) {
-                        ret_cpuname = d_strncpy(str + 13);
+                        ret_cpuname = d_strcpy(str + 13);
                         chomp(ret_cpuname);
                         break;
                 }
         }
 
-        free(str);
         fclose(cpuinfo);
 
         if (ret_cpuname == NULL)
-                ret_cpuname = d_strncpy("CPU name not found.");
+                ret_cpuname = d_strcpy("CPU name not found.");
 
         return ret_cpuname;
 }
@@ -135,21 +143,27 @@ char *get_cpuname(char *args)
 char *get_cpucache(char *args)
 {
         FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
-        
-        char str[16];
-        char core;
-        int found = 0;
 
         freeif(ret_cpucache);
         ret_cpucache = NULL;
 
+        if (cpuinfo == NULL) {
+                ret_cpucache = d_strcpy("Can't open /proc/cpuinfo\n");
+                return ret_cpucache;
+        }       
+
+        char str[16];
+
+        char core;
+        int found = 0;
+
         if (args == NULL)
-                core = d_strncpy("0");
+                core = '0';
         else
-                core = args;
+                core = args[0];
         
-        while (fgets(str, n, cpuinfo) != NULL) {
-                if (strncmp((str + 12), core, 1) == 0)
+        while (fgets(str, 16, cpuinfo) != NULL) {
+                if (strchr((str + 12), core) == 0)
                         found = 1;
                 if (found && (strncmp(str, "cache size", 10) == 0)) {
                         ret_cpucache = d_strncpy((str + 13), 4);
@@ -158,12 +172,11 @@ char *get_cpucache(char *args)
                 }
         }
 
-        free(str);
         fclose(cpuinfo);
 
         if (ret_cpucache == NULL)
-                ret_cpucache = d_strncpy("CPU not found.", 14);
+                ret_cpucache = d_strcpy("CPU not found.");
 
         return ret_cpucache;
 }
-*/
+
