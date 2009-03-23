@@ -39,7 +39,9 @@ void clear_text(void);
 void text_section_split(char *text);
 void text_section_add(char *value, int len, int line, enum text_section_type type);
 struct text_section *text_section_var_find(char *value);
-void text_section_var_modvar(char *value, struct module_var *mvar);
+void text_section_var_modvar(char *value,
+                             struct module_var *mvar,
+                             double timeout);
 void parse_text(void);
 
 /* Globals. */
@@ -201,6 +203,8 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                 n->ypos = -1;
                 n->old_xpos = -1;
                 n->old_ypos = -1;
+                n->timeout = 0.0;
+                n->last_update = 0.0;
                 n->mod_var = NULL;
                 n->next = NULL;
                 n->prev = NULL;
@@ -253,13 +257,17 @@ struct text_section *text_section_var_find(char *value)
  * @param value Value of the text section
  * @param mvar Pointer to module_var node
  */
-void text_section_var_modvar(char *value, struct module_var *mvar)
+void text_section_var_modvar(char *value,
+                             struct module_var *mvar,
+                             double timeout)
 {
         struct text_section *cur = ts_start;
 
         while (cur != NULL) {
-                if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value))
-                    cur->mod_var = mvar;
+                if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value)) {
+                        cur->mod_var = mvar;
+                        cur->timeout = timeout;
+                }
                 
                 cur = cur->next;
         }

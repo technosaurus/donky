@@ -36,6 +36,9 @@ struct text_section {
         unsigned int old_xpos;          /* Old x position. */
         unsigned int old_ypos;          /* Old y position. */
 
+        double timeout;                 /* How often to check for updates. */
+        double last_update;             /* Time of the last update. */
+
         enum text_section_type type;    /* See the definition of this enum in text.h */
 
         struct module_var *mod_var;     /* Pointer to corresponding module var. */
@@ -51,6 +54,8 @@ void parse_text(void);
 void clear_text(void);
 
 struct text_section *text_section_var_find(char *value);
-void text_section_var_modvar(char *value, struct module_var *mvar);
+void text_section_var_modvar(char *value,
+                             struct module_var *mvar,
+                             double timeout);
 
 #endif /* TEXT_H */

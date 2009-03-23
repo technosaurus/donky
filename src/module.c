@@ -126,7 +126,6 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         strncpy(n->method, method, sizeof(n->method) - 1);
         n->type = type;
         n->sym = module_get_sym(mod->handle, method);
-        n->last_update = 0.0;
         n->parent = mod;
         n->next = NULL;
 
@@ -134,12 +133,10 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
          * module defined default! */
         double user_timeout = get_double_key("timeout", name);
         if (user_timeout == -1)
-                n->timeout = timeout;
-        else
-                n->timeout = user_timeout;
+                user_timeout = timeout;
 
         /* Set a pointer to this node in all text sections using this variable. */
-        text_section_var_modvar(name, n);
+        text_section_var_modvar(name, n, user_timeout);
 
         /* Add to linked list. */
         if (mv_start == NULL) {

@@ -321,8 +321,8 @@ void donky_loop(void)
                                  * 
                                  * NOTE: we should update if our
                                  * xpos has changed! */
-                                if ((get_time() - mod->last_update < mod->timeout) ||
-                                    (mod->timeout == 0 && mod->last_update != 0) &&
+                                if ((get_time() - cur->last_update < cur->timeout) ||
+                                    (cur->timeout == 0 && cur->last_update != 0) &&
                                     (cur->old_xpos == cur->xpos)) {
                                         printf("WAITING... %s\n", mod->name);
                                         /* save old x offset */
@@ -330,7 +330,7 @@ void donky_loop(void)
                                         break;
                                 }
 
-                                mod->last_update = get_time();
+                                cur->last_update = get_time();
                                 printf("updating... %s\n", mod->name);
                                 sym = mod->sym;
                                 switch (mod->type) {
