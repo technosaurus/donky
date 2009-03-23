@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/param.h>
 
 #include "config.h"
 #include "util.h"
@@ -265,9 +266,8 @@ int get_bool_key(char *mod, char *key)
  */
 void parse_cfg(void)
 {
-        char *cfg_file_path = NULL;
-        cfg_file_path = getenv("HOME");
-        cfg_file_path = strcat(cfg_file_path, "/.donkyrc");
+        char cfg_file_path[MAXPATHLEN];
+        snprintf(cfg_file_path, (MAXPATHLEN - 1), "%s/.donkyrc", getenv("HOME"));
 
         FILE *cfg_file = fopen(cfg_file_path, "r");
 
