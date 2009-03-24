@@ -243,10 +243,10 @@ void module_var_cron_clear(struct module *parent)
                 if (cur->parent == parent) {
                         if (prev)
                                 prev->next = cur->next;
-                        if (cur == m_start)
-                                m_start = cur->next;
+                        if (cur == mv_start)
+                                mv_start = cur->next;
                         if (cur == m_end)
-                                m_end = prev;
+                                mv_end = prev;
 
                         printf("Clearing cron job [%s], parent module was not used!\n",
                                cur->name);
