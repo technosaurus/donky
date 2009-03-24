@@ -35,7 +35,6 @@ void get_full_charge(void);
 
 /* Globals */
 char *ret_battery = NULL;
-FILE *charge_full;
 char full[16];
 
 /* These run on module startup */
@@ -107,6 +106,8 @@ char *get_battery(char *args)
  */
 void get_full_charge(void)
 {
+        FILE *charge_full;
+
         charge_full = fopen("/sys/class/power_supply/BAT0/charge_full", "r");
         if (charge_full == NULL) {
                 full[0] = '\0';
@@ -121,3 +122,4 @@ void get_full_charge(void)
 
         fclose(charge_full);
 }
+

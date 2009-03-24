@@ -34,7 +34,6 @@ void get_backlight_max(void);
 
 /* Globals */
 char *ret_backlight = NULL;
-FILE *backlight_max;
 char max[4];
 
 /* These run on module startup */
@@ -89,6 +88,8 @@ char *get_eee_backlight(char *args)
 
 void get_backlight_max(void)
 {
+        FILE *backlight_max;
+
         backlight_max = fopen("/sys/devices/virtual/backlight/eeepc/max_brightness", "r");
         if (backlight_max == NULL) {
                 max[0] = '\0';

@@ -43,8 +43,6 @@ snd_mixer_t *volume_alsaMixerHandle;
 snd_mixer_elem_t *volume_alsaElem;
 long volume_alsaMin;
 long volume_alsaMax;
-int volume_alsaSet = -1;
-const char *volume_mixerDevice = "default";
 
 /* These run on module startup */
 int module_init(void)
@@ -64,6 +62,8 @@ char *get_volume(char *args)
 	long level;
 	long max;
 	long min;
+        
+        int volume_alsaSet = -1;
        
         ret_volume = NULL;
 
@@ -93,6 +93,8 @@ char *get_volume(char *args)
 
 int prep_alsa_get_level(long *level, char *args)
 {
+        const char *volume_mixerDevice = "default";
+
 	if (!volume_alsaMixerHandle && prep_alsa_mixer(volume_mixerDevice, args) < 0)
 		return -1;
 
