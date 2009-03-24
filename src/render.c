@@ -25,6 +25,7 @@
 #include "config.h"
 #include "util.h"
 
+/* Function prototypes. */
 void render_text(char *str,
                  xcb_font_t font,
                  struct donky_color color,
@@ -34,6 +35,74 @@ void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
 xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
 xcb_char2b_t *build_chars(char *str, uint8_t length);
+void render_queue_exec(void);
+void render_queue_add(char *value,
+                      struct donky_color color,
+                      xcb_font_t font,
+                      int16_t *xpos,
+                      int16_t *ypos);
+
+/* Globals. */
+struct render_queue *rq_start = NULL;
+struct render_queue *rq_end = NULL;
+
+/**
+ * @brief Render everything in the render queue.
+ */
+void render_queue_exec(void)
+{
+        struct render_queue *cur = rq_start, *next;
+
+        while (cur != NULL) {
+                next = cur->next;
+
+                render_text(cur->value,
+                            cur->font,
+                            cur->color,
+                            *cur->xpos,
+                            *cur->ypos);
+
+                free(cur);
+                
+                cur = next;
+        }
+
+        rq_start = NULL;
+        rq_end = NULL;
+}
+
+/**
+ * @brief Add item to render queue.
+ *
+ * @param value Value of string
+ * @param font Font to use
+ * @param xpos X position
+ * @param ypos Y position
+ */
+void render_queue_add(char *value,
+                      struct donky_color color,
+                      xcb_font_t font,
+                      int16_t *xpos,
+                      int16_t *ypos)
+{
+        struct render_queue *n = malloc(sizeof(struct render_queue));
+
+        n->value = value;
+        n->color = color;
+        n->font = font;
+        n->xpos = xpos;
+        n->ypos = ypos;
+        n->next = NULL;
+        
+        /* Add to linked list. */
+        if (rq_start == NULL) {
+                rq_start = n;
+                rq_end = n;
+        } else {
+                rq_end->next = n;
+                rq_end = n;
+        }
+}
 
 /** 
  * @brief Print a string to donky
@@ -51,9 +120,6 @@ void render_text(char *str,
                  int16_t x,
                  int16_t y)
 {
-        xcb_void_cookie_t cookie_gc;
-        xcb_void_cookie_t cookie_text;
-
         xcb_gcontext_t gc;
         
         uint8_t length;
@@ -61,24 +127,14 @@ void render_text(char *str,
 
         gc = get_font_gc(font, color.pixel_bg, color.pixel_fg);
 
-        cookie_text = xcb_image_text_8_checked(connection,
-                                               length,
-                                               window,
-                                               gc,
-                                               x, y,
-                                               str);
+        xcb_image_text_8(connection,
+                         length,
+                         window,
+                         gc,
+                         x, y,
+                         str);
 
-        error = xcb_request_check(connection, cookie_text);
-        if (error) {
-                printf("render_text: Can't paste text. Error: %d\n", error->error_code);
-                return;
-        }
-
-        cookie_gc = xcb_free_gc(connection, gc);
-
-        error = xcb_request_check(connection, cookie_gc);
-        if (error)
-                printf("render_text: Can't free gc. Error: %d\n", error->error_code);
+        xcb_free_gc(connection, gc);
 }
 
 /**
@@ -91,14 +147,10 @@ void render_text(char *str,
  */
 void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h)
 {
-        xcb_void_cookie_t cookie_clear;
-        cookie_clear = xcb_clear_area_checked(connection,
-                                              0,
-                                              window,
-                                              x, y, w, h);
-        error = xcb_request_check(connection, cookie_clear);
-        if (error)
-                printf("clear_area: Can't do it captain! %d\n", error->error_code);
+        xcb_clear_area(connection,
+                       0,
+                       window,
+                       x, y, w, h);
 }
 
 /**
@@ -207,13 +259,7 @@ xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg)
  */
 void close_font(xcb_font_t font)
 {
-        xcb_void_cookie_t cookie_font;
-
-        cookie_font = xcb_close_font_checked(connection, font);
-        error = xcb_request_check(connection, cookie_font);
-
-        if (error)
-                printf("get_font: Can't close font. Error: %d\n", error->error_code);
+        xcb_close_font(connection, font);
 }
 
 /** 

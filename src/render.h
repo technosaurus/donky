@@ -23,6 +23,18 @@ struct donky_color {
         uint32_t pixel_bg;
 };
 
+struct render_queue {
+        char *value;
+        
+        struct donky_color color;  /* Color of this text section. */
+        xcb_font_t font;           /* Font for this text section. */
+        
+        int16_t *xpos;             /* Current x position. */
+        int16_t *ypos;             /* Current y position. */
+
+        struct render_queue *next;
+};
+
 void render_text(char *str,
                  xcb_font_t font,
                  struct donky_color color,
@@ -33,6 +45,12 @@ xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
 void close_font(xcb_font_t font);
 xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font);
+void render_queue_exec(void);
+void render_queue_add(char *value,
+                      struct donky_color color,
+                      xcb_font_t font,
+                      int16_t *xpos,
+                      int16_t *ypos);
 
 #endif /* RENDER_H */
 

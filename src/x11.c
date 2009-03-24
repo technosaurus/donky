@@ -265,15 +265,15 @@ void donky_loop(void)
 
                         switch (cur->type) {
                         case TEXT_FONT:
-                                if (font != font_orig)
-                                        close_font(font);
+                                //if (font != font_orig)
+                                        //close_font(font);
 
-                                if (cur->args == NULL)
+                                /*if (cur->args == NULL)
                                         font = font_orig;
                                 else if (!strcasecmp(cur->args, font_name))
                                         font = font_orig;
                                 else
-                                        font = get_font(cur->args);
+                                        font = get_font(cur->args);*/
                                 break;
                         case TEXT_COLOR:
                                 if (cur->args == NULL)
@@ -295,11 +295,17 @@ void donky_loop(void)
                                         } else
                                                 offset = cur->pixel_width;
 
+                                        render_queue_add(cur->value,
+                                                         color,
+                                                         font,
+                                                         &cur->xpos,
+                                                         &cur->ypos);
+                                        /*
                                         render_text(cur->value,
                                                     font,
                                                     color,
                                                     cur->xpos,
-                                                    cur->ypos);
+                                                    cur->ypos);*/
                                 }
                                 break;
                         case TEXT_VARIABLE:
@@ -330,11 +336,18 @@ void donky_loop(void)
                                         str = sym(cur->args);
                                         extents = get_extents(str, font);
                                         offset = extents->overall_width;
-                                        render_text(str,
+                                        
+                                        /*render_text(str,
                                                     font,
                                                     color,
                                                     cur->xpos,
-                                                    cur->ypos);
+                                                    cur->ypos);*/
+                                        render_queue_add(str,
+                                                         color,
+                                                         font,
+                                                         &cur->xpos,
+                                                         &cur->ypos);
+                                                    
                                         if (cur->pixel_width)
                                                 cur->old_pixel_width = cur->pixel_width;
                                         cur->pixel_width = offset;
@@ -382,10 +395,10 @@ void donky_loop(void)
                         cur = cur->next;
                 }
 
-                /* Close font & flush everything to X server. */
-                if (font != font_orig)
-                        close_font(font);
-                        
+                /* Render everything... */
+                render_queue_exec();
+
+                /* Flush XCB like a friggin' toilet. */
                 xcb_flush(connection);
 
                 /* Reset cur and take a nap. */

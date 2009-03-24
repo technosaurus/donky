@@ -32,10 +32,10 @@ struct text_section {
         unsigned int line;              /* Line number, starts at 0. */
         unsigned int pixel_width;       /* Pixel width of this section. */
         unsigned int old_pixel_width;   /* Old width of this section. */
-        unsigned int xpos;              /* Current x position. */
-        unsigned int ypos;              /* Current y position. */
-        unsigned int old_xpos;          /* Old x position. */
-        unsigned int old_ypos;          /* Old y position. */
+        int16_t xpos;                   /* Current x position. */
+        int16_t ypos;                   /* Current y position. */
+        int16_t old_xpos;               /* Old x position. */
+        int16_t old_ypos;               /* Old y position. */
 
         double timeout;                 /* How often to check for updates. */
         double last_update;             /* Time of the last update. */
