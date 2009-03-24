@@ -81,7 +81,7 @@ char *m_strdup(char *str)
         if (str == NULL)
                 return NULL;
         
-        char *ret = strdup(str);
+        char *ret = d_strcpy(str);
         mem_list_add(ret);
         return ret;
 }
@@ -99,7 +99,7 @@ char *m_strndup(char *str, size_t size)
         if (str == NULL)
                 return NULL;
         
-        char *ret = strndup(str, size);
+        char *ret = d_strncpy(str, size);
         mem_list_add(ret);
         return ret;
 }

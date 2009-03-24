@@ -36,6 +36,9 @@
 /* Globals. */
 int window_width;
 int window_height;
+int own_window;
+int x_offset;
+int y_offset;
 
 /** 
  * @brief Connects to the X server and stores all relevant information.
@@ -81,11 +84,11 @@ void draw_window(void)
         uint32_t window_fgcolor;
         char *window_bgcolor_name;
         char *window_fgcolor_name;
+
+        int override;
         
         int x_gap;
         int y_gap;
-        int x_offset;
-        int y_offset;
 
         char *alignment = get_char_key("X11", "alignment");;
 
@@ -156,10 +159,24 @@ void draw_window(void)
 
         freeif(alignment);
 
+        /* draw donky in its own window? if not, draw to root */
+        own_window = get_bool_key("X11", "own_window");
+        if (own_window <= 0) {
+                own_window = 0;
+                window = screen->root;
+                return;
+        }
+        /* if it's not 0 or -1, it's 1 */
+
+        /* check if donky's window should override wm control */
+        override = get_bool_key("X11", "override");
+        if (override == -1)
+                override = 0;
+
         window = xcb_generate_id(connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         values[0] = window_bgcolor;
-        values[1] = 1;
+        values[1] = override;
         values[2] = XCB_EVENT_MASK_EXPOSURE;
         window_cookie = xcb_create_window(
                         connection,
@@ -241,6 +258,12 @@ void donky_loop(void)
                 cur->xpos = 0;
         if (cur->ypos < 0)
                 cur->ypos = 0;
+
+        /* for alignment to work on root drawing */
+        if (own_window == 0) {
+                cur->xpos += x_offset;
+                cur->ypos += y_offset;
+        }
 
         /* Setup minimum sleep time. */
         struct timespec tspec;

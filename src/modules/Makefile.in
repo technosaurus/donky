@@ -57,17 +57,17 @@ battery_la_OBJECTS = $(am_battery_la_OBJECTS)
 battery_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(battery_la_LDFLAGS) $(LDFLAGS) -o $@
-cpuinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_cpuinfo_la_OBJECTS = cpuinfo.lo
-cpuinfo_la_OBJECTS = $(am_cpuinfo_la_OBJECTS)
-cpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(cpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
 date_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_date_la_OBJECTS = date.lo
 date_la_OBJECTS = $(am_date_la_OBJECTS)
 date_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(date_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
+eeepc_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_eeepc_la_OBJECTS = eeepc.lo
+eeepc_la_OBJECTS = $(am_eeepc_la_OBJECTS)
+eeepc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(eeepc_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 exec_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_exec_la_OBJECTS = exec.lo
@@ -87,12 +87,30 @@ mpd_la_OBJECTS = $(am_mpd_la_OBJECTS)
 mpd_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(mpd_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+pcpuinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_pcpuinfo_la_OBJECTS = pcpuinfo.lo
+pcpuinfo_la_OBJECTS = $(am_pcpuinfo_la_OBJECTS)
+pcpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(pcpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
+scpuinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_scpuinfo_la_OBJECTS = scpuinfo.lo
+scpuinfo_la_OBJECTS = $(am_scpuinfo_la_OBJECTS)
+scpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(scpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
 sysinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_sysinfo_la_OBJECTS = sysinfo.lo
 sysinfo_la_OBJECTS = $(am_sysinfo_la_OBJECTS)
 sysinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(sysinfo_la_LDFLAGS) $(LDFLAGS) -o $@
+volume_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_volume_la_OBJECTS = volume.lo
+volume_la_OBJECTS = $(am_volume_la_OBJECTS)
+volume_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(volume_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -105,12 +123,15 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(battery_la_SOURCES) $(cpuinfo_la_SOURCES) \
-	$(date_la_SOURCES) $(exec_la_SOURCES) $(moc_la_SOURCES) \
-	$(mpd_la_SOURCES) $(sysinfo_la_SOURCES)
-DIST_SOURCES = $(battery_la_SOURCES) $(cpuinfo_la_SOURCES) \
-	$(date_la_SOURCES) $(exec_la_SOURCES) $(moc_la_SOURCES) \
-	$(mpd_la_SOURCES) $(sysinfo_la_SOURCES)
+SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) $(eeepc_la_SOURCES) \
+	$(exec_la_SOURCES) $(moc_la_SOURCES) $(mpd_la_SOURCES) \
+	$(pcpuinfo_la_SOURCES) $(scpuinfo_la_SOURCES) \
+	$(sysinfo_la_SOURCES) $(volume_la_SOURCES)
+DIST_SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
+	$(eeepc_la_SOURCES) $(exec_la_SOURCES) $(moc_la_SOURCES) \
+	$(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
+	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
+	$(volume_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -230,34 +251,46 @@ top_srcdir = @top_srcdir@
 moduledir = $(libdir)/donky
 date_la_LDFLAGS = -module -avoid-version
 sysinfo_la_LDFLAGS = -module -avoid-version
-cpuinfo_la_LDFLAGS = -module -avoid-version
+pcpuinfo_la_LDFLAGS = -module -avoid-version
+scpuinfo_la_LDFLAGS = -module -avoid-version
 moc_la_LDFLAGS = -module -avoid-version
 battery_la_LDFLAGS = -module -avoid-version
 exec_la_LDFLAGS = -module -avoid-version
 mpd_la_LDFLAGS = -module -avoid-version
+volume_la_LDFLAGS = -module -avoid-version
+eeepc_la_LDFLAGS = -module -avoid-version
 module_LTLIBRARIES = \
 	date.la \
 	sysinfo.la \
-	cpuinfo.la \
+	pcpuinfo.la \
+	scpuinfo.la \
 	moc.la \
 	battery.la \
 	exec.la \
-	mpd.la
+	mpd.la \
+	volume.la \
+	eeepc.la
 
 date_la_SOURCES = date.c
 sysinfo_la_SOURCES = sysinfo.c
-cpuinfo_la_SOURCES = cpuinfo.c
+pcpuinfo_la_SOURCES = pcpuinfo.c
+scpuinfo_la_SOURCES = scpuinfo.c
 moc_la_SOURCES = moc.c
 battery_la_SOURCES = battery.c
 exec_la_SOURCES = exec.c
 mpd_la_SOURCES = mpd.c
+volume_la_SOURCES = volume.c
+eeepc_la_SOURCES = eeepc.c
 date_la_LIBADD = $(DEPS_LIBS)
 sysinfo_la_LIBADD = $(DEPS_LIBS)
-cpuinfo_la_LIBADD = $(DEPS_LIBS)
+pcpuinfo_la_LIBADD = $(DEPS_LIBS)
+scpuinfo_la_LIBADD = $(DEPS_LIBS)
 moc_la_LIBADD = $(DEPS_LIBS)
 battery_la_LIBADD = $(DEPS_LIBS)
 exec_la_LIBADD = $(DEPS_LIBS)
 mpd_la_LIBADD = $(DEPS_LIBS)
+volume_la_LIBADD = $(DEPS_LIBS) -lasound
+eeepc_la_LIBADD = $(DEPS_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -320,18 +353,24 @@ clean-moduleLTLIBRARIES:
 	done
 battery.la: $(battery_la_OBJECTS) $(battery_la_DEPENDENCIES) 
 	$(battery_la_LINK) -rpath $(moduledir) $(battery_la_OBJECTS) $(battery_la_LIBADD) $(LIBS)
-cpuinfo.la: $(cpuinfo_la_OBJECTS) $(cpuinfo_la_DEPENDENCIES) 
-	$(cpuinfo_la_LINK) -rpath $(moduledir) $(cpuinfo_la_OBJECTS) $(cpuinfo_la_LIBADD) $(LIBS)
 date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES) 
 	$(date_la_LINK) -rpath $(moduledir) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
+eeepc.la: $(eeepc_la_OBJECTS) $(eeepc_la_DEPENDENCIES) 
+	$(eeepc_la_LINK) -rpath $(moduledir) $(eeepc_la_OBJECTS) $(eeepc_la_LIBADD) $(LIBS)
 exec.la: $(exec_la_OBJECTS) $(exec_la_DEPENDENCIES) 
 	$(exec_la_LINK) -rpath $(moduledir) $(exec_la_OBJECTS) $(exec_la_LIBADD) $(LIBS)
 moc.la: $(moc_la_OBJECTS) $(moc_la_DEPENDENCIES) 
 	$(moc_la_LINK) -rpath $(moduledir) $(moc_la_OBJECTS) $(moc_la_LIBADD) $(LIBS)
 mpd.la: $(mpd_la_OBJECTS) $(mpd_la_DEPENDENCIES) 
 	$(mpd_la_LINK) -rpath $(moduledir) $(mpd_la_OBJECTS) $(mpd_la_LIBADD) $(LIBS)
+pcpuinfo.la: $(pcpuinfo_la_OBJECTS) $(pcpuinfo_la_DEPENDENCIES) 
+	$(pcpuinfo_la_LINK) -rpath $(moduledir) $(pcpuinfo_la_OBJECTS) $(pcpuinfo_la_LIBADD) $(LIBS)
+scpuinfo.la: $(scpuinfo_la_OBJECTS) $(scpuinfo_la_DEPENDENCIES) 
+	$(scpuinfo_la_LINK) -rpath $(moduledir) $(scpuinfo_la_OBJECTS) $(scpuinfo_la_LIBADD) $(LIBS)
 sysinfo.la: $(sysinfo_la_OBJECTS) $(sysinfo_la_DEPENDENCIES) 
 	$(sysinfo_la_LINK) -rpath $(moduledir) $(sysinfo_la_OBJECTS) $(sysinfo_la_LIBADD) $(LIBS)
+volume.la: $(volume_la_OBJECTS) $(volume_la_DEPENDENCIES) 
+	$(volume_la_LINK) -rpath $(moduledir) $(volume_la_OBJECTS) $(volume_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -340,12 +379,15 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/battery.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpuinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eeepc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/moc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpd.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pcpuinfo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scpuinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sysinfo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

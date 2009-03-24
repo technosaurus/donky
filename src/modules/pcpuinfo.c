@@ -20,51 +20,48 @@
 #include <string.h>
 
 #include "develop.h"
-#include "../util.h"
+#include "../mem.h"
 
 /* Module name */
-char module_name[] = "cpu_info";
+char module_name[] = "pcpuinfo";
 
 /* Required function prototypes. */
 int module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
-char *get_cpufreq(char *args);
-char *get_cpuname(char *args);
-char *get_cpucache(char *args);
+char *get_pcpufreq(char *args);
+char *get_pcpuname(char *args);
+char *get_pcpucache(char *args);
 
 /* Globals */
-char *ret_cpufreq = NULL;
-char *ret_cpuname = NULL;
-char *ret_cpucache = NULL;
+char *ret_pcpufreq = NULL;
+char *ret_pcpuname = NULL;
+char *ret_pcpucache = NULL;
 
 /* These run on module startup */
 int module_init(void)
 {
-        module_var_add(module_name, "cpufreq", "get_cpufreq", 1.0, VARIABLE_STR);
-        module_var_add(module_name, "cpuname", "get_cpuname", 0.0, VARIABLE_STR);
-        module_var_add(module_name, "cpucache", "get_cpucache", 0.0, VARIABLE_STR);
+        module_var_add(module_name, "pcpufreq", "get_pcpufreq", 1.0, VARIABLE_STR);
+        module_var_add(module_name, "pcpuname", "get_pcpuname", 0.0, VARIABLE_STR);
+        module_var_add(module_name, "pcpucache", "get_pcpucache", 0.0, VARIABLE_STR);
 }
 
 /* These run on module unload */
 void module_destroy(void)
 {
-        freeif(ret_cpufreq);
-        freeif(ret_cpuname);
-        freeif(ret_cpucache);
+
 }
 
-char *get_cpufreq(char *args)
+char *get_pcpufreq(char *args)
 {
-        FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+        FILE *pcpuinfo = fopen("/proc/cpuinfo", "r");
 
-        freeif(ret_cpufreq);
-        ret_cpufreq = NULL;
+        ret_pcpufreq = NULL;
 
-        if (cpuinfo == NULL) {
-                ret_cpufreq = d_strcpy("Can't open /proc/cpuinfo\n");
-                return ret_cpufreq;
+        if (pcpuinfo == NULL) {
+                ret_pcpufreq = m_strdup("Can't open /proc/cpuinfo\n");
+                return ret_pcpufreq;
         }
 
         char str[16];
@@ -78,38 +75,37 @@ char *get_cpufreq(char *args)
         else
                 core = args[0];
         
-        while (fgets(str, 16, cpuinfo) != NULL) {
+        while (fgets(str, 16, pcpuinfo) != NULL) {
                 if (strchr((str + 12), core) != NULL)
                         found = 1;
                 if (found && (strncmp(str, "cpu MHz", 7) == 0)) {
-                        ret_cpufreq = d_strncpy((str + 11), 4);
+                        ret_pcpufreq = m_strndup((str + 11), 4);
 
                         /* Null the decimal point if it's there. */
-                        if (p = strchr((ret_cpufreq + 3), '.'))
+                        if (p = strchr((ret_pcpufreq + 3), '.'))
                                 *p = '\0';
                         
                         break;
                 }
         }
 
-        fclose(cpuinfo);
+        fclose(pcpuinfo);
 
-        if (ret_cpufreq == NULL)
-                ret_cpufreq = d_strcpy("CPU freq not found.");
+        if (ret_pcpufreq == NULL)
+                ret_pcpufreq = m_strdup("CPU freq not found.");
 
-        return ret_cpufreq;
+        return ret_pcpufreq;
 }
 
-char *get_cpuname(char *args)
+char *get_pcpuname(char *args)
 {
-        FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+        FILE *pcpuinfo = fopen("/proc/cpuinfo", "r");
 
-        freeif(ret_cpuname);
-        ret_cpuname = NULL;
+        ret_pcpuname = NULL;
 
-        if (cpuinfo == NULL) {
-                ret_cpuname = d_strcpy("Can't open /proc/cpuinfo\n");
-                return ret_cpuname;
+        if (pcpuinfo == NULL) {
+                ret_pcpuname = m_strdup("Can't open /proc/cpuinfo\n");
+                return ret_pcpuname;
         }       
 
         char str[64];
@@ -122,34 +118,33 @@ char *get_cpuname(char *args)
         else
                 core = args[0];
         
-        while (fgets(str, 64, cpuinfo) != NULL) {
+        while (fgets(str, 64, pcpuinfo) != NULL) {
                 if (strchr((str + 12), core) != NULL)
                         found = 1;
                 if (found && (strncmp(str, "model name", 10) == 0)) {
-                        ret_cpuname = d_strcpy(str + 13);
-                        chomp(ret_cpuname);
+                        ret_pcpuname = m_strdup(str + 13);
+                        chomp(ret_pcpuname);
                         break;
                 }
         }
 
-        fclose(cpuinfo);
+        fclose(pcpuinfo);
 
-        if (ret_cpuname == NULL)
-                ret_cpuname = d_strcpy("CPU name not found.");
+        if (ret_pcpuname == NULL)
+                ret_pcpuname = m_strdup("CPU name not found.");
 
-        return ret_cpuname;
+        return ret_pcpuname;
 }
 
-char *get_cpucache(char *args)
+char *get_pcpucache(char *args)
 {
-        FILE *cpuinfo = fopen("/proc/cpuinfo", "r");
+        FILE *pcpuinfo = fopen("/proc/cpuinfo", "r");
 
-        freeif(ret_cpucache);
-        ret_cpucache = NULL;
+        ret_pcpucache = NULL;
 
-        if (cpuinfo == NULL) {
-                ret_cpucache = d_strcpy("Can't open /proc/cpuinfo\n");
-                return ret_cpucache;
+        if (pcpuinfo == NULL) {
+                ret_pcpucache = m_strdup("Can't open /proc/cpuinfo\n");
+                return ret_pcpucache;
         }       
 
         char str[16];
@@ -162,21 +157,21 @@ char *get_cpucache(char *args)
         else
                 core = args[0];
         
-        while (fgets(str, 16, cpuinfo) != NULL) {
+        while (fgets(str, 16, pcpuinfo) != NULL) {
                 if (strchr((str + 12), core) == 0)
                         found = 1;
                 if (found && (strncmp(str, "cache size", 10) == 0)) {
-                        ret_cpucache = d_strncpy((str + 13), 4);
-                        trim_t(ret_cpucache);
+                        ret_pcpucache = m_strndup((str + 13), 4);
+                        trim_t(ret_pcpucache);
                         break;
                 }
         }
 
-        fclose(cpuinfo);
+        fclose(pcpuinfo);
 
-        if (ret_cpucache == NULL)
-                ret_cpucache = d_strcpy("CPU not found.");
+        if (ret_pcpucache == NULL)
+                ret_pcpucache = m_strdup("CPU not found.");
 
-        return ret_cpucache;
+        return ret_pcpucache;
 }
 

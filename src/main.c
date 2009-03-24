@@ -105,10 +105,7 @@ void initialize_stuff(void)
         parse_text();
         module_load_all();
 
-        /* if own_window, etc. */
         draw_window();  /* allow to pass override if in cfg */
-        /* else */
-        //draw_root();
 
         /* test stuff... */
         struct module_var *m = module_var_find("date");

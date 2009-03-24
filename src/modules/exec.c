@@ -15,14 +15,11 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/param.h>
 
 #include "develop.h"
-#include "../util.h"
+#include "../mem.h"
 
 /* Module name */
 char module_name[] = "exec";
@@ -46,7 +43,7 @@ int module_init(void)
 /* These run on module unload */
 void module_destroy(void)
 {
-        freeif(ret_exec);
+
 }
 
 char *get_exec(char *args)
@@ -55,22 +52,21 @@ char *get_exec(char *args)
         
         char pipe[160];
         
-        freeif(ret_exec);
         ret_exec = NULL;
 
         execp = popen(args, "r");
         if (execp == NULL) {
-                ret_exec = d_strcpy("n/a");
+                ret_exec = m_strdup("n/a");
                 return ret_exec;
         }
 
         if (fgets(pipe, 160, execp) == NULL) {
                 pclose(execp);
-                ret_exec = d_strcpy("n/a");
+                ret_exec = m_strdup("n/a");
                 return ret_exec;
         }
 
-        ret_exec = d_strcpy(pipe);
+        ret_exec = m_strdup(pipe);
         chomp(ret_exec);
 
         pclose(execp);

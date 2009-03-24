@@ -22,7 +22,7 @@
 #include <sys/param.h>
 
 #include "develop.h"
-#include "../util.h"
+#include "../mem.h"
 
 /* Module name */
 char module_name[] = "moc";
@@ -48,7 +48,7 @@ int module_init(void)
 /* These run on module unload */
 void module_destroy(void)
 {
-        freeif(ret_moc);
+
 }
 
 char *get_moc(char *args)
@@ -65,23 +65,22 @@ char *get_moc(char *args)
                  "HOME=\"%s\" mocp -Q \"%s\"",
                  home, args);
 
-        freeif(ret_moc);
         ret_moc = NULL;
 
         mocp = popen(mocp_line, "r");
         if (mocp == NULL) {
-                ret_moc = d_strcpy("Could not query moc.");
+                ret_moc = m_strdup("Could not query moc.");
                 return ret_moc;
         }
 
         if (fgets(pipe, 160, mocp) == NULL) {
                 pclose(mocp);
-                ret_moc = d_strcpy("No music playing.");
+                ret_moc = m_strdup("No music playing.");
                 return ret_moc;
         }
 
         /* Copy one char less to remove the \n */
-        ret_moc = d_strncpy(pipe, (strlen(pipe) - sizeof(char)));
+        ret_moc = m_strndup(pipe, (strlen(pipe) - sizeof(char)));
 
         pclose(mocp);
 

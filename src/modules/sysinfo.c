@@ -22,7 +22,7 @@
 #include <math.h>
 
 #include "develop.h"
-#include "../util.h"
+#include "../mem.h"
 
 char module_name[] = "sysinfo"; /* Up to 63 characters, any more and it will
                                    be truncated!  Doesn't matter though, just
@@ -90,21 +90,7 @@ void module_init(void)
  */
 void module_destroy(void)
 {
-        /* Free everything. */
-        freeif(ret_uptime);
-        freeif(ret_loadavg);
-        freeif(ret_totalram);
-        freeif(ret_freeram);
-        freeif(ret_usedram);
-        freeif(ret_sharedram);
-        freeif(ret_bufferram);
-        freeif(ret_totalswap);
-        freeif(ret_freeswap);
-        freeif(ret_usedswap);
-        freeif(ret_procs);
-        freeif(ret_totalhigh);
-        freeif(ret_freehigh);
-        freeif(ret_usedhigh);
+
 }
 
 /**
@@ -145,16 +131,14 @@ char *bytes_to_bigger(unsigned long bytes)
         snprintf(str, sizeof(str),
                  "%.2f%s", recalc, label);
 
-        return strdup(str);
+        return m_strdup(str);
 }
 
 char *get_uptime(char *args)
 {
-        freeif(ret_uptime);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_uptime = strdup("n/a");
+                ret_uptime = m_strdup("n/a");
                 return ret_uptime;
         }
 
@@ -178,11 +162,9 @@ char *get_uptime(char *args)
 
 char *get_loadavg(char *args)
 {
-        freeif(ret_loadavg);
-
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_loadavg = strdup("n/a");
+                ret_loadavg = m_strdup("n/a");
                 return ret_loadavg;
         }
 
@@ -200,11 +182,9 @@ char *get_loadavg(char *args)
 
 char *get_totalram(char *args)
 {
-        freeif(ret_totalram);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_totalram = strdup("n/a");
+                ret_totalram = m_strdup("n/a");
                 return ret_totalram;
         }
         
@@ -214,11 +194,9 @@ char *get_totalram(char *args)
 
 char *get_freeram(char *args)
 {
-        freeif(ret_freeram);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_freeram = strdup("n/a");
+                ret_freeram = m_strdup("n/a");
                 return ret_freeram;
         }
         
@@ -228,11 +206,9 @@ char *get_freeram(char *args)
 
 char *get_usedram(char *args)
 {
-        freeif(ret_usedram);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_usedram = strdup("n/a");
+                ret_usedram = m_strdup("n/a");
                 return ret_usedram;
         }
         
@@ -243,11 +219,9 @@ char *get_usedram(char *args)
 
 char *get_sharedram(char *args)
 {
-        freeif(ret_sharedram);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_sharedram = strdup("n/a");
+                ret_sharedram = m_strdup("n/a");
                 return ret_sharedram;
         }
         
@@ -257,11 +231,9 @@ char *get_sharedram(char *args)
 
 char *get_bufferram(char *args)
 {
-        freeif(ret_bufferram);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_bufferram = strdup("n/a");
+                ret_bufferram = m_strdup("n/a");
                 return ret_bufferram;
         }
         
@@ -271,11 +243,9 @@ char *get_bufferram(char *args)
 
 char *get_totalswap(char *args)
 {
-        freeif(ret_totalswap);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_totalswap = strdup("n/a");
+                ret_totalswap = m_strdup("n/a");
                 return ret_totalswap;
         }
         
@@ -285,11 +255,9 @@ char *get_totalswap(char *args)
 
 char *get_freeswap(char *args)
 {
-        freeif(ret_freeswap);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_freeswap = strdup("n/a");
+                ret_freeswap = m_strdup("n/a");
                 return ret_freeswap;
         }
         
@@ -299,11 +267,9 @@ char *get_freeswap(char *args)
 
 char *get_usedswap(char *args)
 {
-        freeif(ret_usedswap);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_usedswap = strdup("n/a");
+                ret_usedswap = m_strdup("n/a");
                 return ret_usedswap;
         }
         
@@ -313,11 +279,9 @@ char *get_usedswap(char *args)
 
 char *get_procs(char *args)
 {
-        freeif(ret_procs);
-
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_procs = strdup("n/a");
+                ret_procs = m_strdup("n/a");
                 return ret_procs;
         }
 
@@ -328,11 +292,9 @@ char *get_procs(char *args)
 
 char *get_totalhigh(char *args)
 {
-        freeif(ret_totalhigh);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_totalhigh = strdup("n/a");
+                ret_totalhigh = m_strdup("n/a");
                 return ret_totalhigh;
         }
         
@@ -342,11 +304,9 @@ char *get_totalhigh(char *args)
 
 char *get_freehigh(char *args)
 {
-        freeif(ret_freehigh);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_freehigh = strdup("n/a");
+                ret_freehigh = m_strdup("n/a");
                 return ret_freehigh;
         }
         
@@ -356,11 +316,9 @@ char *get_freehigh(char *args)
 
 char *get_usedhigh(char *args)
 {
-        freeif(ret_usedhigh);
-        
         struct sysinfo info;
         if (sysinfo(&info) == -1) {
-                ret_usedhigh = strdup("n/a");
+                ret_usedhigh = m_strdup("n/a");
                 return ret_usedhigh;
         }
         

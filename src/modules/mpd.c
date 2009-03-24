@@ -256,10 +256,10 @@ int start_connection(void)
         hints.ai_protocol = 0;
 
         if ((mpd_host = get_char_key("mpd", "host")) == NULL)
-                mpd_host = strdup("localhost");
+                mpd_host = d_strcpy("localhost");
 
         if ((mpd_port = get_char_key("mpd", "port")) == NULL)
-                mpd_port = strdup("6600");
+                mpd_port = d_strcpy("6600");
 
         if ((s = getaddrinfo(mpd_host, mpd_port, &hints, &result)) != 0) {
                 fprintf(stderr,
