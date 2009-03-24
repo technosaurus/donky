@@ -78,6 +78,9 @@ void *m_calloc(size_t nelem, size_t size)
  */
 char *m_strdup(char *str)
 {
+        if (str == NULL)
+                return NULL;
+        
         char *ret = strdup(str);
         mem_list_add(ret);
         return ret;
@@ -93,6 +96,9 @@ char *m_strdup(char *str)
  */
 char *m_strndup(char *str, size_t size)
 {
+        if (str == NULL)
+                return NULL;
+        
         char *ret = strndup(str, size);
         mem_list_add(ret);
         return ret;
@@ -130,7 +136,8 @@ void mem_list_clear(void)
         while (cur != NULL) {
                 next = cur->next;
 
-                freeif(cur->ptr);
+                printf("Freeing a pointer...\n");
+                free(cur->ptr);
                 free(cur);
 
                 cur = next;

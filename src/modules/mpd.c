@@ -116,6 +116,8 @@ void run_cron(void)
                 pop_currentsong();
                 pop_status();
                 close(mpd_sock);
+                fflush(sockin);
+                fflush(sockout);
                 fclose(sockin);
                 fclose(sockout);
         }
@@ -132,8 +134,6 @@ void pop_status(void)
 
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 str = NULL;
-
-                printf("buf: %s", buffer);
 
                 if (!strcmp(buffer, "OK\n"))
                         break;
@@ -189,8 +189,6 @@ void pop_currentsong(void)
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 str = NULL;
 
-                printf("buf: %s", buffer);
-
                 if (!strcmp(buffer, "OK\n"))
                         break;
                 else if (sscanf(buffer, "file: %a[^\r\n]", &str) == 1)
@@ -243,48 +241,59 @@ char *get_audio(char *args) { return m_strdup(mpdinfo.audio); }
  */
 int start_connection(void)
 {
-        struct sockaddr_in server;
-        struct hostent *hptr;
+        struct addrinfo hints;
+        struct addrinfo *result, *rp;
         char *mpd_host;
-        int mpd_port;
+        char *mpd_port;
         int bytes;
         char data[32];
+        int s;
+
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = 0;
+        hints.ai_protocol = 0;
 
         if ((mpd_host = get_char_key("mpd", "host")) == NULL)
                 mpd_host = strdup("localhost");
 
-        if ((mpd_port = get_int_key("mpd", "port")) == -1)
-                mpd_port = 6600;
+        if ((mpd_port = get_char_key("mpd", "port")) == NULL)
+                mpd_port = strdup("6600");
 
-        if ((hptr = gethostbyname(mpd_host)) == NULL) {
+        if ((s = getaddrinfo(mpd_host, mpd_port, &hints, &result)) != 0) {
                 fprintf(stderr,
                         "mpd: Could not get host [%s] by name: %s",
                         mpd_host,
-                        strerror(errno));
+                        gai_strerror(s));
                 freeif(mpd_host);
+                freeif(mpd_port);
                 return 0;
         }
 
-        printf("Connecting to [%s]:[%d]\n", mpd_host, mpd_port);
+        printf("Connecting to [%s]:[%s]\n", mpd_host, mpd_port);
         free(mpd_host);
+        free(mpd_port);
 
-        memset(&server, 0, sizeof(server));
-        memcpy((char *) &server.sin_addr, hptr->h_addr, hptr->h_length);
-        server.sin_family = AF_INET;
-        server.sin_port = htons((unsigned short) mpd_port);
+        for (rp = result; rp != NULL; rp = rp->ai_next) {
+                mpd_sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+                
+                if (mpd_sock == -1)
+                        continue;
 
-        if ((mpd_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-                fprintf(stderr,
-                        "mpd: Could not create mpd socket: %s\n",
-                        strerror(errno));
-                return 0;
-        }
+                if (connect(mpd_sock, rp->ai_addr, rp->ai_addrlen) != -1)
+                        break;
 
-        if (connect(mpd_sock, (struct sockaddr *) &server, sizeof(server)) < 0) {
                 close(mpd_sock);
+        }
+
+        if (rp == NULL) {
+                fprintf(stderr, "Could not connect to mpd server!\n");
                 return 0;
         }
 
+        freeaddrinfo(result);
+        
         /* Wait for OK */
         bytes = recv(mpd_sock, data, 32, 0);
         data[bytes] = '\0';
@@ -295,8 +304,6 @@ int start_connection(void)
                 sockout = fdopen(mpd_sock, "w");
                 return 1;
         }
-
-        free(hptr);
 
         return 0;
 }

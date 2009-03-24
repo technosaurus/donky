@@ -34,9 +34,6 @@ void module_destroy(void);
 /* My function prototypes. */
 char *get_date(char *args);
 
-/* Globals. */
-char *ret_value = NULL;
-
 /**
  * @brief This is run on module initialization.
  */
@@ -50,7 +47,7 @@ int module_init(void)
  */
 void module_destroy(void)
 {
-        freeif(ret_value);
+        
 }
 
 /**
@@ -61,10 +58,8 @@ void module_destroy(void)
  * @return Formatted time string
  */
 char *get_date(char *args)
-{
-        freeif(ret_value);
-        
-        ret_value = calloc(200, sizeof(char));
+{        
+        char *ret_value = m_calloc(200, sizeof(char));
         time_t t;
         struct tm *tmp;
 
