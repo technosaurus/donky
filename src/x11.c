@@ -31,6 +31,7 @@
 #include "module.h"
 #include "util.h"
 #include "default_settings.h"
+#include "mem.h"
 
 /* Globals. */
 int window_width;
@@ -244,24 +245,28 @@ void donky_loop(void)
         /* Setup minimum sleep time. */
         struct timespec tspec;
         double min_sleep = get_double_key("X11", "global_sleep");
+        
         if (min_sleep < 0)
                 min_sleep = 1.0;
+                
         int min_seconds = floor(min_sleep);
         long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
         tspec.tv_sec = min_seconds;
         tspec.tv_nsec = min_nanosec;
-        printf("Orig: %f Seconds: %d, Nanoseconds: %ld\n", min_sleep, min_seconds, min_nanosec);
 
         /* Infinite donky loop! (TM) :o */
         while (1) {
                 font = font_orig;
                 color.pixel_bg = color_bg_orig;
                 color.pixel_fg = color_fg_orig;
+
+                /* Execute cron tabs. */
+                module_var_cron_exec();
                 
                 while (cur) {
                         extents = NULL;
                         offset = 0;
-                        printf("X pos = %d\n", cur->xpos);
+                        //printf("X pos = %d\n", cur->xpos);
 
                         switch (cur->type) {
                         case TEXT_FONT:
@@ -395,8 +400,9 @@ void donky_loop(void)
                         cur = cur->next;
                 }
 
-                /* Render everything... */
+                /* Render everything and clear mem list... */
                 render_queue_exec();
+                mem_list_clear();
 
                 /* Flush XCB like a friggin' toilet. */
                 xcb_flush(connection);

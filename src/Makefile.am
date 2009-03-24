@@ -10,6 +10,7 @@ donky_SOURCES = \
 	util.c util.h \
 	module.c module.h \
 	x11.c x11.h \
-	render.c render.h
+	render.c render.h \
+	mem.c mem.h
 INCLUDES = $(DEPS_CFLAGS)
 LIBS = $(DEPS_LIBS)

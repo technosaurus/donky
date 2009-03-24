@@ -25,6 +25,7 @@
 #include "module.h"
 #include "text.h"
 #include "config.h"
+#include "util.h"
 
 /* Function prototypes. */
 int module_add(char *name, void *handle, void *destroy);
@@ -69,6 +70,8 @@ int module_add(char *name, void *handle, void *destroy)
                 m_end->next = n;
                 m_end = n;
         }
+
+        return 1;
 }
 
 /**
@@ -126,6 +129,8 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         strncpy(n->method, method, sizeof(n->method) - 1);
         n->type = type;
         n->sym = module_get_sym(mod->handle, method);
+        n->timeout = 0.0;
+        n->last_update = 0.0;
         n->parent = mod;
         n->next = NULL;
 
@@ -169,6 +174,106 @@ struct module_var *module_var_find(char *name)
         }
 
         return NULL;
+}
+
+/**
+ * @brief Add cron job.
+ *
+ * @param parent Unique name of parent module
+ * @param name Unique name of this cron job
+ * @param method Name of method
+ * @param timeout Timeout in seconds
+ *
+ * @return 1 success, 0 fail
+ */
+int module_var_cron_add(char *parent, char *name, char *method, double timeout)
+{
+        struct module *mod = module_find(parent);
+
+        if (mod == NULL)
+                return 0;
+        
+        struct module_var *n = malloc(sizeof(struct module_var));
+
+        /* Fill in module_var structure. */
+        memset(n->name, 0, sizeof(n->name));
+        memset(n->method, 0, sizeof(n->method));
+        strncpy(n->name, name, sizeof(n->name) - 1);
+        strncpy(n->method, method, sizeof(n->method) - 1);
+        n->type = VARIABLE_CRON;
+        n->sym = module_get_sym(mod->handle, method);
+
+        /* Set the timeout.  User configured timeouts take precedence over
+         * module defined default! */
+        double user_timeout = get_double_key("cron", parent);
+        if (user_timeout == -1)
+                user_timeout = timeout;
+
+        printf("Adding [%s] to cron with timeout [%f]\n", name, user_timeout);
+        
+        n->timeout = user_timeout;
+        n->last_update = 0.0;
+        n->parent = mod;
+        n->next = NULL;
+
+        /* Add to linked list. */
+        if (mv_start == NULL) {
+                mv_start = n;
+                mv_end = n;
+        } else {
+                mv_end->next = n;
+                mv_end = n;
+        }
+
+        return 1;
+}
+
+/**
+ * @brief Clear current cron jobs of a given module.
+ *
+ * @param parent Pointer to parent module
+ */
+void module_var_cron_clear(struct module *parent)
+{
+        struct module_var *cur = mv_start, *prev = NULL, *next = NULL;
+
+        while (cur != NULL) {
+                next = cur->next;
+                
+                if (cur->parent == parent) {
+                        if (prev)
+                                prev->next = cur->next;
+
+                        printf("Clearing cron job [%s], parent module was not used!\n",
+                               cur->name);
+                        free(cur);
+                        cur = NULL;
+                }
+
+                prev = cur;
+                cur = next;
+        }
+}
+
+/**
+ * @brief Run all cron jobs.
+ */
+void module_var_cron_exec(void)
+{
+        struct module_var *cur = mv_start;
+        void *(*sym)(void);
+
+        while (cur != NULL) {
+                if (cur->type == VARIABLE_CRON &&
+                    (get_time() - cur->last_update) >= cur->timeout) {
+                        sym = cur->sym;
+                        sym();
+
+                        cur->last_update = get_time();
+                }
+                
+                cur = cur->next;
+        }
 }
 
 /**
@@ -235,6 +340,7 @@ void module_unload(char *name)
                         module_destroy = cur->destroy;
                         module_destroy();
                         dlclose(cur->handle);
+                        module_var_cron_clear(cur);
                         free(cur);
                         
                         return;

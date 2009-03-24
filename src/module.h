@@ -22,7 +22,8 @@ enum variable_type {
         VARIABLE_STR,           /* Function should return char * */
         VARIABLE_BAR,           /* Function should return int between 0 and 100 */
         VARIABLE_GRAPH,         /* TBA */
-        VARIABLE_CUSTOM         /* TBA */
+        VARIABLE_CUSTOM,        /* TBA */
+        VARIABLE_CRON           /* This is simply a method to be run on schedule. */
 };
 
 struct module {
@@ -39,6 +40,9 @@ struct module_var {
         enum variable_type type;        /* Type of method.  See the enum above. */
         void *sym;                      /* Pointer to the function. */
 
+        double timeout;                 /* Used for cron jobs */
+        double last_update;             /* Ditto */
+
         struct module *parent;          /* Parent of this module. */
         struct module_var *next;        /* Next node in linked list. */
 };
@@ -46,5 +50,6 @@ struct module_var {
 struct module_var *module_var_find(char *name);
 void module_load_all(void);
 void clear_module(void);
+void module_var_cron_exec(void);
 
 #endif /* MODULE_H */
