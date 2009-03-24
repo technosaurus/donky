@@ -64,7 +64,8 @@ struct mpd_info {
         char xfade[4];
         char state[16];
         char song[4];
-        char time[8];
+        char etime[8];
+        char ttime[8];
         char bitrate[8];
         char audio[16];
 } mpdinfo;
@@ -89,7 +90,8 @@ int module_init(void)
         module_var_add(module_name, "mpd_xfade", "get_xfade", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_state", "get_state", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_song", "get_song", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_time", "get_timez", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "mpd_etime", "get_elapsed_time", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "mpd_ttime", "get_total_time", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_bitrate", "get_bitrate", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_audio", "get_audio", 10.0, VARIABLE_STR);
 
@@ -127,6 +129,7 @@ void pop_status(void)
 {
         char buffer[256];
         char *str;
+        int elapsed, total;
         
         /* currentsong */
         fprintf(sockout, "status\r\n");
@@ -155,15 +158,33 @@ void pop_status(void)
                 else if (sscanf(buffer, "xfade: %a[^\r\n]", &str) == 1)
                         snprintf(mpdinfo.xfade, sizeof(mpdinfo.xfade),
                                  "%s", str);
-                else if (sscanf(buffer, "state: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.state, sizeof(mpdinfo.state),
-                                 "%s", str);
+                else if (sscanf(buffer, "state: %a[^\r\n]", &str) == 1) {
+                        if (!strncmp(str, "pl", (2 * sizeof(char))))
+                                snprintf(mpdinfo.state,
+                                         sizeof(mpdinfo.state),
+                                         "%s", "Playing");
+                        else if (!strncmp(str, "pa", (2 * sizeof(char))))
+                                snprintf(mpdinfo.state,
+                                         sizeof(mpdinfo.state),
+                                         "%s", "Paused");
+                        else if (!strncmp(str, "st", (2 * sizeof(char))))
+                                snprintf(mpdinfo.state,
+                                         sizeof(mpdinfo.state),
+                                         "%s", "Stopped");
+                }
                 else if (sscanf(buffer, "song: %a[^\r\n]", &str) == 1)
                         snprintf(mpdinfo.song, sizeof(mpdinfo.song),
                                  "%s", str);
-                else if (sscanf(buffer, "time: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.time, sizeof(mpdinfo.time),
-                                 "%s", str);
+                else if (sscanf(buffer, "time: %d:%d", &elapsed, &total) == 2) {
+                        snprintf(mpdinfo.etime,
+                                 sizeof(mpdinfo.etime),
+                                 "%.2d:%.2d",
+                                 (elapsed / 60), (elapsed % 60));
+                        snprintf(mpdinfo.ttime,
+                                 sizeof(mpdinfo.ttime),
+                                 "%.2d:%.2d",
+                                 (total / 60), (total % 60));
+                }
                 else if (sscanf(buffer, "bitrate: %a[^\r\n]", &str) == 1)
                         snprintf(mpdinfo.bitrate, sizeof(mpdinfo.bitrate),
                                  "%s", str);
@@ -232,9 +253,10 @@ char *get_playlistlength(char *args) { return m_strdup(mpdinfo.playlistlength); 
 char *get_xfade(char *args) { return m_strdup(mpdinfo.xfade); }
 char *get_state(char *args) { return m_strdup(mpdinfo.state); }
 char *get_song(char *args) { return m_strdup(mpdinfo.song); }
-char *get_timez(char *args) { return m_strdup(mpdinfo.time); }
 char *get_bitrate(char *args) { return m_strdup(mpdinfo.bitrate); }
 char *get_audio(char *args) { return m_strdup(mpdinfo.audio); }
+char *get_elapsed_time(char *args) { return m_strdup(mpdinfo.etime); }
+char *get_total_time(char *args) { return m_strdup(mpdinfo.ttime); }
 
 /**
  * @brief Connect to MPD host.
