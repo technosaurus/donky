@@ -23,7 +23,6 @@
 
 #include "config.h"
 #include "util.h"
-#include "text.h"
 
 #define MAX_LINE_SIZE 1024
 
@@ -345,7 +344,7 @@ void parse_cfg(void)
 
         fclose(cfg_file);
 
-        if (ts_start == NULL) {
+        if (config_text == NULL) {
                 printf("No [text] section in config. Exiting.\n");
                 clear_cfg();
                 exit(EXIT_FAILURE);
