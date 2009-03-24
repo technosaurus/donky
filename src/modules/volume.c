@@ -75,15 +75,13 @@ char *get_volume(char *args)
         max = volume_alsaMax;
 	min = volume_alsaMin;
 
-        printf("VOLUME first\n");
-
 	ret = ((volume_alsaSet / 100.0) * (max - min) + min) + 0.5;
 	if (volume_alsaSet > 0 && ret == level) {
 		ret = volume_alsaSet;
 	} else
 		ret = (int)(100 * (((float)(level - min)) / (max - min)) + 0.5);
 
-        printf("VOLUME RET = %d\n", ret);
+        close_alsa_mixer();
 
         ret_volume = m_malloc(5 * sizeof(char));
         snprintf(ret_volume, (4 * sizeof(char)), "%d", ret);
