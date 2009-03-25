@@ -104,23 +104,7 @@ void initialize_stuff(void)
         parse_cfg();
         parse_text();
         module_load_all();
-
         draw_window();  /* allow to pass override if in cfg */
-
-        /* test stuff... */
-        struct module_var *m = module_var_find("date");
-        if (m != NULL) {
-                char *output;
-                double start, total;
-                char *(*sym)(char *);
-                sym = m->sym;
-
-                start = get_time();
-                output = sym("%b %d, %R");
-                total = get_time() - start;
-                printf("OUTPUT: [%s] time: %f\n", output, total);
-        }
-
         donky_loop();
 }
 

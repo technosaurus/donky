@@ -41,10 +41,73 @@ void render_queue_add(char *value,
                       xcb_font_t font,
                       int16_t *xpos,
                       int16_t *ypos);
+void clear_queue_exec(void);
+void clear_queue_add(int16_t xpos,
+                     int16_t ypos,
+                     uint16_t width,
+                     uint16_t height);
 
 /* Globals. */
 struct render_queue *rq_start = NULL;
 struct render_queue *rq_end = NULL;
+
+struct clear_queue *cq_start = NULL;
+struct clear_queue *cq_end = NULL;
+
+/**
+ * @brief Render everything in the render queue.
+ */
+void clear_queue_exec(void)
+{
+        struct clear_queue *cur = cq_start, *next;
+
+        while (cur != NULL) {
+                next = cur->next;
+
+                clear_area(cur->xpos,
+                           cur->ypos,
+                           cur->width,
+                           cur->height);
+
+                free(cur);
+                
+                cur = next;
+        }
+
+        cq_start = NULL;
+        cq_end = NULL;
+}
+
+/**
+ * @brief Add item to clear queue.
+ *
+ * @param xpos X position
+ * @param ypos Y position
+ * @param width Width
+ * @param height Height
+ */
+void clear_queue_add(int16_t xpos,
+                     int16_t ypos,
+                     uint16_t width,
+                     uint16_t height)
+{
+        struct clear_queue *n = malloc(sizeof(struct clear_queue));
+
+        n->xpos = xpos;
+        n->ypos = ypos;
+        n->width = width;
+        n->height = height;
+        n->next = NULL;
+        
+        /* Add to linked list. */
+        if (cq_start == NULL) {
+                cq_start = n;
+                cq_end = n;
+        } else {
+                cq_end->next = n;
+                cq_end = n;
+        }
+}
 
 /**
  * @brief Render everything in the render queue.

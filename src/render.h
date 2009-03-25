@@ -35,6 +35,15 @@ struct render_queue {
         struct render_queue *next;
 };
 
+struct clear_queue {
+        int16_t xpos;             /* Current x position. */
+        int16_t ypos;             /* Current y position. */
+        uint16_t width;
+        uint16_t height;
+
+        struct clear_queue *next;
+};
+
 void render_text(char *str,
                  xcb_font_t font,
                  struct donky_color color,
@@ -51,6 +60,11 @@ void render_queue_add(char *value,
                       xcb_font_t font,
                       int16_t *xpos,
                       int16_t *ypos);
+void clear_queue_exec(void);
+void clear_queue_add(int16_t xpos,
+                     int16_t ypos,
+                     uint16_t width,
+                     uint16_t height);
 
 #endif /* RENDER_H */
 

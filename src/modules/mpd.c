@@ -112,8 +112,6 @@ void module_destroy(void)
  */
 void run_cron(void)
 {
-        printf("Running mpd_cron!\n");
-        
         if (start_connection()) {
                 pop_currentsong();
                 pop_status();
@@ -200,8 +198,6 @@ void pop_currentsong(void)
 {
         char buffer[256];
         char *str;
-
-        printf("In current song!\n");
         
         /* currentsong */
         fprintf(sockout, "currentsong\r\n");
@@ -293,7 +289,7 @@ int start_connection(void)
                 return 0;
         }
 
-        printf("Connecting to [%s]:[%s]\n", mpd_host, mpd_port);
+        //printf("Connecting to [%s]:[%s]\n", mpd_host, mpd_port);
         free(mpd_host);
         free(mpd_port);
 
@@ -321,7 +317,6 @@ int start_connection(void)
         data[bytes] = '\0';
 
         if (strstr(data, "OK MPD")) {
-                printf("GOT OK MPD\n");
                 sockin = fdopen(mpd_sock, "r");
                 sockout = fdopen(mpd_sock, "w");
                 return 1;

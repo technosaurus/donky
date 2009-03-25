@@ -221,7 +221,10 @@ void donky_loop(void)
         char *color_name_bg;
         char *color_name_fg;
 
-        int offset;
+        uint16_t offset;
+        
+        int16_t font_x_offset;
+        int16_t font_y_offset;
 
         char *str;
         char *(*sym)(char *);
@@ -251,13 +254,16 @@ void donky_loop(void)
 
         /* Setup the position of the starting text section. */
         cur = ts_start;
-        cur->xpos = get_int_key("X11", "font_x_offset");
-        cur->ypos = get_int_key("X11", "font_y_offset");
+        font_x_offset = get_int_key("X11", "font_x_offset");
+        font_y_offset = get_int_key("X11", "font_y_offset");
 
-        if (cur->xpos < 0)
-                cur->xpos = 0;
-        if (cur->ypos < 0)
-                cur->ypos = 0;
+        if (font_x_offset < 0)
+                font_x_offset = 0;
+        if (font_y_offset < 0)
+                font_y_offset = 0;
+
+        cur->xpos = font_x_offset;
+        cur->ypos = font_y_offset;
 
         /* for alignment to work on root drawing */
         if (own_window == 0) {
@@ -291,6 +297,14 @@ void donky_loop(void)
                         offset = 0;
                         //printf("X pos = %d\n", cur->xpos);
 
+                        /* If our X position has changed, lets clear the area
+                         * where we used to be. */
+                        if (cur->xpos != cur->old_xpos)
+                                clear_queue_add(cur->old_xpos,
+                                                cur->old_ypos - font_y_offset,
+                                                cur->old_pixel_width,
+                                                window_height);
+
                         switch (cur->type) {
                         case TEXT_FONT:
                                 //if (font != font_orig)
@@ -314,7 +328,7 @@ void donky_loop(void)
                                  * we will need to redraw this static text.
                                  * Otherwise, we never redraw it! */
                                 if (cur->old_xpos == -1 || cur->old_xpos != cur->xpos) {
-                                        printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
+                                        //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
                                         if (!cur->pixel_width) {
                                                 extents = get_extents(cur->value, font);
                                                 offset = extents->overall_width;
@@ -350,14 +364,14 @@ void donky_loop(void)
                                 if (((get_time() - cur->last_update < cur->timeout) ||
                                     (cur->timeout == 0 && cur->last_update != 0)) &&
                                     (cur->old_xpos == cur->xpos)) {
-                                        printf("WAITING... %s\n", mod->name);
+                                        //printf("WAITING... %s\n", mod->name);
                                         /* save old x offset */
                                         offset = cur->pixel_width;
                                         break;
                                 }
 
                                 cur->last_update = get_time();
-                                printf("Updating... %s\n", mod->name);
+                                //printf("Updating... %s\n", mod->name);
                                 sym = mod->sym;
                                 switch (mod->type) {
                                 case VARIABLE_STR:
@@ -403,14 +417,6 @@ void donky_loop(void)
                                 cur->next->ypos = cur->ypos;
                         }
 
-                        /* Clear the area after the last node in the list
-                         * if the end of the text has shifted inward */
-                        if (cur->next == NULL && ((cur->old_xpos + cur->old_pixel_width) > (cur->xpos + cur->pixel_width)))
-                                clear_area(cur->xpos + cur->pixel_width,
-                                           cur->ypos,
-                                           window_width - (cur->xpos + cur->pixel_width),
-                                           window_height); /* Change this when we come up with multi-line support. */
-
                         /* Set our current X and Y pos as old. */
                         cur->old_xpos = cur->xpos;
                         cur->old_ypos = cur->ypos;
@@ -424,6 +430,7 @@ void donky_loop(void)
                 }
 
                 /* Render everything and clear mem list... */
+                clear_queue_exec();
                 render_queue_exec();
                 mem_list_clear();
 

@@ -136,7 +136,6 @@ void mem_list_clear(void)
         while (cur != NULL) {
                 next = cur->next;
 
-                printf("Freeing a pointer...\n");
                 free(cur->ptr);
                 free(cur);
 

@@ -18,6 +18,8 @@
 #ifndef TEXT_H
 #define TEXT_H
 
+#include <xcb/xcb.h>
+
 enum text_section_type {
         TEXT_STATIC,    /* This is static text.  It does not need to be evaluated. */
         TEXT_VARIABLE,  /* Needs further evaluation before drawing! */
@@ -30,8 +32,8 @@ struct text_section {
         char *args;                     /* Arguments given to a variable. ${...} */
         
         unsigned int line;              /* Line number, starts at 0. */
-        unsigned int pixel_width;       /* Pixel width of this section. */
-        unsigned int old_pixel_width;   /* Old width of this section. */
+        uint16_t pixel_width;       /* Pixel width of this section. */
+        uint16_t old_pixel_width;   /* Old width of this section. */
         int16_t xpos;                   /* Current x position. */
         int16_t ypos;                   /* Current y position. */
         int16_t old_xpos;               /* Old x position. */
