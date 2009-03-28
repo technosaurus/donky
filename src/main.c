@@ -100,12 +100,20 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
-        init_x_connection();
+        struct x_connection *x_conn;
+        x_conn = malloc(sizeof(struct x_connection));
+
+        init_x_connection(x_conn);
+        printf("made X connection\n");
         parse_cfg();
+        printf("parsed config\n");
         parse_text();
+        printf("parsed [text]\n");
         module_load_all();
-        draw_window();  /* allow to pass override if in cfg */
-        donky_loop();
+        printf("loaded modules\n");
+        draw_window(x_conn);  /* allow to pass override if in cfg */
+        printf("drew window\n");
+        donky_loop(x_conn);
 }
 
 /**

@@ -44,36 +44,39 @@ int y_offset;
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
  */
-void init_x_connection(void)
+void init_x_connection(struct x_connection *x_conn)
 {
-        /* connect to X server */
-        x_display = XOpenDisplay(NULL);
-        //connection = xcb_connect(NULL, &screen_number);
-        connection = XGetXCBConnection(x_display);
+        const xcb_setup_t *setup;
+        xcb_screen_iterator_t screen_iter;
+        int screen_number;
 
-        if (!connection) {
+        /* connect to X server */
+        x_conn->display = XOpenDisplay(NULL);
+        x_conn->connection = XGetXCBConnection(x_conn->display);
+
+        if (!x_conn->connection) {
                 printf("Can't connect to X server.\n");
                 exit(EXIT_FAILURE);
         }
 
-        setup = xcb_get_setup(connection);
+        setup = xcb_get_setup(x_conn->connection);
 
-        screen = NULL;
+        x_conn->screen = NULL;
         
         screen_iter = xcb_setup_roots_iterator(setup);
 
         /* find our current screen */        
         for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter)) {
                 if (screen_number == 0) {
-                        screen = screen_iter.data;
+                        x_conn->screen = screen_iter.data;
                         break;
                 }
         }
 
         /* exit if we can't find it */
-        if (!screen) {
+        if (!x_conn->screen) {
                 printf("Can't find the current screen.\n");
-                xcb_disconnect(connection);
+                xcb_disconnect(x_conn->connection);
                 exit(EXIT_FAILURE);
         }
 }
@@ -81,7 +84,7 @@ void init_x_connection(void)
 /** 
  * @brief Draw donky's window
  */
-void draw_window(void)
+void draw_window(struct x_connection *x_conn)
 {
         uint32_t window_bgcolor;
         uint32_t window_fgcolor;
@@ -93,14 +96,16 @@ void draw_window(void)
         int x_gap;
         int y_gap;
 
-        char *alignment = get_char_key("X11", "alignment");;
+        char *alignment = get_char_key("X11", "alignment");
 
         xcb_void_cookie_t window_cookie;
         uint32_t mask;
         uint32_t values[3];
 
         xcb_void_cookie_t map_cookie;
-        
+
+        xcb_generic_error_t *error;
+
         /* Set up window bg and fg colors. */
         window_bgcolor_name = get_char_key("X11", "window_bgcolor");
         window_fgcolor_name = get_char_key("X11", "window_fgcolor");
@@ -110,8 +115,12 @@ void draw_window(void)
         if (window_fgcolor_name == NULL)
                 window_fgcolor_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
                 
-        window_bgcolor = get_color(window_bgcolor_name);
-        window_fgcolor = get_color(window_fgcolor_name);
+        window_bgcolor = get_color(x_conn->connection,
+                                   x_conn->screen,
+                                   window_bgcolor_name);
+        window_fgcolor = get_color(x_conn->connection,
+                                   x_conn->screen,
+                                   window_fgcolor_name);
 
         freeif(window_bgcolor_name);
         freeif(window_fgcolor_name);
@@ -137,15 +146,15 @@ void draw_window(void)
         /* calculate alignment */
         if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
                 x_offset = 0 + x_gap;
-                y_offset = screen->height_in_pixels - window_height - y_gap;
+                y_offset = x_conn->screen->height_in_pixels - window_height - y_gap;
         } else if (alignment && (strcasecmp(alignment, "top_left") == 0)) {
                 x_offset = 0 + x_gap;
                 y_offset = 0 + y_gap;
         } else if (alignment && (strcasecmp(alignment, "bottom_right") == 0)) {
-                x_offset = screen->width_in_pixels - window_width - x_gap;
-                y_offset = screen->height_in_pixels - window_height - y_gap;
+                x_offset = x_conn->screen->width_in_pixels - window_width - x_gap;
+                y_offset = x_conn->screen->height_in_pixels - window_height - y_gap;
         } else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
-                x_offset = screen->width_in_pixels - window_width - x_gap;
+                x_offset = x_conn->screen->width_in_pixels - window_width - x_gap;
                 y_offset = 0 + y_gap;
         } else {
                 if (alignment)
@@ -153,7 +162,7 @@ void draw_window(void)
                 else
                         printf("No alignment specified. Using bottom_left.\n");
                 x_offset = 0 + x_gap;
-                y_offset = screen->height_in_pixels - window_height - y_gap;
+                y_offset = x_conn->screen->height_in_pixels - window_height - y_gap;
         }
 
         freeif(alignment);
@@ -162,7 +171,7 @@ void draw_window(void)
         own_window = get_bool_key("X11", "own_window");
         if (own_window <= 0) {
                 own_window = 0;
-                window = screen->root;
+                x_conn->window = x_conn->screen->root;
                 return;
         }
         /* if it's not 0 or -1, it's 1 */
@@ -172,36 +181,36 @@ void draw_window(void)
         if (override == -1)
                 override = 0;
 
-        window = xcb_generate_id(connection);
+        x_conn->window = xcb_generate_id(x_conn->connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         values[0] = window_bgcolor;
         values[1] = override;
         values[2] = XCB_EVENT_MASK_EXPOSURE;
         window_cookie = xcb_create_window(
-                        connection,
-                        screen->root_depth,
-                        window,
-                        screen->root,
+                        x_conn->connection,
+                        x_conn->screen->root_depth,
+                        x_conn->window,
+                        x_conn->screen->root,
                         x_offset, y_offset,
                         window_width, window_height,
                         0,
                         XCB_WINDOW_CLASS_INPUT_OUTPUT, /* TODO: learn */
-                        screen->root_visual,
+                        x_conn->screen->root_visual,
                         mask, values);
-        map_cookie = xcb_map_window_checked(connection, window);
-
+        map_cookie = xcb_map_window_checked(x_conn->connection,
+                                            x_conn->window);
         /* some error management */
-        error = xcb_request_check(connection, window_cookie);
+        error = xcb_request_check(x_conn->connection, window_cookie);
         if (error) {
                 printf("Can't create window. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
+                xcb_disconnect(x_conn->connection);
                 exit(EXIT_FAILURE);
         }
         
-        error = xcb_request_check(connection, map_cookie);
+        error = xcb_request_check(x_conn->connection, map_cookie);
         if (error) {
                 printf("Can't map window. Error: %d\n", error->error_code);
-                xcb_disconnect(connection);
+                xcb_disconnect(x_conn->connection);
                 exit(EXIT_FAILURE);
         }
 }
@@ -210,7 +219,7 @@ void draw_window(void)
 /** 
  * @brief Main donky loop.
  */
-void donky_loop(void)
+void donky_loop(struct x_connection *x_conn)
 {
         xcb_font_t font;
         XFontStruct *font_struct;
@@ -234,13 +243,15 @@ void donky_loop(void)
 
         struct text_section *cur;
 
+        //xcb_generic_event_t *event;
+
         /* Set up user configured font or default font. */
         font_name = get_char_key("X11", "default_font");
 
         if (font_name == NULL)
                 font_name = d_strcpy(DEFAULT_FONT);
 
-        font_struct = XLoadQueryFont(x_display, font_name);
+        font_struct = XLoadQueryFont(x_conn->display, font_name);
         font = font_struct->fid;
 
         /* Set up user configured or default font colors. */
@@ -252,8 +263,12 @@ void donky_loop(void)
         if (color_name_bg == NULL)
                 color_name_fg = d_strcpy(DEFAULT_FONT_FGCOLOR);
 
-        color_bg_orig = get_color(color_name_bg);
-        color_fg_orig = get_color(color_name_fg);
+        color_bg_orig = get_color(x_conn->connection,
+                                  x_conn->screen,
+                                  color_name_bg);
+        color_fg_orig = get_color(x_conn->connection,
+                                  x_conn->screen,
+                                  color_name_fg);
 
         /* Setup the position of the starting text section. */
         cur = ts_start;
@@ -317,9 +332,13 @@ void donky_loop(void)
                                 break;*/
                         case TEXT_COLOR:
                                 if (cur->args == NULL)
-                                        color.pixel_fg = get_color(color_name_fg);
+                                        color.pixel_fg = get_color(x_conn->connection,
+                                                                   x_conn->screen,
+                                                                   color_name_fg);
                                 else
-                                        color.pixel_fg = get_color(cur->args);
+                                        color.pixel_fg = get_color(x_conn->connection,
+                                                                   x_conn->screen,
+                                                                   cur->args);
                                 break;
                         case TEXT_STATIC:
                                 /* If the xpos has changed since last drawn,
@@ -426,10 +445,11 @@ void donky_loop(void)
                 }
 
                 /* Render everything. */
-                render_queue_exec();
+                render_queue_exec(x_conn->connection,
+                                  &x_conn->window);
 
                 /* Flush XCB like a friggin' toilet. */
-                xcb_flush(connection);
+                xcb_flush(x_conn->connection);
 
                 /* Clear mem list... */
                 mem_list_clear();

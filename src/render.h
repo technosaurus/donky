@@ -41,14 +41,8 @@ struct render_queue {
         struct render_queue *next;
 };
 
-void render_text(char *str,
-                 xcb_font_t font,
-                 struct donky_color color,
-                 int16_t x,
-                 int16_t y);
-void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
-xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
-void render_queue_exec(void);
+void render_queue_exec(xcb_connection_t *connection,
+                       xcb_window_t *window);
 void render_queue_add(char *value,
                       struct donky_color color,
                       xcb_font_t font,

@@ -26,14 +26,22 @@
 #include "util.h"
 
 /* Function prototypes. */
-void render_text(char *str,
+void render_text(xcb_connection_t *connection,
+                 xcb_window_t *window,
+                 char *str,
                  xcb_font_t font,
                  struct donky_color color,
                  int16_t x,
                  int16_t y);
-void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
-xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
-void render_queue_exec(void);
+void clear_area(xcb_connection_t *connection,
+                xcb_window_t *window,
+                int16_t x, int16_t y, uint16_t w, uint16_t h);
+xcb_gc_t get_font_gc(xcb_connection_t *connection,
+                     xcb_window_t *window,
+                     xcb_font_t font,
+                     uint32_t pixel_bg, uint32_t pixel_fg);
+void render_queue_exec(xcb_connection_t *connection,
+                       xcb_window_t *window);
 void render_queue_add(char *value,
                       struct donky_color color,
                       xcb_font_t font,
@@ -52,7 +60,8 @@ struct render_queue *rq_end = NULL;
 /**
  * @brief Render everything in the render queue.
  */
-void render_queue_exec(void)
+void render_queue_exec(xcb_connection_t *connection,
+                       xcb_window_t *window)
 {
         struct render_queue *cur = rq_start, *next;
 
@@ -60,17 +69,23 @@ void render_queue_exec(void)
                 next = cur->next;
 
                 if (cur->is_last && cur->cl_width > 0 && cur->cl_height > 0)
-                        clear_area(cur->cl_xpos,
+                        clear_area(connection,
+                                   window,
+                                   cur->cl_xpos,
                                    cur->cl_ypos,
                                    window_width - cur->cl_xpos,
                                    cur->cl_height);
                 else if (cur->cl_width > 0 && cur->cl_height > 0)
-                        clear_area(cur->cl_xpos,
+                        clear_area(connection,
+                                   window,
+                                   cur->cl_xpos,
                                    cur->cl_ypos,
                                    cur->cl_width,
                                    cur->cl_height);
 
-                render_text(cur->value,
+                render_text(connection,
+                            window,
+                            cur->value,
                             cur->font,
                             cur->color,
                             *cur->xpos,
@@ -140,7 +155,9 @@ void render_queue_add(char *value,
  * 
  * @return Pixel length of printed string
  */
-void render_text(char *str,
+void render_text(xcb_connection_t *connection,
+                 xcb_window_t *window,
+                 char *str,
                  xcb_font_t font,
                  struct donky_color color,
                  int16_t x,
@@ -151,11 +168,14 @@ void render_text(char *str,
         uint8_t length;
         length = strlen(str);
 
-        gc = get_font_gc(font, color.pixel_bg, color.pixel_fg);
+        gc = get_font_gc(connection,
+                         window,
+                         font,
+                         color.pixel_bg, color.pixel_fg);
 
         xcb_image_text_8(connection,
                          length,
-                         window,
+                         *window,
                          gc,
                          x, y,
                          str);
@@ -171,11 +191,13 @@ void render_text(char *str,
  * @param w Width
  * @param h Height
  */
-void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h)
+void clear_area(xcb_connection_t *connection,
+                xcb_window_t *window,
+                int16_t x, int16_t y, uint16_t w, uint16_t h)
 {
         xcb_clear_area(connection,
                        0,
-                       window,
+                       *window,
                        x, y, w, h);
 }
 
@@ -186,16 +208,19 @@ void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h)
  *
  * @return Color's pixel.
  */
-uint32_t get_color(char *name)
+uint32_t get_color(xcb_connection_t *connection,
+                   xcb_screen_t *screen,
+                   char *name)
 {
-        xcb_alloc_named_color_reply_t *reply = xcb_alloc_named_color_reply(
-                connection,
-                xcb_alloc_named_color(connection,
-                                      screen->default_colormap,
-                                      strlen(name),
-                                      name),
-                &error
-        );
+        xcb_generic_error_t *error;
+
+        xcb_alloc_named_color_reply_t *reply;
+        reply = xcb_alloc_named_color_reply(connection,
+                                            xcb_alloc_named_color(connection,
+                                            screen->default_colormap,
+                                            strlen(name),
+                                            name),
+                                            &error);
         
         if (error) {
                 printf("get_color: Can't allocate color. Error: %d\n",
@@ -217,8 +242,12 @@ uint32_t get_color(char *name)
  * 
  * @return Font graphic context
  */
-xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg)
+xcb_gc_t get_font_gc(xcb_connection_t *connection,
+                     xcb_window_t *window,
+                     xcb_font_t font,
+                     uint32_t pixel_bg, uint32_t pixel_fg)
 {
+        xcb_generic_error_t *error;
         xcb_gcontext_t gc;
         xcb_void_cookie_t cookie_gc;
 
@@ -240,7 +269,7 @@ xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg)
 
         cookie_gc = xcb_create_gc_checked(connection,
                                           gc,
-                                          window,
+                                          *window,
                                           mask, value_list);
         error = xcb_request_check(connection, cookie_gc);
         if (error)

@@ -19,16 +19,6 @@
 #define X11_H
 
 #include <X11/Xlib.h>
-Display *x_display;
-
-xcb_connection_t *connection;
-xcb_screen_iterator_t screen_iter;
-const xcb_setup_t *setup;
-xcb_screen_t *screen;
-xcb_generic_error_t *error;
-int screen_number;
-xcb_window_t window;
-xcb_generic_event_t *event;
 
 uint32_t color_bg_orig;
 uint32_t color_fg_orig;
@@ -37,6 +27,13 @@ int window_width;
 int window_height;
 
 struct XFontStruct *font_struct_orig;
+
+struct x_connection {
+        Display *display;
+        xcb_connection_t *connection;
+        xcb_screen_t *screen;
+        xcb_window_t window;
+};
 
 #endif /* X11_H */
 
