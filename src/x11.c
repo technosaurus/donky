@@ -107,9 +107,9 @@ void draw_window(void)
         window_fgcolor_name = get_char_key("X11", "window_fgcolor");
 
         if (window_bgcolor_name == NULL)
-                window_bgcolor_name = strdup(DEFAULT_WINDOW_BGCOLOR);
+                window_bgcolor_name = d_strcpy(DEFAULT_WINDOW_BGCOLOR);
         if (window_fgcolor_name == NULL)
-                window_fgcolor_name = strdup(DEFAULT_WINDOW_FGCOLOR);
+                window_fgcolor_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
                 
         window_bgcolor = get_color(window_bgcolor_name);
         window_fgcolor = get_color(window_fgcolor_name);
@@ -139,20 +139,16 @@ void draw_window(void)
         if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
                 x_offset = 0 + x_gap;
                 y_offset = screen->height_in_pixels - window_height - y_gap;
-        }
-        else if (alignment && (strcasecmp(alignment, "top_left") == 0)) {
+        } else if (alignment && (strcasecmp(alignment, "top_left") == 0)) {
                 x_offset = 0 + x_gap;
                 y_offset = 0 + y_gap;
-        }
-        else if (alignment && (strcasecmp(alignment, "bottom_right") == 0)) {
+        } else if (alignment && (strcasecmp(alignment, "bottom_right") == 0)) {
                 x_offset = screen->width_in_pixels - window_width - x_gap;
                 y_offset = screen->height_in_pixels - window_height - y_gap;
-        }
-        else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
+        } else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
                 x_offset = screen->width_in_pixels - window_width - x_gap;
                 y_offset = 0 + y_gap;
-        }
-        else {
+        } else {
                 if (alignment)
                         printf("Unrecognized alignment: %s. Using bottom_left.\n", alignment);
                 else
@@ -240,7 +236,7 @@ void donky_loop(void)
         font_name = get_char_key("X11", "default_font");
 
         if (font_name == NULL)
-                font_name = strndup(DEFAULT_FONT, (sizeof(char) * strlen(DEFAULT_FONT)));
+                font_name = d_strcpy(DEFAULT_FONT);
 
         //font_orig = get_font(font_name);
         font_struct = XLoadQueryFont(x_display, font_name);
@@ -251,9 +247,9 @@ void donky_loop(void)
         color_name_fg = get_char_key("X11", "font_fgcolor");
 
         if (color_name_bg == NULL)
-                color_name_bg = strdup(DEFAULT_FONT_BGCOLOR);
+                color_name_bg = d_strcpy(DEFAULT_FONT_BGCOLOR);
         if (color_name_bg == NULL)
-                color_name_fg = strdup(DEFAULT_FONT_FGCOLOR);
+                color_name_fg = d_strcpy(DEFAULT_FONT_FGCOLOR);
 
         color_bg_orig = get_color(color_name_bg);
         color_fg_orig = get_color(color_name_fg);
