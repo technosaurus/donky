@@ -199,11 +199,8 @@ void text_section_add(char *value, int len, int line, enum text_section_type typ
                 n->args = args;
                 n->line = line;
                 n->pixel_width = 0;
-                n->old_pixel_width = 0;
                 n->xpos = -1;
                 n->ypos = -1;
-                n->old_xpos = -1;
-                n->old_ypos = -1;
                 n->timeout = 0.0;
                 n->last_update = 0.0;
                 n->mod_var = NULL;

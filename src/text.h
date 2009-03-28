@@ -32,12 +32,10 @@ struct text_section {
         char *args;                     /* Arguments given to a variable. ${...} */
         
         unsigned int line;              /* Line number, starts at 0. */
-        uint16_t pixel_width;       /* Pixel width of this section. */
-        uint16_t old_pixel_width;   /* Old width of this section. */
+        char result[64];
+        uint16_t pixel_width;           /* Pixel width of this section. */
         int16_t xpos;                   /* Current x position. */
         int16_t ypos;                   /* Current y position. */
-        int16_t old_xpos;               /* Old x position. */
-        int16_t old_ypos;               /* Old y position. */
 
         double timeout;                 /* How often to check for updates. */
         double last_update;             /* Time of the last update. */
