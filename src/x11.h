@@ -18,6 +18,9 @@
 #ifndef X11_H
 #define X11_H
 
+#include <X11/Xlib.h>
+Display *x_display;
+
 xcb_connection_t *connection;
 xcb_screen_iterator_t screen_iter;
 const xcb_setup_t *setup;
@@ -29,7 +32,9 @@ xcb_generic_event_t *event;
 
 uint32_t color_bg_orig;
 uint32_t color_fg_orig;
+
 xcb_font_t font_orig;
+struct XFontStruct *font_struct_orig;
 
 #endif /* X11_H */
 

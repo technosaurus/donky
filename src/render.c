@@ -339,8 +339,10 @@ xcb_char2b_t *build_chars(char *str, uint8_t length)
         int i;
         
         for (i = 0; i < length; i++) {
-                ret[0].byte1 = 0;
-                ret[0].byte2 = str[i];
+                if (str[i] < 128) {
+                        ret[0].byte1 = str[i];
+                        ret[0].byte2 = 0;
+                }
         }
 
         return ret;

@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <X11/Xlib.h>
+#include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <unistd.h>
 #include <time.h>
@@ -47,7 +49,9 @@ int y_offset;
 void init_x_connection(void)
 {
         /* connect to X server */
-        connection = xcb_connect(NULL, &screen_number);
+        x_display = XOpenDisplay(NULL);
+        //connection = xcb_connect(NULL, &screen_number);
+        connection = XGetXCBConnection(x_display);
 
         if (!connection) {
                 printf("Can't connect to X server.\n");
@@ -214,8 +218,8 @@ void draw_window(void)
 void donky_loop(void)
 {
         xcb_font_t font;
+        XFontStruct *font_struct;
         char *font_name;
-        xcb_query_text_extents_reply_t *extents;
         
         struct donky_color color;
         char *color_name_bg;
@@ -238,7 +242,9 @@ void donky_loop(void)
         if (font_name == NULL)
                 font_name = strndup(DEFAULT_FONT, (sizeof(char) * strlen(DEFAULT_FONT)));
 
-        font_orig = get_font(font_name);
+        //font_orig = get_font(font_name);
+        font_struct = XLoadQueryFont(x_display, font_name);
+        font_orig = font_struct->fid;
 
         /* Set up user configured or default font colors. */
         color_name_bg = get_char_key("X11", "font_bgcolor");
@@ -286,6 +292,8 @@ void donky_loop(void)
         /* Infinite donky loop! (TM) :o */
         while (1) {
                 font = font_orig;
+                /* whatever we'd have to put for the
+                 * Xlib font_struct here... */
                 color.pixel_bg = color_bg_orig;
                 color.pixel_fg = color_fg_orig;
 
@@ -293,17 +301,8 @@ void donky_loop(void)
                 module_var_cron_exec();
                 
                 while (cur) {
-                        extents = NULL;
                         offset = 0;
                         //printf("X pos = %d\n", cur->xpos);
-
-                        /* If our X position has changed, lets clear the area
-                         * where we used to be. */
-                        if (cur->xpos != cur->old_xpos)
-                                clear_queue_add(cur->old_xpos,
-                                                cur->old_ypos - font_y_offset,
-                                                cur->old_pixel_width,
-                                                window_height);
 
                         switch (cur->type) {
                         case TEXT_FONT:
@@ -330,24 +329,23 @@ void donky_loop(void)
                                 if (cur->old_xpos == -1 || cur->old_xpos != cur->xpos) {
                                         //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
                                         if (!cur->pixel_width) {
-                                                extents = get_extents(cur->value, font);
-                                                offset = extents->overall_width;
+                                                offset = XTextWidth(font_struct, cur->value, strlen(cur->value));
                                                 if (!cur->pixel_width && (!cur->old_pixel_width))
                                                         cur->pixel_width = cur->old_pixel_width = offset;
                                         } else
                                                 offset = cur->pixel_width;
+
+                                        if (cur->old_xpos != -1)
+                                                clear_queue_add(cur->old_xpos,
+                                                                cur->old_ypos - font_y_offset,
+                                                                cur->old_pixel_width,
+                                                                window_height);
 
                                         render_queue_add(cur->value,
                                                          color,
                                                          font,
                                                          &cur->xpos,
                                                          &cur->ypos);
-                                        /*
-                                        render_text(cur->value,
-                                                    font,
-                                                    color,
-                                                    cur->xpos,
-                                                    cur->ypos);*/
                                 }
                                 break;
                         case TEXT_VARIABLE:
@@ -376,23 +374,24 @@ void donky_loop(void)
                                 switch (mod->type) {
                                 case VARIABLE_STR:
                                         str = sym(cur->args);
-                                        extents = get_extents(str, font);
-                                        offset = extents->overall_width;
-                                        
-                                        /*render_text(str,
-                                                    font,
-                                                    color,
-                                                    cur->xpos,
-                                                    cur->ypos);*/
+                                        offset = XTextWidth(font_struct, str, strlen(str));
+
+                                        if (cur->pixel_width)
+                                                cur->old_pixel_width = cur->pixel_width;
+                                        cur->pixel_width = offset;
+
+                                        if (cur->old_xpos != -1)
+                                                clear_queue_add(cur->old_xpos,
+                                                                cur->old_ypos - font_y_offset,
+                                                                cur->old_pixel_width,
+                                                                window_height);
+
                                         render_queue_add(str,
                                                          color,
                                                          font,
                                                          &cur->xpos,
                                                          &cur->ypos);
                                                     
-                                        if (cur->pixel_width)
-                                                cur->old_pixel_width = cur->pixel_width;
-                                        cur->pixel_width = offset;
                                         break;
                                 case VARIABLE_BAR:
                                         break;
@@ -421,10 +420,6 @@ void donky_loop(void)
                         cur->old_xpos = cur->xpos;
                         cur->old_ypos = cur->ypos;
 
-                        /* Make sure we free this mother,
-                         * was leaking on me earlier! */
-                        freeif(extents);
-
                         /* Next node... */
                         cur = cur->next;
                 }
@@ -452,5 +447,6 @@ void donky_loop(void)
         freeif(font_name);
         freeif(color_name_bg);
         freeif(color_name_fg);
+        /* cleaning Xlib shiz up here too */
 }
 
