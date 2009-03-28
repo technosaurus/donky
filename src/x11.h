@@ -33,6 +33,9 @@ xcb_generic_event_t *event;
 uint32_t color_bg_orig;
 uint32_t color_fg_orig;
 
+int window_width;
+int window_height;
+
 xcb_font_t font_orig;
 struct XFontStruct *font_struct_orig;
 

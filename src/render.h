@@ -32,16 +32,13 @@ struct render_queue {
         int16_t *xpos;             /* Current x position. */
         int16_t *ypos;             /* Current y position. */
 
+        int16_t cl_xpos;
+        int16_t cl_ypos;
+        uint16_t cl_width;
+        uint16_t cl_height;
+        int is_last;
+
         struct render_queue *next;
-};
-
-struct clear_queue {
-        int16_t xpos;             /* Current x position. */
-        int16_t ypos;             /* Current y position. */
-        uint16_t width;
-        uint16_t height;
-
-        struct clear_queue *next;
 };
 
 void render_text(char *str,
@@ -50,21 +47,18 @@ void render_text(char *str,
                  int16_t x,
                  int16_t y);
 void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
-xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
-void close_font(xcb_font_t font);
-xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font);
 void render_queue_exec(void);
 void render_queue_add(char *value,
                       struct donky_color color,
                       xcb_font_t font,
                       int16_t *xpos,
-                      int16_t *ypos);
-void clear_queue_exec(void);
-void clear_queue_add(int16_t xpos,
-                     int16_t ypos,
-                     uint16_t width,
-                     uint16_t height);
+                      int16_t *ypos,
+                      int16_t cl_xpos,
+                      int16_t cl_ypos,
+                      int16_t cl_width,
+                      int16_t cl_height,
+                      int is_last);
 
 #endif /* RENDER_H */
 

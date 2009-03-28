@@ -36,8 +36,6 @@
 #include "mem.h"
 
 /* Globals. */
-int window_width;
-int window_height;
 int own_window;
 int x_offset;
 int y_offset;
@@ -65,11 +63,12 @@ void init_x_connection(void)
         screen_iter = xcb_setup_roots_iterator(setup);
 
         /* find our current screen */        
-        for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter))
+        for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter)) {
                 if (screen_number == 0) {
                         screen = screen_iter.data;
                         break;
                 }
+        }
 
         /* exit if we can't find it */
         if (!screen) {
@@ -222,6 +221,8 @@ void donky_loop(void)
         char *color_name_fg;
 
         uint16_t offset;
+
+        int is_last;
         
         int16_t font_x_offset;
         int16_t font_y_offset;
@@ -298,7 +299,11 @@ void donky_loop(void)
                 
                 while (cur) {
                         offset = 0;
-                        //printf("X pos = %d\n", cur->xpos);
+                        is_last = 0;
+
+                        if ((cur->next && cur->line != cur->next->line) ||
+                            cur->next == NULL)
+                            is_last = 1;
 
                         switch (cur->type) {
                         case TEXT_FONT:
@@ -328,20 +333,20 @@ void donky_loop(void)
                                                 offset = XTextWidth(font_struct, cur->value, strlen(cur->value));
                                                 if (!cur->pixel_width && (!cur->old_pixel_width))
                                                         cur->pixel_width = cur->old_pixel_width = offset;
-                                        } else
+                                        } else {
                                                 offset = cur->pixel_width;
-
-                                        if (cur->old_xpos != -1)
-                                                clear_queue_add(cur->old_xpos,
-                                                                cur->old_ypos - font_y_offset,
-                                                                cur->old_pixel_width,
-                                                                window_height);
+                                        }
 
                                         render_queue_add(cur->value,
                                                          color,
                                                          font,
                                                          &cur->xpos,
-                                                         &cur->ypos);
+                                                         &cur->ypos,
+                                                         cur->xpos,
+                                                         cur->ypos - font_y_offset,
+                                                         cur->pixel_width,
+                                                         window_height,
+                                                         is_last);
                                 }
                                 break;
                         case TEXT_VARIABLE:
@@ -376,17 +381,16 @@ void donky_loop(void)
                                                 cur->old_pixel_width = cur->pixel_width;
                                         cur->pixel_width = offset;
 
-                                        if (cur->old_xpos != -1)
-                                                clear_queue_add(cur->old_xpos,
-                                                                cur->old_ypos - font_y_offset,
-                                                                cur->old_pixel_width,
-                                                                window_height);
-
                                         render_queue_add(str,
                                                          color,
                                                          font,
                                                          &cur->xpos,
-                                                         &cur->ypos);
+                                                         &cur->ypos,
+                                                         cur->xpos,
+                                                         cur->ypos - font_y_offset,
+                                                         cur->pixel_width,
+                                                         window_height,
+                                                         is_last);
                                                     
                                         break;
                                 case VARIABLE_BAR:
@@ -421,7 +425,6 @@ void donky_loop(void)
                 }
 
                 /* Render everything and clear mem list... */
-                clear_queue_exec();
                 render_queue_exec();
                 mem_list_clear();
 
@@ -439,7 +442,6 @@ void donky_loop(void)
                         break;
         }
 
-        close_font(font_orig);
         freeif(font_name);
         freeif(color_name_bg);
         freeif(color_name_fg);

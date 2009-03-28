@@ -32,82 +32,22 @@ void render_text(char *str,
                  int16_t x,
                  int16_t y);
 void clear_area(int16_t x, int16_t y, uint16_t w, uint16_t h);
-xcb_font_t get_font(char *font_name);
 xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg);
-xcb_char2b_t *build_chars(char *str, uint8_t length);
 void render_queue_exec(void);
 void render_queue_add(char *value,
                       struct donky_color color,
                       xcb_font_t font,
                       int16_t *xpos,
-                      int16_t *ypos);
-void clear_queue_exec(void);
-void clear_queue_add(int16_t xpos,
-                     int16_t ypos,
-                     uint16_t width,
-                     uint16_t height);
+                      int16_t *ypos,
+                      int16_t cl_xpos,
+                      int16_t cl_ypos,
+                      int16_t cl_width,
+                      int16_t cl_height,
+                      int is_last);
 
 /* Globals. */
 struct render_queue *rq_start = NULL;
 struct render_queue *rq_end = NULL;
-
-struct clear_queue *cq_start = NULL;
-struct clear_queue *cq_end = NULL;
-
-/**
- * @brief Render everything in the render queue.
- */
-void clear_queue_exec(void)
-{
-        struct clear_queue *cur = cq_start, *next;
-
-        while (cur != NULL) {
-                next = cur->next;
-
-                clear_area(cur->xpos,
-                           cur->ypos,
-                           cur->width,
-                           cur->height);
-
-                free(cur);
-                
-                cur = next;
-        }
-
-        cq_start = NULL;
-        cq_end = NULL;
-}
-
-/**
- * @brief Add item to clear queue.
- *
- * @param xpos X position
- * @param ypos Y position
- * @param width Width
- * @param height Height
- */
-void clear_queue_add(int16_t xpos,
-                     int16_t ypos,
-                     uint16_t width,
-                     uint16_t height)
-{
-        struct clear_queue *n = malloc(sizeof(struct clear_queue));
-
-        n->xpos = xpos;
-        n->ypos = ypos;
-        n->width = width;
-        n->height = height;
-        n->next = NULL;
-        
-        /* Add to linked list. */
-        if (cq_start == NULL) {
-                cq_start = n;
-                cq_end = n;
-        } else {
-                cq_end->next = n;
-                cq_end = n;
-        }
-}
 
 /**
  * @brief Render everything in the render queue.
@@ -118,6 +58,17 @@ void render_queue_exec(void)
 
         while (cur != NULL) {
                 next = cur->next;
+
+                if (cur->is_last && cur->cl_width > 0 && cur->cl_height > 0)
+                        clear_area(cur->cl_xpos,
+                                   cur->cl_ypos,
+                                   window_width - cur->cl_xpos,
+                                   cur->cl_height);
+                else if (cur->cl_width > 0 && cur->cl_height > 0)
+                        clear_area(cur->cl_xpos,
+                                   cur->cl_ypos,
+                                   cur->cl_width,
+                                   cur->cl_height);
 
                 render_text(cur->value,
                             cur->font,
@@ -146,7 +97,12 @@ void render_queue_add(char *value,
                       struct donky_color color,
                       xcb_font_t font,
                       int16_t *xpos,
-                      int16_t *ypos)
+                      int16_t *ypos,
+                      int16_t cl_xpos,
+                      int16_t cl_ypos,
+                      int16_t cl_width,
+                      int16_t cl_height,
+                      int is_last)
 {
         struct render_queue *n = malloc(sizeof(struct render_queue));
 
@@ -155,6 +111,13 @@ void render_queue_add(char *value,
         n->font = font;
         n->xpos = xpos;
         n->ypos = ypos;
+
+        n->cl_xpos = cl_xpos;
+        n->cl_ypos = cl_ypos;
+        n->cl_width = cl_width;
+        n->cl_height = cl_height;
+        n->is_last = is_last;
+        
         n->next = NULL;
         
         /* Add to linked list. */
@@ -248,35 +211,6 @@ uint32_t get_color(char *name)
 }
 
 /** 
- * @brief Open and return a font
- * 
- * @param font_name Name of font to open
- * 
- * @return Opened font
- */
-xcb_font_t get_font(char *font_name)
-{
-        xcb_font_t font;
-        xcb_void_cookie_t cookie_font;
-
-        font = xcb_generate_id(connection);
-        cookie_font = xcb_open_font_checked(connection,
-                                            font,
-                                            strlen(font_name),
-                                            font_name);
-
-        error = xcb_request_check(connection, cookie_font);
-        if (error) {
-                printf("get_font: Can't open font [%s]. Error: %d\n",
-                       font_name,
-                       error->error_code);
-                return font_orig;
-        }
-
-        return font;
-}
-
-/** 
  * @brief Create a font graphic context
  * 
  * @param font Font to use in creation
@@ -313,73 +247,4 @@ xcb_gc_t get_font_gc(xcb_font_t font, uint32_t pixel_bg, uint32_t pixel_fg)
                 printf("get_font: Can't create graphic context. Error: %d\n", error->error_code);
 
         return gc;
-}
-
-/** 
- * @brief Closes an open font
- * 
- * @param font Font to close
- */
-void close_font(xcb_font_t font)
-{
-        xcb_close_font(connection, font);
-}
-
-/** 
- * @brief Uh... what lobo said...
- * 
- * @param str String to convert
- * @param length Length of string
- * 
- * @return Insanity
- */
-xcb_char2b_t *build_chars(char *str, uint8_t length)
-{
-        xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
-        int i;
-        
-        for (i = 0; i < length; i++) {
-                if (str[i] < 128) {
-                        ret[0].byte1 = str[i];
-                        ret[0].byte2 = 0;
-                }
-        }
-
-        return ret;
-}
-
-/**
- * @brief Get the text extents of a given string and font.
- *
- * @param str String...
- * @param font Font structure
- *
- * @return The text extents reply structure.
- */
-xcb_query_text_extents_reply_t *get_extents(char *str, xcb_font_t font)
-{
-        uint8_t length;
-        length = strlen(str);
-
-        xcb_char2b_t *chars;
-        xcb_query_text_extents_cookie_t cookie_extents;
-        xcb_query_text_extents_reply_t *extents_reply;
-
-        chars = build_chars(str, length);
-
-        cookie_extents = xcb_query_text_extents(connection,
-                                                font,
-                                                strlen(str),
-                                                chars);
-
-        extents_reply = xcb_query_text_extents_reply(connection,
-                                                     cookie_extents,
-                                                     &error);
-
-        if (error)
-                printf("render_text: Can't get extents reply. Error: %d\n", error->error_code);
-
-        freeif(chars);
-
-        return extents_reply;
 }
