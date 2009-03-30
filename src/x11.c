@@ -40,6 +40,21 @@ int own_window;
 int x_offset;
 int y_offset;
 
+struct donky_draw_settings {
+        xcb_font_t font;
+        XFontStruct *font_struct;
+        char *font_name;
+
+        struct donky_color color;
+        char *color_name_bg;
+        char *color_name_fg;
+
+        int16_t font_x_offset;
+        int16_t font_y_offset;
+
+        struct timespec tspec;
+};
+
 /** 
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
@@ -215,24 +230,75 @@ void draw_window(struct x_connection *x_conn)
         }
 }
 
+/**
+ * @brief Load all the donky draw settings.
+ *
+ * @return Malloc'd donky_draw_settings structure
+ */
+struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn)
+{
+        struct donky_draw_settings *dds = malloc(sizeof(struct donky_draw_settings));
+
+        /* Set up user configured font or default font. */
+        dds->font_name = get_char_key("X11", "default_font");
+
+        if (dds->font_name == NULL)
+                dds->font_name = d_strcpy(DEFAULT_FONT);
+
+        dds->font_struct = XLoadQueryFont(x_conn->display, dds->font_name);
+        dds->font = dds->font_struct->fid;
+
+        /* Set up user configured or default font colors. */
+        dds->color_name_bg = get_char_key("X11", "font_bgcolor");
+        dds->color_name_fg = get_char_key("X11", "font_fgcolor");
+
+        if (dds->color_name_bg == NULL)
+                dds->color_name_bg = d_strcpy(DEFAULT_FONT_BGCOLOR);
+        if (dds->color_name_bg == NULL)
+                dds->color_name_fg = d_strcpy(DEFAULT_FONT_FGCOLOR);
+
+        color_bg_orig = get_color(x_conn->connection,
+                                  x_conn->screen,
+                                  dds->color_name_bg);
+        color_fg_orig = get_color(x_conn->connection,
+                                  x_conn->screen,
+                                  dds->color_name_fg);
+
+        /* Setup the position of the starting text section. */
+        dds->font_x_offset = get_int_key("X11", "font_x_offset");
+        dds->font_y_offset = get_int_key("X11", "font_y_offset");
+
+        if (dds->font_x_offset < 0)
+                dds->font_x_offset = 0;
+        if (dds->font_y_offset < 0)
+                dds->font_y_offset = 0;
+
+        /* for alignment to work on root drawing */
+        if (own_window == 0) {
+                dds->font_x_offset += x_offset;
+                dds->font_y_offset += y_offset;
+        }
+
+        /* Setup minimum sleep time. */
+        double min_sleep = get_double_key("X11", "global_sleep");
+        
+        if (min_sleep < 0)
+                min_sleep = 1.0;
+                
+        int min_seconds = floor(min_sleep);
+        long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
+        dds->tspec.tv_sec = min_seconds;
+        dds->tspec.tv_nsec = min_nanosec;
+
+        return dds;
+}
 
 /** 
  * @brief Main donky loop.
  */
 void donky_loop(struct x_connection *x_conn)
 {
-        xcb_font_t font;
-        XFontStruct *font_struct;
-        char *font_name;
-        
-        struct donky_color color;
-        char *color_name_bg;
-        char *color_name_fg;
-
         int is_last;
-        
-        int16_t font_x_offset;
-        int16_t font_y_offset;
 
         char *str;
         char *(*sym)(char *);
@@ -241,72 +307,20 @@ void donky_loop(struct x_connection *x_conn)
         int16_t new_xpos;
         int16_t new_ypos;
 
-        struct text_section *cur;
+        struct text_section *cur = ts_start;
+        struct donky_draw_settings *dds = donky_draw_settings_load(x_conn);
 
         //xcb_generic_event_t *event;
 
-        /* Set up user configured font or default font. */
-        font_name = get_char_key("X11", "default_font");
-
-        if (font_name == NULL)
-                font_name = d_strcpy(DEFAULT_FONT);
-
-        font_struct = XLoadQueryFont(x_conn->display, font_name);
-        font = font_struct->fid;
-
-        /* Set up user configured or default font colors. */
-        color_name_bg = get_char_key("X11", "font_bgcolor");
-        color_name_fg = get_char_key("X11", "font_fgcolor");
-
-        if (color_name_bg == NULL)
-                color_name_bg = d_strcpy(DEFAULT_FONT_BGCOLOR);
-        if (color_name_bg == NULL)
-                color_name_fg = d_strcpy(DEFAULT_FONT_FGCOLOR);
-
-        color_bg_orig = get_color(x_conn->connection,
-                                  x_conn->screen,
-                                  color_name_bg);
-        color_fg_orig = get_color(x_conn->connection,
-                                  x_conn->screen,
-                                  color_name_fg);
-
-        /* Setup the position of the starting text section. */
-        cur = ts_start;
-        font_x_offset = get_int_key("X11", "font_x_offset");
-        font_y_offset = get_int_key("X11", "font_y_offset");
-
-        if (font_x_offset < 0)
-                font_x_offset = 0;
-        if (font_y_offset < 0)
-                font_y_offset = 0;
-
-        /* for alignment to work on root drawing */
-        if (own_window == 0) {
-                font_x_offset += x_offset;
-                font_y_offset += y_offset;
-        }
-
         /* new_xpos and new_ypos hold the coords
          * of where we'll be drawing anything new */
-        new_xpos = font_x_offset;
-        new_ypos = font_y_offset;
-
-        /* Setup minimum sleep time. */
-        struct timespec tspec;
-        double min_sleep = get_double_key("X11", "global_sleep");
-        
-        if (min_sleep < 0)
-                min_sleep = 1.0;
-                
-        int min_seconds = floor(min_sleep);
-        long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
-        tspec.tv_sec = min_seconds;
-        tspec.tv_nsec = min_nanosec;
+        new_xpos = dds->font_x_offset;
+        new_ypos = dds->font_y_offset;
 
         /* Infinite donky loop! (TM) :o */
         while (1) {
-                color.pixel_bg = color_bg_orig;
-                color.pixel_fg = color_fg_orig;
+                dds->color.pixel_bg = color_bg_orig;
+                dds->color.pixel_fg = color_fg_orig;
 
                 /* Execute cron tabs. */
                 module_var_cron_exec();
@@ -332,13 +346,13 @@ void donky_loop(struct x_connection *x_conn)
                                 break;*/
                         case TEXT_COLOR:
                                 if (cur->args == NULL)
-                                        color.pixel_fg = get_color(x_conn->connection,
-                                                                   x_conn->screen,
-                                                                   color_name_fg);
+                                        dds->color.pixel_fg = get_color(x_conn->connection,
+                                                                        x_conn->screen,
+                                                                        dds->color_name_fg);
                                 else
-                                        color.pixel_fg = get_color(x_conn->connection,
-                                                                   x_conn->screen,
-                                                                   cur->args);
+                                        dds->color.pixel_fg = get_color(x_conn->connection,
+                                                                        x_conn->screen,
+                                                                        cur->args);
                                 break;
                         case TEXT_STATIC:
                                 /* If the xpos has changed since last drawn,
@@ -347,18 +361,20 @@ void donky_loop(struct x_connection *x_conn)
                                 if (cur->xpos == -1 || cur->xpos != new_xpos) {
                                         //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
                                         if (!cur->pixel_width)
-                                                cur->pixel_width = XTextWidth(font_struct, cur->value, strlen(cur->value));
+                                                cur->pixel_width = XTextWidth(dds->font_struct,
+                                                                              cur->value,
+                                                                              strlen(cur->value));
 
                                         cur->xpos = new_xpos;
                                         cur->ypos = new_ypos;
 
                                         render_queue_add(cur->value,
-                                                         color,
-                                                         font,
+                                                         dds->color,
+                                                         dds->font,
                                                          &cur->xpos,
                                                          &cur->ypos,
                                                          cur->xpos,
-                                                         cur->ypos - font_y_offset,
+                                                         cur->ypos - dds->font_y_offset,
                                                          cur->pixel_width,
                                                          window_height,
                                                          is_last);
@@ -398,17 +414,17 @@ void donky_loop(struct x_connection *x_conn)
                                                 //printf("Updating... %s\n", mod->name);
                                         }
 
-                                        cur->pixel_width = XTextWidth(font_struct,
+                                        cur->pixel_width = XTextWidth(dds->font_struct,
                                                                       cur->result,
                                                                       strlen(cur->result));
 
                                         render_queue_add(cur->result,
-                                                         color,
-                                                         font,
+                                                         dds->color,
+                                                         dds->font,
                                                          &cur->xpos,
                                                          &cur->ypos,
                                                          cur->xpos,
-                                                         cur->ypos - font_y_offset,
+                                                         cur->ypos - dds->font_y_offset,
                                                          cur->pixel_width,
                                                          window_height,
                                                          is_last);
@@ -436,8 +452,8 @@ void donky_loop(struct x_connection *x_conn)
                                 new_xpos += cur->pixel_width;
                                 //new_ypos += TODO
                         } else {
-                                new_xpos = font_x_offset;
-                                new_ypos = font_y_offset;
+                                new_xpos = dds->font_x_offset;
+                                new_ypos = dds->font_y_offset;
                         }
 
                         /* Next node... */
@@ -461,13 +477,14 @@ void donky_loop(struct x_connection *x_conn)
                  * returns -1 if it detects a signal hander being invoked, so
                  * we opt to break from the loop since it will probably be the
                  * reload or kill handler. */
-                if (nanosleep(&tspec, NULL) == -1)
+                if (nanosleep(&dds->tspec, NULL) == -1)
                         break;
         }
 
-        freeif(font_name);
-        freeif(color_name_bg);
-        freeif(color_name_fg);
+        freeif(dds->font_name);
+        freeif(dds->color_name_bg);
+        freeif(dds->color_name_fg);
+        freeif(dds);
         /* cleaning Xlib shiz up here too */
 }
 
