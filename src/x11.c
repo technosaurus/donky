@@ -40,21 +40,6 @@ int own_window;
 int x_offset;
 int y_offset;
 
-struct donky_draw_settings {
-        xcb_font_t font;
-        XFontStruct *font_struct;
-        char *font_name;
-
-        struct donky_color color;
-        char *color_name_bg;
-        char *color_name_fg;
-
-        int16_t font_x_offset;
-        int16_t font_y_offset;
-
-        struct timespec tspec;
-};
-
 /** 
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
@@ -257,10 +242,10 @@ struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn
         if (dds->color_name_bg == NULL)
                 dds->color_name_fg = d_strcpy(DEFAULT_FONT_FGCOLOR);
 
-        color_bg_orig = get_color(x_conn->connection,
+        dds->color_bg_orig = get_color(x_conn->connection,
                                   x_conn->screen,
                                   dds->color_name_bg);
-        color_fg_orig = get_color(x_conn->connection,
+        dds->color_fg_orig = get_color(x_conn->connection,
                                   x_conn->screen,
                                   dds->color_name_fg);
 
@@ -307,6 +292,9 @@ void donky_loop(struct x_connection *x_conn)
         int16_t new_xpos;
         int16_t new_ypos;
 
+        xcb_generic_event_t *e;
+        uint8_t force = 0;
+
         struct text_section *cur = ts_start;
         struct donky_draw_settings *dds = donky_draw_settings_load(x_conn);
 
@@ -319,8 +307,20 @@ void donky_loop(struct x_connection *x_conn)
 
         /* Infinite donky loop! (TM) :o */
         while (1) {
-                dds->color.pixel_bg = color_bg_orig;
-                dds->color.pixel_fg = color_fg_orig;
+
+                while (e = xcb_poll_for_event(x_conn->connection)) {
+                        switch (e->response_type & ~0x80) {
+                                case XCB_EXPOSE:
+                                        force = 1;
+                                        break;
+                                default:
+                                        break;
+                        }
+                        free(e);
+                }
+
+                dds->color.pixel_bg = dds->color_bg_orig;
+                dds->color.pixel_fg = dds->color_fg_orig;
 
                 /* Execute cron tabs. */
                 module_var_cron_exec();
@@ -358,7 +358,7 @@ void donky_loop(struct x_connection *x_conn)
                                 /* If the xpos has changed since last drawn,
                                  * we will need to redraw this static text.
                                  * Otherwise, we never redraw it! */
-                                if (cur->xpos == -1 || cur->xpos != new_xpos) {
+                                if (cur->xpos == -1 || (cur->xpos != new_xpos) || force) {
                                         //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
                                         if (!cur->pixel_width)
                                                 cur->pixel_width = XTextWidth(dds->font_struct,
@@ -391,9 +391,10 @@ void donky_loop(struct x_connection *x_conn)
                                  * 
                                  * NOTE: we should update if our
                                  * xpos has changed! */
-                                if (((get_time() - cur->last_update < cur->timeout) ||
-                                     (cur->timeout == 0 && (cur->last_update != 0))) &&
-                                    (cur->xpos == new_xpos)) {
+                                if (!force &&
+                                    (((get_time() - cur->last_update < cur->timeout) ||
+                                      (cur->timeout == 0 && (cur->last_update != 0))) &&
+                                     (cur->xpos == new_xpos))) {
                                         //printf("WAITING... %s\n", mod->name);
                                         break;
                                 }
@@ -480,6 +481,9 @@ void donky_loop(struct x_connection *x_conn)
                 if (nanosleep(&dds->tspec, NULL) == -1)
                         break;
         }
+
+        if (force == 1)
+                force = 0;
 
         freeif(dds->font_name);
         freeif(dds->color_name_bg);

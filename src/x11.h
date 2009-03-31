@@ -19,20 +19,34 @@
 #define X11_H
 
 #include <X11/Xlib.h>
-
-uint32_t color_bg_orig;
-uint32_t color_fg_orig;
+#include "render.h"
 
 int window_width;
 int window_height;
-
-struct XFontStruct *font_struct_orig;
 
 struct x_connection {
         Display *display;
         xcb_connection_t *connection;
         xcb_screen_t *screen;
         xcb_window_t window;
+};
+
+struct donky_draw_settings {
+        xcb_font_t font;
+        XFontStruct *font_struct;
+        char *font_name;
+
+        struct donky_color color;
+        uint32_t color_bg_orig;
+        uint32_t color_fg_orig;
+
+        char *color_name_bg;
+        char *color_name_fg;
+
+        int16_t font_x_offset;
+        int16_t font_y_offset;
+
+        struct timespec tspec;
 };
 
 #endif /* X11_H */

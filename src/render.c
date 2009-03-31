@@ -226,7 +226,7 @@ uint32_t get_color(xcb_connection_t *connection,
                 printf("get_color: Can't allocate color. Error: %d\n",
                        error->error_code);
                 freeif(reply);
-                return color_fg_orig;
+                exit(EXIT_FAILURE);
         }
 
         uint32_t my_pixel = reply->pixel;

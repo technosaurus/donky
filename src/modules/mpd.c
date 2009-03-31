@@ -48,22 +48,22 @@ FILE *sockin, *sockout;
 struct mpd_info {
         /* currentsong */
         char file[256];
-        char artist[36];
-        char title[36];
-        char album[36];
-        char track[4];
+        char artist[64];
+        char title[64];
+        char album[64];
+        char track[8];
         char date[8];
-        char genre[36];
+        char genre[32];
 
         /* status */
         char volume[4];
         char repeat[4];
         char random[4];
-        char playlist[12];
-        char playlistlength[12];
+        char playlist[8];
+        char playlistlength[8];
         char xfade[4];
-        char state[16];
-        char song[4];
+        char state[12];
+        char song[8];
         char etime[8];
         char ttime[8];
         char bitrate[8];
@@ -125,112 +125,167 @@ void run_cron(void)
 
 void pop_status(void)
 {
-        char buffer[256];
-        char *str;
+        char buffer[128];
+
+        /* will be used for \n search & removal */
+        char *p = NULL;
+        char *c = NULL;
+
+        /* will be used for etime and ttime */
         int elapsed, total;
+
+        size_t n = sizeof(char);
         
         /* currentsong */
         fprintf(sockout, "status\r\n");
         fflush(sockout);
 
         while (fgets(buffer, sizeof(buffer), sockin)) {
-                str = NULL;
-
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (sscanf(buffer, "volume: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.volume, sizeof(mpdinfo.volume),
-                                 "%s", str);
-                else if (sscanf(buffer, "repeat: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.repeat, sizeof(mpdinfo.repeat),
-                                 "%s", str);
-                else if (sscanf(buffer, "random: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.random, sizeof(mpdinfo.random),
-                                 "%s", str);
-                else if (sscanf(buffer, "playlist: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.playlist, sizeof(mpdinfo.playlist),
-                                 "%s", str);
-                else if (sscanf(buffer, "playlistlength: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.playlistlength, sizeof(mpdinfo.playlistlength),
-                                 "%s", str);
-                else if (sscanf(buffer, "xfade: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.xfade, sizeof(mpdinfo.xfade),
-                                 "%s", str);
-                else if (sscanf(buffer, "state: %a[^\r\n]", &str) == 1) {
-                        if (!strncmp(str, "pl", (2 * sizeof(char))))
-                                snprintf(mpdinfo.state,
-                                         sizeof(mpdinfo.state),
-                                         "%s", "Playing");
-                        else if (!strncmp(str, "pa", (2 * sizeof(char))))
-                                snprintf(mpdinfo.state,
-                                         sizeof(mpdinfo.state),
-                                         "%s", "Paused");
-                        else if (!strncmp(str, "st", (2 * sizeof(char))))
-                                snprintf(mpdinfo.state,
-                                         sizeof(mpdinfo.state),
-                                         "%s", "Stopped");
+                /* "volume" is 6 characters long.
+                 * (buffer + 8) is where the actual value of "volume"
+                 * begins in the string. This offset of 2 generalizes
+                 * for every other variable minus checking
+                 * playlist vs playlistlength and the etime and ttime
+                 * variables for which we use sscanf instead. */
+                else if (!strncmp(buffer, "volume", 6))
+                        p = strncpy(mpdinfo.volume,
+                                    (buffer + 8),
+                                    sizeof(mpdinfo.volume) - n);
+                else if (!strncmp(buffer, "repeat", 6))
+                        p = strncpy(mpdinfo.repeat,
+                                    (buffer + 8),
+                                    sizeof(mpdinfo.repeat) - n);
+                else if (!strncmp(buffer, "random", 6))
+                        p = strncpy(mpdinfo.random,
+                                    (buffer + 8),
+                                    sizeof(mpdinfo.random) - n);
+                /* We must include the ":" here, else this would match
+                 * both "playlist" and "playlistlength" */
+                else if (!strncmp(buffer, "playlist:", 9))
+                        p = strncpy(mpdinfo.playlist,
+                                    /* ...so the offset is only +1 */
+                                    (buffer + 10),
+                                    sizeof(mpdinfo.playlist) - n);
+                else if (!strncmp(buffer, "playlistlength", 14))
+                        p = strncpy(mpdinfo.playlistlength,
+                                    (buffer + 16),
+                                    sizeof(mpdinfo.playlistlength) - n);
+                else if (!strncmp(buffer, "xfade", 5))
+                        p = strncpy(mpdinfo.xfade,
+                                    (buffer + 7),
+                                    sizeof(mpdinfo.xfade) - n);
+                else if (!strncmp(buffer, "state", 5)) {
+                        /* MPD state is one of:
+                         * "play", "pause", or "stop". 
+                         * These are not very readable, so we
+                         * instead store the state as:
+                         * "Playing", "Paused", or "Stopped". */
+                        if (!strncmp((buffer + 7), "pl", 2))
+                                strncpy(mpdinfo.state,
+                                        "Playing",
+                                        sizeof(mpdinfo.state) - n);
+                        else if (!strncmp((buffer + 7), "pa", 2))
+                                strncpy(mpdinfo.state,
+                                        "Paused",
+                                        sizeof(mpdinfo.state) - n);
+                        else if (!strncmp((buffer + 7), "st", 2))
+                                strncpy(mpdinfo.state,
+                                        "Stopped",
+                                        sizeof(mpdinfo.state) - n);
                 }
-                else if (sscanf(buffer, "song: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.song, sizeof(mpdinfo.song),
-                                 "%s", str);
+                else if (!strncmp(buffer, "song", 4))
+                        p = strncpy(mpdinfo.song,
+                                    (buffer + 6),
+                                    sizeof(mpdinfo.song) - n);
+                /* MPD gives track elapsed time and total time in an
+                 * elapsed:total format, in seconds. This extracts
+                 * those numbers and turns them into 2 separate
+                 * elements in MM:SS format. */
                 else if (sscanf(buffer, "time: %d:%d", &elapsed, &total) == 2) {
                         snprintf(mpdinfo.etime,
-                                 sizeof(mpdinfo.etime),
+                                 sizeof(mpdinfo.etime) - n,
+                                 /* %.2d gives us a leading zero */
                                  "%.2d:%.2d",
+                                 /* minutes */   /* seconds */
                                  (elapsed / 60), (elapsed % 60));
                         snprintf(mpdinfo.ttime,
-                                 sizeof(mpdinfo.ttime),
+                                 sizeof(mpdinfo.ttime) - n,
                                  "%.2d:%.2d",
                                  (total / 60), (total % 60));
                 }
-                else if (sscanf(buffer, "bitrate: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.bitrate, sizeof(mpdinfo.bitrate),
-                                 "%s", str);
-                else if (sscanf(buffer, "audio: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.audio, sizeof(mpdinfo.audio),
-                                 "%s", str);
+                else if (!strncmp(buffer, "bitrate", 7))
+                        p = strncpy(mpdinfo.bitrate,
+                                    (buffer + 9),
+                                    sizeof(mpdinfo.bitrate) - n);
+                else if (!strncmp(buffer, "audio", 5))
+                        p = strncpy(mpdinfo.audio,
+                                    (buffer + 7),
+                                    sizeof(mpdinfo.audio) - n);
 
-                freeif(str);
+                /* Remove newline if there is one. */
+                if (p) {
+                        if (c = strchr(p, '\n')) {
+                                *c = '\0';
+                                c = NULL;
+                        }
+                        p = NULL;
+                }
         }
 }
 
+/* The comments of the previous function also apply to this one. */
 void pop_currentsong(void)
 {
-        char buffer[256];
-        char *str;
+        char buffer[128];
+        char *p = NULL;
+        char *c = NULL;
+        size_t n = sizeof(char);
         
         /* currentsong */
         fprintf(sockout, "currentsong\r\n");
         fflush(sockout);
 
         while (fgets(buffer, sizeof(buffer), sockin)) {
-                str = NULL;
-
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (sscanf(buffer, "file: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.file, sizeof(mpdinfo.file),
-                                 "%s", str);
-                else if (sscanf(buffer, "Artist: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.artist, sizeof(mpdinfo.artist),
-                                 "%s", str);
-                else if (sscanf(buffer, "Title: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.title, sizeof(mpdinfo.title),
-                                 "%s", str);
-                else if (sscanf(buffer, "Album: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.album, sizeof(mpdinfo.album),
-                                 "%s", str);
-                else if (sscanf(buffer, "Track: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.track, sizeof(mpdinfo.track),
-                                 "%s", str);
-                else if (sscanf(buffer, "Date: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.date, sizeof(mpdinfo.date),
-                                 "%s", str);
-                else if (sscanf(buffer, "Genre: %a[^\r\n]", &str) == 1)
-                        snprintf(mpdinfo.genre, sizeof(mpdinfo.genre),
-                                 "%s", str);
-                                 
-                freeif(str);
+                else if (!strncmp(buffer, "file", 4))
+                        p = strncpy(mpdinfo.file,
+                                    (buffer + 6),
+                                    sizeof(mpdinfo.file) - n);
+                else if (!strncmp(buffer, "Artist", 6))
+                        p = strncpy(mpdinfo.artist,
+                                    (buffer + 8),
+                                    sizeof(mpdinfo.artist) - n);
+                else if (!strncmp(buffer, "Title", 5))
+                        p = strncpy(mpdinfo.title,
+                                    (buffer + 7),
+                                    sizeof(mpdinfo.title) - n);
+                else if (!strncmp(buffer, "Album", 5))
+                        p = strncpy(mpdinfo.album,
+                                    (buffer + 7),
+                                    sizeof(mpdinfo.album) - n);
+                else if (!strncmp(buffer, "Track", 5))
+                        p = strncpy(mpdinfo.track,
+                                    (buffer + 7),
+                                    sizeof(mpdinfo.track) - n);
+                else if (!strncmp(buffer, "Date", 4))
+                        p = strncpy(mpdinfo.date,
+                                    (buffer + 6),
+                                    sizeof(mpdinfo.date) - n);
+                else if (!strncmp(buffer, "Genre", 5))
+                        p = strncpy(mpdinfo.genre,
+                                    (buffer + 7),
+                                    sizeof(mpdinfo.genre) - n);
+
+                if (p) {
+                        if (c = strchr(p, '\n')) {
+                                *c = '\0';
+                                c = NULL;
+                        }
+                        p = NULL;
+                }
         }
 }
 

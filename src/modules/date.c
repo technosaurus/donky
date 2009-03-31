@@ -60,7 +60,7 @@ void module_destroy(void)
  */
 char *get_date(char *args)
 {        
-        char *ret_value = m_calloc(200, sizeof(char));
+        char ret_value[96];
         time_t t;
         struct tm *tmp;
 
@@ -68,10 +68,12 @@ char *get_date(char *args)
         tmp = localtime(&t);
 
         if (tmp == NULL)
-                return strncpy(ret_value, "n/a", 200);
+                return strncpy(ret_value, "n/a", sizeof("n/a"));
 
-        if (strftime(ret_value, 200, args, tmp) == 0)
-                return strncpy(ret_value, "n/a", 200);
+        if (strftime(ret_value,
+                     sizeof(ret_value) - sizeof(char),
+                     args, tmp) == 0)
+                return strncpy(ret_value, "n/a", sizeof("n/a"));
 
         return ret_value;
 }

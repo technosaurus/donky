@@ -55,7 +55,7 @@ char *get_scpufreq(char *args)
 
         if (args == NULL)
                 strncpy(path,
-                        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq\0",
+                        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq",
                         (54 * sizeof(char)));
         else
                 snprintf(path,

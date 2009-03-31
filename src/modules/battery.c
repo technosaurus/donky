@@ -63,7 +63,7 @@ char *get_battery(char *args)
 
         if (args == NULL)
                 strncpy(path,
-                        "/sys/class/power_supply/BAT0/charge_now\0",
+                        "/sys/class/power_supply/BAT0/charge_now",
                         (40 * sizeof(char)));
         else
                 snprintf(path,
