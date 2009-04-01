@@ -254,9 +254,15 @@ struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn
         dds->font_y_offset = get_int_key("X11", "font_y_offset");
 
         if (dds->font_x_offset < 0)
-                dds->font_x_offset = 0;
+                dds->font_x_offset = DEFAULT_FONT_X_OFFSET;
         if (dds->font_y_offset < 0)
-                dds->font_y_offset = 0;
+                dds->font_y_offset = DEFAULT_FONT_Y_OFFSET;
+
+        /* Setup the position of the starting text section. */
+        dds->minimum_line_height = get_int_key("X11", "minimum_line_height");
+
+        if (dds->minimum_line_height < 0)
+                dds->minimum_line_height = DEFAULT_MINIMUM_LINE_HEIGHT;
 
         /* for alignment to work on root drawing */
         if (own_window == 0) {
@@ -268,7 +274,7 @@ struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn
         double min_sleep = get_double_key("X11", "global_sleep");
         
         if (min_sleep < 0)
-                min_sleep = 1.0;
+                min_sleep = DEFAULT_GLOBAL_SLEEP;
                 
         int min_seconds = floor(min_sleep);
         long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
@@ -293,12 +299,23 @@ void donky_loop(struct x_connection *x_conn)
         int16_t new_ypos;
 
         xcb_generic_event_t *e;
-        uint8_t force = 0;
+        uint8_t force;
 
         struct text_section *cur = ts_start;
         struct donky_draw_settings *dds = donky_draw_settings_load(x_conn);
 
-        //xcb_generic_event_t *event;
+        /* XTextExtents crap. */
+        int direction_return;
+        int font_ascent_return;
+        int font_descent_return;
+        XCharStruct overall_return;
+
+        /* Line height pewp. */
+        int *line_heights = calloc(sizeof(int), ts_end->line + 1);
+        int calcd_line_heights = 0;
+        int height;
+        int linediff;
+        int i;
 
         /* new_xpos and new_ypos hold the coords
          * of where we'll be drawing anything new */
@@ -307,8 +324,10 @@ void donky_loop(struct x_connection *x_conn)
 
         /* Infinite donky loop! (TM) :o */
         while (1) {
-
-                while (e = xcb_poll_for_event(x_conn->connection)) {
+                force = 0;
+                
+                /* Do a quick event poll. */
+                if (e = xcb_poll_for_event(x_conn->connection)) {
                         switch (e->response_type & ~0x80) {
                                 case XCB_EXPOSE:
                                         force = 1;
@@ -360,10 +379,27 @@ void donky_loop(struct x_connection *x_conn)
                                  * Otherwise, we never redraw it! */
                                 if (cur->xpos == -1 || (cur->xpos != new_xpos) || force) {
                                         //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
-                                        if (!cur->pixel_width)
-                                                cur->pixel_width = XTextWidth(dds->font_struct,
-                                                                              cur->value,
-                                                                              strlen(cur->value));
+                                        if (!cur->pixel_width) {
+                                                XTextExtents(dds->font_struct,
+                                                             cur->value,
+                                                             strlen(cur->value),
+                                                             &direction_return,
+                                                             &font_ascent_return,
+                                                             &font_descent_return,
+                                                             &overall_return);
+                                                
+                                                cur->pixel_width = overall_return.width;
+
+                                                /* Calculate line height. */
+                                                if (!calcd_line_heights) {
+                                                        height = overall_return.ascent + overall_return.descent;
+                                                        
+                                                        if (!line_heights[cur->line])
+                                                                line_heights[cur->line] = height;
+                                                        else if (line_heights[cur->line] < height)
+                                                                line_heights[cur->line] = height;
+                                                }
+                                        }
 
                                         cur->xpos = new_xpos;
                                         cur->ypos = new_ypos;
@@ -376,7 +412,7 @@ void donky_loop(struct x_connection *x_conn)
                                                          cur->xpos,
                                                          cur->ypos - dds->font_y_offset,
                                                          cur->pixel_width,
-                                                         window_height,
+                                                         line_heights[cur->line],
                                                          is_last);
                                 }
                                 break;
@@ -415,9 +451,25 @@ void donky_loop(struct x_connection *x_conn)
                                                 //printf("Updating... %s\n", mod->name);
                                         }
 
-                                        cur->pixel_width = XTextWidth(dds->font_struct,
-                                                                      cur->result,
-                                                                      strlen(cur->result));
+                                        XTextExtents(dds->font_struct,
+                                                     cur->result,
+                                                     strlen(cur->result),
+                                                     &direction_return,
+                                                     &font_ascent_return,
+                                                     &font_descent_return,
+                                                     &overall_return);
+                                                     
+                                        cur->pixel_width = overall_return.width;
+
+                                        /* Calculate line height. */
+                                        if (!calcd_line_heights) {
+                                                height = overall_return.ascent + overall_return.descent;
+                                                        
+                                                if (!line_heights[cur->line])
+                                                        line_heights[cur->line] = height;
+                                                else if (line_heights[cur->line] < height)
+                                                        line_heights[cur->line] = height;
+                                        }
 
                                         render_queue_add(cur->result,
                                                          dds->color,
@@ -427,9 +479,8 @@ void donky_loop(struct x_connection *x_conn)
                                                          cur->xpos,
                                                          cur->ypos - dds->font_y_offset,
                                                          cur->pixel_width,
-                                                         window_height,
+                                                         line_heights[cur->line],
                                                          is_last);
-                                                    
                                         break;
                                 case VARIABLE_BAR:
                                         break;
@@ -451,7 +502,24 @@ void donky_loop(struct x_connection *x_conn)
                            to know where to start drawing it */
                         if (cur->next) {
                                 new_xpos += cur->pixel_width;
-                                //new_ypos += TODO
+
+                                if (cur->line != cur->next->line) {
+                                        /* Set xpos to beginning of line! */
+                                        new_xpos = dds->font_x_offset;
+
+                                        /* Calculate the difference in lines
+                                         * (Needed for multiple blank lines
+                                         *  between text.) */
+                                        linediff = cur->next->line - cur->line - 1;
+
+                                        if (line_heights[cur->line] > dds->minimum_line_height)
+                                                new_ypos += line_heights[cur->line];
+                                        else
+                                                new_ypos += dds->minimum_line_height;
+                                        
+                                        for (i = 0; i < linediff; i++)
+                                                new_ypos += dds->minimum_line_height;
+                                }
                         } else {
                                 new_xpos = dds->font_x_offset;
                                 new_ypos = dds->font_y_offset;
@@ -474,17 +542,21 @@ void donky_loop(struct x_connection *x_conn)
                 /* Reset cur and take a nap. */
                 cur = ts_start;
 
+                /* Set a flag so we know we've already calc'd all line heights. */
+                if (!calcd_line_heights)
+                        calcd_line_heights = 1;
+
                 /* Sleep set amount of seconds and nanoseconds.  nanosleep
                  * returns -1 if it detects a signal hander being invoked, so
                  * we opt to break from the loop since it will probably be the
                  * reload or kill handler. */
-                if (nanosleep(&dds->tspec, NULL) == -1)
+                if (nanosleep(&dds->tspec, NULL) == -1) {
+                        printf("Breaking...\n");
                         break;
+                }
         }
 
-        if (force == 1)
-                force = 0;
-
+        freeif(line_heights);
         freeif(dds->font_name);
         freeif(dds->color_name_bg);
         freeif(dds->color_name_fg);
