@@ -395,9 +395,9 @@ void donky_loop(struct x_connection *x_conn)
                                                         height = overall_return.ascent + overall_return.descent;
                                                         
                                                         if (!line_heights[cur->line])
-                                                                line_heights[cur->line] = height;
+                                                                line_heights[cur->line] = height + 2;
                                                         else if (line_heights[cur->line] < height)
-                                                                line_heights[cur->line] = height;
+                                                                line_heights[cur->line] = height + 2;
                                                 }
                                         }
 
@@ -466,9 +466,9 @@ void donky_loop(struct x_connection *x_conn)
                                                 height = overall_return.ascent + overall_return.descent;
                                                         
                                                 if (!line_heights[cur->line])
-                                                        line_heights[cur->line] = height;
+                                                        line_heights[cur->line] = height + 2;
                                                 else if (line_heights[cur->line] < height)
-                                                        line_heights[cur->line] = height;
+                                                        line_heights[cur->line] = height + 2;
                                         }
 
                                         render_queue_add(cur->result,
