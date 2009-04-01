@@ -258,11 +258,17 @@ struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn
         if (dds->font_y_offset < 0)
                 dds->font_y_offset = DEFAULT_FONT_Y_OFFSET;
 
-        /* Setup the position of the starting text section. */
+        /* Setup minimum line height. */
         dds->minimum_line_height = get_int_key("X11", "minimum_line_height");
 
         if (dds->minimum_line_height < 0)
                 dds->minimum_line_height = DEFAULT_MINIMUM_LINE_HEIGHT;
+
+        /* Setup minimum line spacing. */
+        dds->minimum_line_spacing = get_int_key("X11", "minimum_line_spacing");
+
+        if (dds->minimum_line_spacing < 0)
+                dds->minimum_line_spacing = DEFAULT_MINIMUM_LINE_SPACING;
 
         /* for alignment to work on root drawing */
         if (own_window == 0) {
@@ -395,9 +401,9 @@ void donky_loop(struct x_connection *x_conn)
                                                         height = overall_return.ascent + overall_return.descent;
                                                         
                                                         if (!line_heights[cur->line])
-                                                                line_heights[cur->line] = height + 2;
+                                                                line_heights[cur->line] = height + dds->minimum_line_spacing;
                                                         else if (line_heights[cur->line] < height)
-                                                                line_heights[cur->line] = height + 2;
+                                                                line_heights[cur->line] = height + dds->minimum_line_spacing;
                                                 }
                                         }
 
@@ -466,9 +472,9 @@ void donky_loop(struct x_connection *x_conn)
                                                 height = overall_return.ascent + overall_return.descent;
                                                         
                                                 if (!line_heights[cur->line])
-                                                        line_heights[cur->line] = height + 2;
+                                                        line_heights[cur->line] = height + dds->minimum_line_spacing;
                                                 else if (line_heights[cur->line] < height)
-                                                        line_heights[cur->line] = height + 2;
+                                                        line_heights[cur->line] = height + dds->minimum_line_spacing;
                                         }
 
                                         render_queue_add(cur->result,
@@ -515,10 +521,10 @@ void donky_loop(struct x_connection *x_conn)
                                         if (line_heights[cur->line] > dds->minimum_line_height)
                                                 new_ypos += line_heights[cur->line];
                                         else
-                                                new_ypos += dds->minimum_line_height;
+                                                new_ypos += dds->minimum_line_height + dds->minimum_line_spacing;
                                         
                                         for (i = 0; i < linediff; i++)
-                                                new_ypos += dds->minimum_line_height;
+                                                new_ypos += dds->minimum_line_height + dds->minimum_line_spacing;
                                 }
                         } else {
                                 new_xpos = dds->font_x_offset;

@@ -47,6 +47,7 @@ struct donky_draw_settings {
         int16_t font_y_offset;
 
         int16_t minimum_line_height;
+        int16_t minimum_line_spacing;
 
         struct timespec tspec;
 };

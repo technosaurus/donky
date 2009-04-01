@@ -36,8 +36,8 @@
 
 /* Function prototypes. */
 void clear_text(void);
-void text_section_split(char *text);
-void text_section_add(char *value, int len, int line, enum text_section_type type);
+void text_section_split(char *text, unsigned int line);
+void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 struct text_section *text_section_var_find(char *value);
 void text_section_var_modvar(char *value,
                              struct module_var *mvar,
@@ -53,7 +53,7 @@ struct text_section *ts_end = NULL;
  */
 void parse_text(void)
 {
-        text_section_split(config_text);
+        text_section_split(config_text, 0);
 
         /* We don't need this anymore! */
         freeif(config_text);
@@ -71,12 +71,11 @@ void parse_text(void)
  *
  * @param text Character array pointer of text to parse.
  */
-void text_section_split(char *text)
+void text_section_split(char *text, unsigned int line)
 {
         char *dup;
         char *s;
         char *ts;
-        unsigned int line = 0;
 
         dup = strndup(text, MAX_TEXT_SIZE);
         s = ts = dup;
@@ -167,14 +166,14 @@ void text_section_split(char *text)
  * @param line Current line number
  * @param type Section type (TEXT_VARIABLE, TEXT_STATIC)
  */
-void text_section_add(char *value, int len, int line, enum text_section_type type)
+void text_section_add(char *value, int len, unsigned int line, enum text_section_type type)
 {        
         char *copy_val = strndup(value, len);
         char *alias_contents = get_char_key("alias", copy_val);
         char *args = NULL;
         
         if (type == TEXT_VARIABLE && alias_contents) {
-                text_section_split(alias_contents);
+                text_section_split(alias_contents, line);
                 freeif(copy_val);
                 freeif(alias_contents);
         } else {
