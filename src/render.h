@@ -18,10 +18,7 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-struct donky_color {
-        uint32_t pixel_fg;
-        uint32_t pixel_bg;
-};
+#include "x11.h"
 
 struct render_queue {
         char *value;
@@ -41,8 +38,21 @@ struct render_queue {
         struct render_queue *next;
 };
 
+/* function prototypes */
+void render_text(xcb_connection_t *connection,
+                 xcb_window_t *window,
+                 char *str,
+                 xcb_font_t font,
+                 struct donky_color color,
+                 int16_t x,
+                 int16_t y);
+xcb_gc_t get_font_gc(xcb_connection_t *connection,
+                     xcb_window_t *window,
+                     xcb_font_t font,
+                     uint32_t bg, uint32_t fg);
 void render_queue_exec(xcb_connection_t *connection,
-                       xcb_window_t *window);
+                       xcb_window_t *window,
+                       int16_t *window_width);
 void render_queue_add(char *value,
                       struct donky_color color,
                       xcb_font_t font,
@@ -53,6 +63,9 @@ void render_queue_add(char *value,
                       int16_t cl_width,
                       int16_t cl_height,
                       int is_last);
+uint32_t get_color(xcb_connection_t *connection,
+                   xcb_screen_t *screen,
+                   char *name);
 
 #endif /* RENDER_H */
 

@@ -25,34 +25,6 @@
 #include "config.h"
 #include "util.h"
 
-/* Function prototypes. */
-void render_text(xcb_connection_t *connection,
-                 xcb_window_t *window,
-                 char *str,
-                 xcb_font_t font,
-                 struct donky_color color,
-                 int16_t x,
-                 int16_t y);
-void clear_area(xcb_connection_t *connection,
-                xcb_window_t *window,
-                int16_t x, int16_t y, uint16_t w, uint16_t h);
-xcb_gc_t get_font_gc(xcb_connection_t *connection,
-                     xcb_window_t *window,
-                     xcb_font_t font,
-                     uint32_t pixel_bg, uint32_t pixel_fg);
-void render_queue_exec(xcb_connection_t *connection,
-                       xcb_window_t *window);
-void render_queue_add(char *value,
-                      struct donky_color color,
-                      xcb_font_t font,
-                      int16_t *xpos,
-                      int16_t *ypos,
-                      int16_t cl_xpos,
-                      int16_t cl_ypos,
-                      int16_t cl_width,
-                      int16_t cl_height,
-                      int is_last);
-
 /* Globals. */
 struct render_queue *rq_start = NULL;
 struct render_queue *rq_end = NULL;
@@ -61,7 +33,8 @@ struct render_queue *rq_end = NULL;
  * @brief Render everything in the render queue.
  */
 void render_queue_exec(xcb_connection_t *connection,
-                       xcb_window_t *window)
+                       xcb_window_t *window,
+                       int16_t *window_width)
 {
         struct render_queue *cur = rq_start, *next;
 
@@ -69,15 +42,17 @@ void render_queue_exec(xcb_connection_t *connection,
                 next = cur->next;
 
                 if (cur->is_last && cur->cl_width > 0 && cur->cl_height > 0)
-                        clear_area(connection,
-                                   window,
+                    xcb_clear_area(connection,
+                                   0,
+                                   *window,
                                    cur->cl_xpos,
                                    cur->cl_ypos,
-                                   window_width - cur->cl_xpos,
+                                   *window_width - cur->cl_xpos,
                                    cur->cl_height);
                 else if (cur->cl_width > 0 && cur->cl_height > 0)
-                        clear_area(connection,
-                                   window,
+                    xcb_clear_area(connection,
+                                   0,
+                                   *window,
                                    cur->cl_xpos,
                                    cur->cl_ypos,
                                    cur->cl_width,
@@ -171,7 +146,7 @@ void render_text(xcb_connection_t *connection,
         gc = get_font_gc(connection,
                          window,
                          font,
-                         color.pixel_bg, color.pixel_fg);
+                         color.bg, color.fg);
 
         xcb_image_text_8(connection,
                          length,
@@ -181,24 +156,6 @@ void render_text(xcb_connection_t *connection,
                          str);
 
         xcb_free_gc(connection, gc);
-}
-
-/**
- * @brief Clear an area of the window.
- *
- * @param x X pos
- * @param y Y pos
- * @param w Width
- * @param h Height
- */
-void clear_area(xcb_connection_t *connection,
-                xcb_window_t *window,
-                int16_t x, int16_t y, uint16_t w, uint16_t h)
-{
-        xcb_clear_area(connection,
-                       0,
-                       *window,
-                       x, y, w, h);
 }
 
 /**
@@ -245,7 +202,7 @@ uint32_t get_color(xcb_connection_t *connection,
 xcb_gc_t get_font_gc(xcb_connection_t *connection,
                      xcb_window_t *window,
                      xcb_font_t font,
-                     uint32_t pixel_bg, uint32_t pixel_fg)
+                     uint32_t bg, uint32_t fg)
 {
         xcb_generic_error_t *error;
         xcb_gcontext_t gc;
@@ -254,17 +211,11 @@ xcb_gc_t get_font_gc(xcb_connection_t *connection,
         uint32_t mask;
         uint32_t value_list[3];
 
-        uint32_t font_bgcolor;
-        uint32_t font_fgcolor;
-
-        font_bgcolor = pixel_bg;
-        font_fgcolor = pixel_fg;
-
         gc = xcb_generate_id(connection);
         
         mask = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
-        value_list[0] = font_fgcolor;
-        value_list[1] = font_bgcolor;
+        value_list[0] = fg;
+        value_list[1] = bg;
         value_list[2] = font;
 
         cookie_gc = xcb_create_gc_checked(connection,
@@ -277,3 +228,4 @@ xcb_gc_t get_font_gc(xcb_connection_t *connection,
 
         return gc;
 }
+

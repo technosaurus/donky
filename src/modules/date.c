@@ -75,5 +75,5 @@ char *get_date(char *args)
                      args, tmp) == 0)
                 return strncpy(ret_value, "n/a", sizeof("n/a"));
 
-        return ret_value;
+        return m_strdup(ret_value);
 }

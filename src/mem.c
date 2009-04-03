@@ -23,19 +23,6 @@
 #include "mem.h"
 #include "util.h"
 
-struct mem_list {
-        void *ptr;
-        struct mem_list *next;
-};
-
-/* Function prototypes. */
-void mem_list_add(void *ptr);
-void mem_list_clear(void);
-void *m_malloc(size_t size);
-void *m_calloc(size_t nelem, size_t size);
-char *m_strdup(char *str);
-char *m_strndup(char *str, size_t size);
-
 /* Globals. */
 struct mem_list *mem_start = NULL;
 struct mem_list *mem_end = NULL;

@@ -19,10 +19,6 @@
 #define X11_H
 
 #include <X11/Xlib.h>
-#include "render.h"
-
-int window_width;
-int window_height;
 
 struct x_connection {
         Display *display;
@@ -31,17 +27,20 @@ struct x_connection {
         xcb_window_t window;
 };
 
-struct donky_draw_settings {
+struct donky_color {
+        uint32_t fg;
+        uint32_t bg;
+        uint32_t bg_orig;
+        uint32_t fg_orig;
+
+        char *bg_name;
+        char *fg_name;
+};
+
+struct draw_settings {
         xcb_font_t font;
         XFontStruct *font_struct;
         char *font_name;
-
-        struct donky_color color;
-        uint32_t color_bg_orig;
-        uint32_t color_fg_orig;
-
-        char *color_name_bg;
-        char *color_name_fg;
 
         int16_t font_x_offset;
         int16_t font_y_offset;
@@ -49,8 +48,33 @@ struct donky_draw_settings {
         int16_t minimum_line_height;
         int16_t minimum_line_spacing;
 
+        struct donky_color color;
+
         struct timespec tspec;
 };
+
+struct window_settings {
+        int8_t own_window;
+        int8_t override;
+
+        int16_t width;
+        int16_t height;
+
+        int16_t x_offset;
+        int16_t y_offset;
+
+        uint32_t bg_color;
+        uint32_t fg_color;
+};
+
+/* function prototypes */
+struct x_connection *init_x_connection(void);
+struct window_settings *window_settings_load(struct x_connection *x_conn);
+struct window_settings *draw_window(struct x_connection *x_conn);
+struct draw_settings *draw_settings_load(struct x_connection *x_conn,
+                                         struct window_settings *ws);
+void donky_loop(struct x_connection *x_conn,
+                struct window_settings *ws);
 
 #endif /* X11_H */
 

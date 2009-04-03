@@ -38,32 +38,9 @@
         ((c) == '0') \
 )
 
-struct setting {
-        struct setting *next;
-        
-        char *key;
-        char *value;
-};
-
-struct cfg {
-        struct cfg *next;
-
-        char *mod;
-
-        struct setting *first_setting;
-        struct setting *last_setting;
-} *first_cfg = NULL, *last_cfg = NULL;
-
-/* function prototypes */
-void add_mod(char *mod);
-struct cfg *find_mod(char *mod);
-void add_key(char *mod, char *key, char *value);
-char *get_char_key(char *mod, char *key);
-int get_int_key(char *mod, char *key);
-double get_double_key(char *mod, char *key);
-int get_bool_key(char *mod, char *key);
-void parse_cfg (void);
-void config_clear(void);
+/* Globals */
+struct cfg *first_cfg = NULL;
+struct cfg *last_cfg = NULL;
 
 /** 
  * @brief Add a mod to the configuration list

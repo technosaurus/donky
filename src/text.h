@@ -51,12 +51,15 @@ struct text_section {
 struct text_section *ts_start;
 struct text_section *ts_end;
 
-void parse_text(void);
+/* Function prototypes. */
 void clear_text(void);
-
+void text_section_split(char *text, unsigned int line);
+void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 struct text_section *text_section_var_find(char *value);
 void text_section_var_modvar(char *value,
                              struct module_var *mvar,
                              double timeout);
+void parse_text(void);
 
 #endif /* TEXT_H */
+

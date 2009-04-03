@@ -18,13 +18,35 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-char *config_text;
-void parse_cfg(void);
-void clear_cfg(void);
+struct setting {
+        struct setting *next;
+        
+        char *key;
+        char *value;
+};
+
+struct cfg {
+        struct cfg *next;
+
+        char *mod;
+
+        struct setting *first_setting;
+        struct setting *last_setting;
+};
+
+/* function prototypes */
+void add_mod(char *mod);
+struct cfg *find_mod(char *mod);
+void add_key(char *mod, char *key, char *value);
 char *get_char_key(char *mod, char *key);
 int get_int_key(char *mod, char *key);
 double get_double_key(char *mod, char *key);
 int get_bool_key(char *mod, char *key);
+void parse_cfg (void);
+void clear_cfg(void);
+
+/* holds [text] */
+char *config_text;
 
 #endif /* CONFIG_H */
 

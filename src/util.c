@@ -23,19 +23,6 @@
 
 #include "util.h"
 
-char *trim(char *);
-char *trim_l(char *);
-void trim_t(char *);
-int is_comment(char *);
-int is_all_spaces(char *);
-char *chop(char *);
-char *chomp(char *);
-char *substr(char *, int, int);
-double get_time(void);
-void freeif(void *ptr);
-char *d_strcpy(const char *str);
-char *d_strncpy(const char *str, int n);
-
 /**
  * @brief Trim leading and trailing whitespace from a string.
  *

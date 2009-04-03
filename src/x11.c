@@ -35,17 +35,15 @@
 #include "default_settings.h"
 #include "mem.h"
 
-/* Globals. */
-int own_window;
-int x_offset;
-int y_offset;
-
 /** 
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
  */
-void init_x_connection(struct x_connection *x_conn)
+struct x_connection *init_x_connection(void)
 {
+        struct x_connection *x_conn;
+        x_conn = malloc(sizeof(struct x_connection));
+
         const xcb_setup_t *setup;
         xcb_screen_iterator_t screen_iter;
         int screen_number;
@@ -79,60 +77,57 @@ void init_x_connection(struct x_connection *x_conn)
                 xcb_disconnect(x_conn->connection);
                 exit(EXIT_FAILURE);
         }
+
+        return x_conn;
 }
 
 /** 
- * @brief Draw donky's window
+ * @brief Gather and store necessary information for donky's
+ *        to-be-drawn window.
+ * 
+ * @param x_conn donky's open X connection.
+ * 
+ * @return malloc'd & filled windows_settings struct
  */
-void draw_window(struct x_connection *x_conn)
+struct window_settings *window_settings_load(struct x_connection *x_conn)
 {
-        uint32_t window_bgcolor;
-        uint32_t window_fgcolor;
-        char *window_bgcolor_name;
-        char *window_fgcolor_name;
+        char *bg_color_name;
+        char *fg_color_name;
 
-        int override;
-        
-        int x_gap;
-        int y_gap;
+        char *alignment;
+        int16_t x_gap;
+        int16_t y_gap;
 
-        char *alignment = get_char_key("X11", "alignment");
-
-        xcb_void_cookie_t window_cookie;
-        uint32_t mask;
-        uint32_t values[3];
-
-        xcb_void_cookie_t map_cookie;
-
-        xcb_generic_error_t *error;
+        struct window_settings *ws;
+        ws = malloc(sizeof(struct window_settings));
 
         /* Set up window bg and fg colors. */
-        window_bgcolor_name = get_char_key("X11", "window_bgcolor");
-        window_fgcolor_name = get_char_key("X11", "window_fgcolor");
+        bg_color_name = get_char_key("X11", "window_bgcolor");
+        fg_color_name = get_char_key("X11", "window_fgcolor");
 
-        if (window_bgcolor_name == NULL)
-                window_bgcolor_name = d_strcpy(DEFAULT_WINDOW_BGCOLOR);
-        if (window_fgcolor_name == NULL)
-                window_fgcolor_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
+        if (bg_color_name == NULL)
+                bg_color_name = d_strcpy(DEFAULT_WINDOW_BGCOLOR);
+        if (fg_color_name == NULL)
+                fg_color_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
                 
-        window_bgcolor = get_color(x_conn->connection,
+        ws->bg_color = get_color(x_conn->connection,
                                    x_conn->screen,
-                                   window_bgcolor_name);
-        window_fgcolor = get_color(x_conn->connection,
+                                   bg_color_name);
+        ws->fg_color = get_color(x_conn->connection,
                                    x_conn->screen,
-                                   window_fgcolor_name);
+                                   fg_color_name);
 
-        freeif(window_bgcolor_name);
-        freeif(window_fgcolor_name);
+        free(bg_color_name);
+        free(fg_color_name);
 
         /* get window dimensions from cfg or set to defaults */
-        window_width = get_int_key("X11", "window_width");
-        window_height = get_int_key("X11", "window_height");
+        ws->width = get_int_key("X11", "window_width");
+        ws->height = get_int_key("X11", "window_height");
 
-        if (window_width <= 0)
-                window_width = DEFAULT_WINDOW_WIDTH;
-        if (window_height <= 0)
-                window_height = DEFAULT_WINDOW_HEIGHT;
+        if (ws->width <= 0)
+                ws->width = DEFAULT_WINDOW_WIDTH;
+        if (ws->height <= 0)
+                ws->height = DEFAULT_WINDOW_HEIGHT;
 
         /* get gaps from cfg or set to defaults */
         x_gap = get_int_key("X11", "x_gap");
@@ -143,56 +138,81 @@ void draw_window(struct x_connection *x_conn)
         if (y_gap < 0)
                 y_gap = DEFAULT_Y_GAP;
 
+        alignment = get_char_key("X11", "alignment");
+
         /* calculate alignment */
         if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
-                x_offset = 0 + x_gap;
-                y_offset = x_conn->screen->height_in_pixels - window_height - y_gap;
+                ws->x_offset = 0 + x_gap;
+                ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
         } else if (alignment && (strcasecmp(alignment, "top_left") == 0)) {
-                x_offset = 0 + x_gap;
-                y_offset = 0 + y_gap;
+                ws->x_offset = 0 + x_gap;
+                ws->y_offset = 0 + y_gap;
         } else if (alignment && (strcasecmp(alignment, "bottom_right") == 0)) {
-                x_offset = x_conn->screen->width_in_pixels - window_width - x_gap;
-                y_offset = x_conn->screen->height_in_pixels - window_height - y_gap;
+                ws->x_offset = x_conn->screen->width_in_pixels - ws->width - x_gap;
+                ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
         } else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
-                x_offset = x_conn->screen->width_in_pixels - window_width - x_gap;
-                y_offset = 0 + y_gap;
+                ws->x_offset = x_conn->screen->width_in_pixels - ws->width - x_gap;
+                ws->y_offset = 0 + y_gap;
         } else {
                 if (alignment)
                         printf("Unrecognized alignment: %s. Using bottom_left.\n", alignment);
                 else
                         printf("No alignment specified. Using bottom_left.\n");
-                x_offset = 0 + x_gap;
-                y_offset = x_conn->screen->height_in_pixels - window_height - y_gap;
+                ws->x_offset = 0 + x_gap;
+                ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
         }
 
         freeif(alignment);
 
         /* draw donky in its own window? if not, draw to root */
-        own_window = get_bool_key("X11", "own_window");
-        if (own_window <= 0) {
-                own_window = 0;
+        ws->own_window = get_bool_key("X11", "own_window");
+        if (ws->own_window <= 0) {
+                ws->own_window = 0;
                 x_conn->window = x_conn->screen->root;
                 return;
         }
-        /* if it's not 0 or -1, it's 1 */
 
         /* check if donky's window should override wm control */
-        override = get_bool_key("X11", "override");
-        if (override == -1)
-                override = 0;
+        ws->override = get_bool_key("X11", "override");
+        if (ws->override == -1)
+                ws->override = 0;
+
+        return ws;
+}
+
+/** 
+ * @brief Gather window settings (see window_settings_load())
+ *        and draw window.
+ * 
+ * @param x_conn donky's open X connection.
+ * 
+ * @return The windows_setting struct used in drawing the window.
+ */
+struct window_settings *draw_window(struct x_connection *x_conn)
+{
+        struct window_settings *ws;
+        ws = window_settings_load(x_conn);
+
+        xcb_void_cookie_t window_cookie;
+        uint32_t mask;
+        uint32_t values[3];
+
+        xcb_void_cookie_t map_cookie;
+
+        xcb_generic_error_t *error;
 
         x_conn->window = xcb_generate_id(x_conn->connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
-        values[0] = window_bgcolor;
-        values[1] = override;
+        values[0] = ws->bg_color;
+        values[1] = ws->override;
         values[2] = XCB_EVENT_MASK_EXPOSURE;
         window_cookie = xcb_create_window(
                         x_conn->connection,
                         x_conn->screen->root_depth,
                         x_conn->window,
                         x_conn->screen->root,
-                        x_offset, y_offset,
-                        window_width, window_height,
+                        ws->x_offset, ws->y_offset,
+                        ws->width, ws->height,
                         0,
                         XCB_WINDOW_CLASS_INPUT_OUTPUT, /* TODO: learn */
                         x_conn->screen->root_visual,
@@ -213,67 +233,70 @@ void draw_window(struct x_connection *x_conn)
                 xcb_disconnect(x_conn->connection);
                 exit(EXIT_FAILURE);
         }
+
+        return ws;
 }
 
 /**
  * @brief Load all the donky draw settings.
  *
- * @return Malloc'd donky_draw_settings structure
+ * @return Malloc'd draw_settings structure
  */
-struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn)
+struct draw_settings *draw_settings_load(struct x_connection *x_conn,
+                                         struct window_settings *ws)
 {
-        struct donky_draw_settings *dds = malloc(sizeof(struct donky_draw_settings));
+        struct draw_settings *ds = malloc(sizeof(struct draw_settings));
 
         /* Set up user configured font or default font. */
-        dds->font_name = get_char_key("X11", "default_font");
+        ds->font_name = get_char_key("X11", "default_font");
 
-        if (dds->font_name == NULL)
-                dds->font_name = d_strcpy(DEFAULT_FONT);
+        if (ds->font_name == NULL)
+                ds->font_name = d_strcpy(DEFAULT_FONT);
 
-        dds->font_struct = XLoadQueryFont(x_conn->display, dds->font_name);
-        dds->font = dds->font_struct->fid;
+        ds->font_struct = XLoadQueryFont(x_conn->display, ds->font_name);
+        ds->font = ds->font_struct->fid;
 
         /* Set up user configured or default font colors. */
-        dds->color_name_bg = get_char_key("X11", "font_bgcolor");
-        dds->color_name_fg = get_char_key("X11", "font_fgcolor");
+        ds->color.bg_name = get_char_key("X11", "font_bgcolor");
+        ds->color.fg_name = get_char_key("X11", "font_fgcolor");
 
-        if (dds->color_name_bg == NULL)
-                dds->color_name_bg = d_strcpy(DEFAULT_FONT_BGCOLOR);
-        if (dds->color_name_bg == NULL)
-                dds->color_name_fg = d_strcpy(DEFAULT_FONT_FGCOLOR);
+        if (ds->color.bg_name == NULL)
+                ds->color.bg_name = d_strcpy(DEFAULT_FONT_BGCOLOR);
+        if (ds->color.bg_name == NULL)
+                ds->color.fg_name = d_strcpy(DEFAULT_FONT_FGCOLOR);
 
-        dds->color_bg_orig = get_color(x_conn->connection,
-                                  x_conn->screen,
-                                  dds->color_name_bg);
-        dds->color_fg_orig = get_color(x_conn->connection,
-                                  x_conn->screen,
-                                  dds->color_name_fg);
+        ds->color.bg_orig = get_color(x_conn->connection,
+                                             x_conn->screen,
+                                             ds->color.bg_name);
+        ds->color.fg_orig = get_color(x_conn->connection,
+                                             x_conn->screen,
+                                             ds->color.fg_name);
 
         /* Setup the position of the starting text section. */
-        dds->font_x_offset = get_int_key("X11", "font_x_offset");
-        dds->font_y_offset = get_int_key("X11", "font_y_offset");
+        ds->font_x_offset = get_int_key("X11", "font_x_offset");
+        ds->font_y_offset = get_int_key("X11", "font_y_offset");
 
-        if (dds->font_x_offset < 0)
-                dds->font_x_offset = DEFAULT_FONT_X_OFFSET;
-        if (dds->font_y_offset < 0)
-                dds->font_y_offset = DEFAULT_FONT_Y_OFFSET;
+        if (ds->font_x_offset < 0)
+                ds->font_x_offset = DEFAULT_FONT_X_OFFSET;
+        if (ds->font_y_offset < 0)
+                ds->font_y_offset = DEFAULT_FONT_Y_OFFSET;
 
         /* Setup minimum line height. */
-        dds->minimum_line_height = get_int_key("X11", "minimum_line_height");
+        ds->minimum_line_height = get_int_key("X11", "minimum_line_height");
 
-        if (dds->minimum_line_height < 0)
-                dds->minimum_line_height = DEFAULT_MINIMUM_LINE_HEIGHT;
+        if (ds->minimum_line_height < 0)
+                ds->minimum_line_height = DEFAULT_MINIMUM_LINE_HEIGHT;
 
         /* Setup minimum line spacing. */
-        dds->minimum_line_spacing = get_int_key("X11", "minimum_line_spacing");
+        ds->minimum_line_spacing = get_int_key("X11", "minimum_line_spacing");
 
-        if (dds->minimum_line_spacing < 0)
-                dds->minimum_line_spacing = DEFAULT_MINIMUM_LINE_SPACING;
+        if (ds->minimum_line_spacing < 0)
+                ds->minimum_line_spacing = DEFAULT_MINIMUM_LINE_SPACING;
 
         /* for alignment to work on root drawing */
-        if (own_window == 0) {
-                dds->font_x_offset += x_offset;
-                dds->font_y_offset += y_offset;
+        if (ws->own_window == 0) {
+                ds->font_x_offset += ws->x_offset;
+                ds->font_y_offset += ws->y_offset;
         }
 
         /* Setup minimum sleep time. */
@@ -284,16 +307,17 @@ struct donky_draw_settings *donky_draw_settings_load(struct x_connection *x_conn
                 
         int min_seconds = floor(min_sleep);
         long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
-        dds->tspec.tv_sec = min_seconds;
-        dds->tspec.tv_nsec = min_nanosec;
+        ds->tspec.tv_sec = min_seconds;
+        ds->tspec.tv_nsec = min_nanosec;
 
-        return dds;
+        return ds;
 }
 
 /** 
  * @brief Main donky loop.
  */
-void donky_loop(struct x_connection *x_conn)
+void donky_loop(struct x_connection *x_conn,
+                struct window_settings *ws)
 {
         int is_last;
 
@@ -308,7 +332,7 @@ void donky_loop(struct x_connection *x_conn)
         uint8_t force;
 
         struct text_section *cur = ts_start;
-        struct donky_draw_settings *dds = donky_draw_settings_load(x_conn);
+        struct draw_settings *ds = draw_settings_load(x_conn, ws);
 
         /* XTextExtents crap. */
         int direction_return;
@@ -325,8 +349,8 @@ void donky_loop(struct x_connection *x_conn)
 
         /* new_xpos and new_ypos hold the coords
          * of where we'll be drawing anything new */
-        new_xpos = dds->font_x_offset;
-        new_ypos = dds->font_y_offset;
+        new_xpos = ds->font_x_offset;
+        new_ypos = ds->font_y_offset;
 
         /* Infinite donky loop! (TM) :o */
         while (1) {
@@ -344,8 +368,8 @@ void donky_loop(struct x_connection *x_conn)
                         free(e);
                 }
 
-                dds->color.pixel_bg = dds->color_bg_orig;
-                dds->color.pixel_fg = dds->color_fg_orig;
+                ds->color.bg = ds->color.bg_orig;
+                ds->color.fg = ds->color.fg_orig;
 
                 /* Execute cron tabs. */
                 module_var_cron_exec();
@@ -371,13 +395,13 @@ void donky_loop(struct x_connection *x_conn)
                                 break;*/
                         case TEXT_COLOR:
                                 if (cur->args == NULL)
-                                        dds->color.pixel_fg = get_color(x_conn->connection,
-                                                                        x_conn->screen,
-                                                                        dds->color_name_fg);
+                                        ds->color.fg = get_color(x_conn->connection,
+                                                                  x_conn->screen,
+                                                                  ds->color.fg_name);
                                 else
-                                        dds->color.pixel_fg = get_color(x_conn->connection,
-                                                                        x_conn->screen,
-                                                                        cur->args);
+                                        ds->color.fg = get_color(x_conn->connection,
+                                                                  x_conn->screen,
+                                                                  cur->args);
                                 break;
                         case TEXT_STATIC:
                                 /* If the xpos has changed since last drawn,
@@ -386,7 +410,7 @@ void donky_loop(struct x_connection *x_conn)
                                 if (cur->xpos == -1 || (cur->xpos != new_xpos) || force) {
                                         //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
                                         if (!cur->pixel_width) {
-                                                XTextExtents(dds->font_struct,
+                                                XTextExtents(ds->font_struct,
                                                              cur->value,
                                                              strlen(cur->value),
                                                              &direction_return,
@@ -401,9 +425,9 @@ void donky_loop(struct x_connection *x_conn)
                                                         height = overall_return.ascent + overall_return.descent;
                                                         
                                                         if (!line_heights[cur->line])
-                                                                line_heights[cur->line] = height + dds->minimum_line_spacing;
+                                                                line_heights[cur->line] = height + ds->minimum_line_spacing;
                                                         else if (line_heights[cur->line] < height)
-                                                                line_heights[cur->line] = height + dds->minimum_line_spacing;
+                                                                line_heights[cur->line] = height + ds->minimum_line_spacing;
                                                 }
                                         }
 
@@ -411,12 +435,12 @@ void donky_loop(struct x_connection *x_conn)
                                         cur->ypos = new_ypos;
 
                                         render_queue_add(cur->value,
-                                                         dds->color,
-                                                         dds->font,
+                                                         ds->color,
+                                                         ds->font,
                                                          &cur->xpos,
                                                          &cur->ypos,
                                                          cur->xpos,
-                                                         cur->ypos - dds->font_y_offset,
+                                                         cur->ypos - ds->font_y_offset,
                                                          cur->pixel_width,
                                                          line_heights[cur->line],
                                                          is_last);
@@ -457,7 +481,7 @@ void donky_loop(struct x_connection *x_conn)
                                                 //printf("Updating... %s\n", mod->name);
                                         }
 
-                                        XTextExtents(dds->font_struct,
+                                        XTextExtents(ds->font_struct,
                                                      cur->result,
                                                      strlen(cur->result),
                                                      &direction_return,
@@ -472,18 +496,18 @@ void donky_loop(struct x_connection *x_conn)
                                                 height = overall_return.ascent + overall_return.descent;
                                                         
                                                 if (!line_heights[cur->line])
-                                                        line_heights[cur->line] = height + dds->minimum_line_spacing;
+                                                        line_heights[cur->line] = height + ds->minimum_line_spacing;
                                                 else if (line_heights[cur->line] < height)
-                                                        line_heights[cur->line] = height + dds->minimum_line_spacing;
+                                                        line_heights[cur->line] = height + ds->minimum_line_spacing;
                                         }
 
                                         render_queue_add(cur->result,
-                                                         dds->color,
-                                                         dds->font,
+                                                         ds->color,
+                                                         ds->font,
                                                          &cur->xpos,
                                                          &cur->ypos,
                                                          cur->xpos,
-                                                         cur->ypos - dds->font_y_offset,
+                                                         cur->ypos - ds->font_y_offset,
                                                          cur->pixel_width,
                                                          line_heights[cur->line],
                                                          is_last);
@@ -511,24 +535,24 @@ void donky_loop(struct x_connection *x_conn)
 
                                 if (cur->line != cur->next->line) {
                                         /* Set xpos to beginning of line! */
-                                        new_xpos = dds->font_x_offset;
+                                        new_xpos = ds->font_x_offset;
 
                                         /* Calculate the difference in lines
                                          * (Needed for multiple blank lines
                                          *  between text.) */
                                         linediff = cur->next->line - cur->line - 1;
 
-                                        if (line_heights[cur->line] > dds->minimum_line_height)
+                                        if (line_heights[cur->line] > ds->minimum_line_height)
                                                 new_ypos += line_heights[cur->line];
                                         else
-                                                new_ypos += dds->minimum_line_height + dds->minimum_line_spacing;
+                                                new_ypos += ds->minimum_line_height + ds->minimum_line_spacing;
                                         
                                         for (i = 0; i < linediff; i++)
-                                                new_ypos += dds->minimum_line_height + dds->minimum_line_spacing;
+                                                new_ypos += ds->minimum_line_height + ds->minimum_line_spacing;
                                 }
                         } else {
-                                new_xpos = dds->font_x_offset;
-                                new_ypos = dds->font_y_offset;
+                                new_xpos = ds->font_x_offset;
+                                new_ypos = ds->font_y_offset;
                         }
 
                         /* Next node... */
@@ -537,7 +561,8 @@ void donky_loop(struct x_connection *x_conn)
 
                 /* Render everything. */
                 render_queue_exec(x_conn->connection,
-                                  &x_conn->window);
+                                  &x_conn->window,
+                                  &ws->width);
 
                 /* Flush XCB like a friggin' toilet. */
                 xcb_flush(x_conn->connection);
@@ -545,7 +570,7 @@ void donky_loop(struct x_connection *x_conn)
                 /* Clear mem list... */
                 mem_list_clear();
 
-                /* Reset cur and take a nap. */
+                /* Reset cur. */
                 cur = ts_start;
 
                 /* Set a flag so we know we've already calc'd all line heights. */
@@ -556,17 +581,17 @@ void donky_loop(struct x_connection *x_conn)
                  * returns -1 if it detects a signal hander being invoked, so
                  * we opt to break from the loop since it will probably be the
                  * reload or kill handler. */
-                if (nanosleep(&dds->tspec, NULL) == -1) {
+                if (nanosleep(&ds->tspec, NULL) == -1) {
                         printf("Breaking...\n");
                         break;
                 }
         }
 
         freeif(line_heights);
-        freeif(dds->font_name);
-        freeif(dds->color_name_bg);
-        freeif(dds->color_name_fg);
-        freeif(dds);
-        /* cleaning Xlib shiz up here too */
+        freeif(ds->font_name);
+        freeif(ds->color.bg_name);
+        freeif(ds->color.fg_name);
+        freeif(ds);
+        /* clean Xlib shiz up here too */
 }
 

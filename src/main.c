@@ -101,19 +101,24 @@ int main(int argc, char **argv)
 void initialize_stuff(void)
 {
         struct x_connection *x_conn;
-        x_conn = malloc(sizeof(struct x_connection));
+        struct window_settings *ws;
 
-        init_x_connection(x_conn);
+        x_conn = init_x_connection();
         printf("made X connection\n");
+
         parse_cfg();
         printf("parsed config\n");
+
         parse_text();
         printf("parsed [text]\n");
+
         module_load_all();
         printf("loaded modules\n");
-        draw_window(x_conn);  /* allow to pass override if in cfg */
+
+        ws = draw_window(x_conn);
         printf("drew window\n");
-        donky_loop(x_conn);
+
+        donky_loop(x_conn, ws);
 }
 
 /**
