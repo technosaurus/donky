@@ -35,6 +35,9 @@
 #include "default_settings.h"
 #include "mem.h"
 
+extern int donky_reload;
+extern int donky_exit;
+
 /** 
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
@@ -111,11 +114,11 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
                 fg_color_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
                 
         ws->bg_color = get_color(x_conn->connection,
-                                   x_conn->screen,
-                                   bg_color_name);
+                                 x_conn->screen,
+                                 bg_color_name);
         ws->fg_color = get_color(x_conn->connection,
-                                   x_conn->screen,
-                                   fg_color_name);
+                                 x_conn->screen,
+                                 fg_color_name);
 
         free(bg_color_name);
         free(fg_color_name);
@@ -219,6 +222,7 @@ struct window_settings *draw_window(struct x_connection *x_conn)
                         mask, values);
         map_cookie = xcb_map_window_checked(x_conn->connection,
                                             x_conn->window);
+                                            
         /* some error management */
         error = xcb_request_check(x_conn->connection, window_cookie);
         if (error) {
@@ -266,11 +270,11 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
                 ds->color.fg_name = d_strcpy(DEFAULT_FONT_FGCOLOR);
 
         ds->color.bg_orig = get_color(x_conn->connection,
-                                             x_conn->screen,
-                                             ds->color.bg_name);
+                                      x_conn->screen,
+                                      ds->color.bg_name);
         ds->color.fg_orig = get_color(x_conn->connection,
-                                             x_conn->screen,
-                                             ds->color.fg_name);
+                                      x_conn->screen,
+                                      ds->color.fg_name);
 
         /* Setup the position of the starting text section. */
         ds->font_x_offset = get_int_key("X11", "font_x_offset");
@@ -353,7 +357,7 @@ void donky_loop(struct x_connection *x_conn,
         new_ypos = ds->font_y_offset;
 
         /* Infinite donky loop! (TM) :o */
-        while (1) {
+        while (!donky_reload && !donky_exit) {
                 force = 0;
                 
                 /* Do a quick event poll. */
@@ -588,10 +592,20 @@ void donky_loop(struct x_connection *x_conn,
                 }
         }
 
+        /* Cleanup. */
         freeif(line_heights);
         freeif(ds->font_name);
         freeif(ds->color.bg_name);
         freeif(ds->color.fg_name);
         freeif(ds);
-}
+        freeif(ws);
 
+        /* Destroy our window and disconnect from X. */
+        xcb_destroy_window(x_conn->connection, x_conn->window);
+        xcb_flush(x_conn->connection);
+        XCloseDisplay(x_conn->display);
+        xcb_disconnect(x_conn->connection);
+        freeif(x_conn);
+
+        printf("Done cleaning up...\n");
+}

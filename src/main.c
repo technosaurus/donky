@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <xcb/xcb.h>
+#include <signal.h>
 
 #include "../config.h"
 #include "config.h"
@@ -35,9 +36,17 @@
         "  -c, --config=FILE    Use alternate configuration file\n" \
         "  -d, --debug          Show debugging messages\n"
 
+/* Function prototypes. */
 void initialize_stuff(void);
 void clean_up_everything(void);
 int main(int argc, char **argv);
+void sigterm_handler(int signum);
+void sighup_handler(int signum);
+void sigint_handler(int signum);
+
+/* Globals. */
+int donky_reload = 0;
+int donky_exit = 0;
 
 /**
  * @brief Program entry point.
@@ -87,11 +96,13 @@ int main(int argc, char **argv)
                 }
         }
 
+        /* Set signal handlers. */
+        signal(SIGTERM, sigterm_handler);
+        signal(SIGHUP, sighup_handler);
+        signal(SIGINT, sigint_handler);
+
         /* Initialize, then start donky. */
         initialize_stuff();
-        //free_your_mind();
-        
-        clean_up_everything();
 
         exit(EXIT_SUCCESS);
 }
@@ -103,22 +114,34 @@ void initialize_stuff(void)
         struct x_connection *x_conn;
         struct window_settings *ws;
 
-        x_conn = init_x_connection();
-        printf("made X connection\n");
+        while (1) {
+                x_conn = init_x_connection();
+                printf("made X connection\n");
 
-        parse_cfg();
-        printf("parsed config\n");
+                parse_cfg();
+                printf("parsed config\n");
 
-        parse_text();
-        printf("parsed [text]\n");
+                parse_text();
+                printf("parsed [text]\n");
 
-        module_load_all();
-        printf("loaded modules\n");
+                module_load_all();
+                printf("loaded modules\n");
 
-        ws = draw_window(x_conn);
-        printf("drew window\n");
+                ws = draw_window(x_conn);
+                printf("drew window\n");
 
-        donky_loop(x_conn, ws);
+                donky_loop(x_conn, ws);
+
+                clean_up_everything();
+
+                /* Exit flag! */
+                if (donky_exit)
+                        break;
+
+                /* We just reloaded, negate the flag. */
+                if (donky_reload)
+                        donky_reload = 0;
+        }
 }
 
 /**
@@ -129,5 +152,28 @@ void clean_up_everything(void)
         clear_cfg();
         clear_text();
         clear_module();
-        //clear_x();
+}
+
+/**
+ * @brief Handles SIGTERM signal.
+ */
+void sigterm_handler(int signum)
+{
+        donky_exit = 1;
+}
+
+/**
+ * @brief Handles SIGHUP signal.
+ */
+void sighup_handler(int signum)
+{
+        donky_reload = 1;
+}
+
+/**
+ * @brief Handles SIGINT signal.
+ */
+void sigint_handler(int signum)
+{
+        donky_exit = 1;
 }
