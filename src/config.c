@@ -136,7 +136,7 @@ char *get_char_key(char *mod, char *key)
 
         while (cur_set) {
                 if(!strcasecmp(cur_set->key, key))
-                        return strdup(cur_set->value);
+                        return d_strcpy(cur_set->value);
 
                 cur_set = cur_set->next;
         }
@@ -283,7 +283,7 @@ void parse_cfg(void)
                 /* handle [text] - store all lines 'til next [mod] into config_text */
                 if (mod && !strcasecmp(mod, "text")) {
                         if (!config_text)
-                                config_text = strndup(str, (strlen(str) * sizeof(char)));
+                                config_text = d_strncpy(str, (strlen(str) * sizeof(char)));
                         else {
                                 /* resize config_text so we can add more to it */
                                 config_text = realloc(config_text, ((strlen(config_text) + strlen(str) + 2) * sizeof(char)));
@@ -298,11 +298,11 @@ void parse_cfg(void)
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value) == 2)
                         trim_t(value);
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
-                        value = strndup("True", (sizeof(char) * 4));
+                        value = d_strncpy("True", (sizeof(char) * 4));
                 
                 /* if the value is "" or '', set it to False */
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''")))
-                        value = strndup("False", (sizeof(char) * 5));
+                        value = d_strncpy("False", (sizeof(char) * 5));
 
                 /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
@@ -312,6 +312,7 @@ void parse_cfg(void)
                         printf("char: %s || int: %d || double: %f || bool: %d ||\n\n",
                                 chrkey, get_int_key(mod, key),
                                 get_double_key(mod, key), get_bool_key(mod, key));
+                        free(chrkey);
                 }
 
                 /* reset pointers */
