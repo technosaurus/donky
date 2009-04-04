@@ -19,7 +19,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/Xlib.h>
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 #include <unistd.h>
@@ -29,7 +28,6 @@
 #include "x11.h"
 #include "config.h"
 #include "render.h"
-#include "text.h"
 #include "module.h"
 #include "util.h"
 #include "default_settings.h"
@@ -320,37 +318,24 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
 void donky_loop(struct x_connection *x_conn,
                 struct window_settings *ws)
 {
-        unsigned int is_last;
-
-        char *(*sym)(char *);
-        struct module_var *mod;
-
-        int16_t new_xpos;
-        int16_t new_ypos;
+        struct text_section *cur = ts_start;
+        struct draw_settings *ds = draw_settings_load(x_conn, ws);
 
         xcb_generic_event_t *e;
         uint8_t force;
 
-        struct text_section *cur = ts_start;
-        struct draw_settings *ds = draw_settings_load(x_conn, ws);
-
-        /* XTextExtents crap. */
-        int direction_return;
-        int font_ascent_return;
-        int font_descent_return;
-        XCharStruct overall_return;
+        /* new_xpos and new_ypos hold the coords
+         * of where we'll be drawing anything new */
+        int16_t new_xpos = ds->font_x_offset;
+        int16_t new_ypos = ds->font_y_offset;
 
         /* Line height pewp. */
         int *line_heights = calloc(sizeof(int), ts_end->line + 1);
         int calcd_line_heights = 0;
-        int height;
         int linediff;
         int i;
 
-        /* new_xpos and new_ypos hold the coords
-         * of where we'll be drawing anything new */
-        new_xpos = ds->font_x_offset;
-        new_ypos = ds->font_y_offset;
+        unsigned int is_last;
 
         /* Infinite donky loop! (TM) :o */
         while (!donky_reload && !donky_exit) {
@@ -409,56 +394,25 @@ void donky_loop(struct x_connection *x_conn,
                                  * we will need to redraw this static text.
                                  * Otherwise, we never redraw it! */
                                 if (cur->xpos == -1 || (cur->xpos != new_xpos) || force) {
-                                        //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
-                                        if (!cur->pixel_width) {
-                                                XTextExtents(ds->font_struct,
-                                                             cur->value,
-                                                             strlen(cur->value),
-                                                             &direction_return,
-                                                             &font_ascent_return,
-                                                             &font_descent_return,
-                                                             &overall_return);
-                                                
-                                                cur->pixel_width = overall_return.width;
-
-                                                /* Calculate line height. */
-                                                if (!calcd_line_heights) {
-                                                        height = overall_return.ascent + overall_return.descent;
-                                                        
-                                                        if (!line_heights[cur->line])
-                                                                line_heights[cur->line] = height + ds->minimum_line_spacing;
-                                                        else if (line_heights[cur->line] < height)
-                                                                line_heights[cur->line] = height + ds->minimum_line_spacing;
-                                                }
-                                        }
-
                                         cur->xpos = new_xpos;
                                         cur->ypos = new_ypos;
 
-                                        render_queue_add(cur->value,
-                                                         ds->color,
-                                                         ds->font,
-                                                         &cur->xpos,
-                                                         &cur->ypos,
-                                                         cur->xpos,
-                                                         cur->ypos - ds->font_y_offset,
-                                                         &cur->pixel_width,
-                                                         line_heights[cur->line],
-                                                         &is_last);
+                                        handle_TEXT_STATIC(cur,
+                                                           ds,
+                                                           line_heights,
+                                                           &calcd_line_heights,
+                                                           &is_last);
                                 }
                                 break;
                         case TEXT_VARIABLE:
-                                mod = cur->mod_var;
-                                if (mod == NULL)
-                                        break;
-
                                 /* We only update the value of this variable
                                  * if it has timed out or if timeout is set to
                                  * 0, meaning never update.
                                  * 
                                  * NOTE: we should update if our
                                  * xpos has changed! */
-                                if (!force &&
+                                if (((!force) ||
+                                     (cur->mod_var == NULL)) &&
                                     (((get_time() - cur->last_update < cur->timeout) ||
                                       (cur->timeout == 0 && (cur->last_update != 0))) &&
                                      (cur->xpos == new_xpos))) {
@@ -469,49 +423,13 @@ void donky_loop(struct x_connection *x_conn,
                                 cur->xpos = new_xpos;
                                 cur->ypos = new_ypos;
 
-                                sym = mod->sym;
-                                switch (mod->type) {
+                                switch (cur->mod_var->type) {
                                 case VARIABLE_STR:
-                                        if ((get_time() - cur->last_update >= cur->timeout) ||
-                                            (cur->timeout == 0 && (cur->last_update == 0))) {
-                                                strncpy(cur->result,
-                                                        sym(cur->args),
-                                                        sizeof(cur->result));
-
-                                                cur->last_update = get_time();
-                                                //printf("Updating... %s\n", mod->name);
-                                        }
-
-                                        XTextExtents(ds->font_struct,
-                                                     cur->result,
-                                                     strlen(cur->result),
-                                                     &direction_return,
-                                                     &font_ascent_return,
-                                                     &font_descent_return,
-                                                     &overall_return);
-                                                     
-                                        cur->pixel_width = overall_return.width;
-
-                                        /* Calculate line height. */
-                                        if (!calcd_line_heights) {
-                                                height = overall_return.ascent + overall_return.descent;
-                                                        
-                                                if (!line_heights[cur->line])
-                                                        line_heights[cur->line] = height + ds->minimum_line_spacing;
-                                                else if (line_heights[cur->line] < height)
-                                                        line_heights[cur->line] = height + ds->minimum_line_spacing;
-                                        }
-
-                                        render_queue_add(cur->result,
-                                                         ds->color,
-                                                         ds->font,
-                                                         &cur->xpos,
-                                                         &cur->ypos,
-                                                         cur->xpos,
-                                                         cur->ypos - ds->font_y_offset,
-                                                         &cur->pixel_width,
-                                                         line_heights[cur->line],
-                                                         &is_last);
+                                        handle_VARIABLE_STR(cur,
+                                                            ds,
+                                                            line_heights,
+                                                            &calcd_line_heights,
+                                                            &is_last);
                                         break;
                                 case VARIABLE_BAR:
                                         break;
@@ -607,3 +525,128 @@ void donky_loop(struct x_connection *x_conn,
 
         printf("Done cleaning up...\n");
 }
+
+/** 
+ * @brief Handles TEXT_STATIC text_section types.
+ *        Takes care of drawing any static text.
+ * 
+ * @param cur The current text_section node.
+ * @param ds Current donky draw settings.
+ * @param line_heights 
+ * @param calcd_line_heights 
+ * @param is_last Whether or not this is the last node
+ *                in our text_section list.
+ */
+void handle_TEXT_STATIC(struct text_section *cur,
+                        struct draw_settings *ds,
+                        int *line_heights,
+                        int *calcd_line_heights,
+                        unsigned int *is_last)
+{
+        //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
+        if (!cur->pixel_width) {
+                int direction_return;
+                int font_ascent_return;
+                int font_descent_return;
+                XCharStruct overall_return;
+
+                XTextExtents(ds->font_struct,
+                             cur->value,
+                             strlen(cur->value),
+                             &direction_return,
+                             &font_ascent_return,
+                             &font_descent_return,
+                             &overall_return);
+                                                
+                cur->pixel_width = overall_return.width;
+
+                /* Calculate line height. */
+                if (!*calcd_line_heights) {
+                        int height = overall_return.ascent + overall_return.descent;
+                                                        
+                        if (!line_heights[cur->line])
+                                line_heights[cur->line] = height + ds->minimum_line_spacing;
+                        else if (line_heights[cur->line] < height)
+                                line_heights[cur->line] = height + ds->minimum_line_spacing;
+                }
+        }
+
+        render_queue_add(cur->value,
+                         ds->color,
+                         ds->font,
+                         &cur->xpos,
+                         &cur->ypos,
+                         cur->xpos,
+                         cur->ypos - ds->font_y_offset,
+                         &cur->pixel_width,
+                         line_heights[cur->line],
+                         is_last);
+}
+
+/** 
+ * @brief Handles TEXT_VARIABLE->VARIABLE_STR text_section types.
+ *        Takes care of any text that can change from one update
+ *        to the next.
+ * 
+ * @param cur The current text_section node.
+ * @param ds Current donky draw settings.
+ * @param line_heights 
+ * @param calcd_line_heights 
+ * @param is_last Whether or not this is the last node
+ *                in the text_section list.
+ */
+void handle_VARIABLE_STR(struct text_section *cur,
+                         struct draw_settings *ds,
+                         int *line_heights,
+                         int *calcd_line_heights,
+                         unsigned int *is_last)
+{
+        char *(*sym)(char *) = cur->mod_var->sym;
+
+        int direction_return;
+        int font_ascent_return;
+        int font_descent_return;
+        XCharStruct overall_return;
+
+        if ((get_time() - cur->last_update >= cur->timeout) ||
+            (cur->timeout == 0 && (cur->last_update == 0))) {
+                strncpy(cur->result,
+                        sym(cur->args),
+                        sizeof(cur->result));
+
+                cur->last_update = get_time();
+                //printf("Updating... %s\n", mod->name);
+        }
+
+        XTextExtents(ds->font_struct,
+                     cur->result,
+                     strlen(cur->result),
+                     &direction_return,
+                     &font_ascent_return,
+                     &font_descent_return,
+                     &overall_return);
+                                                     
+        cur->pixel_width = overall_return.width;
+
+        /* Calculate line height. */
+        if (!*calcd_line_heights) {
+                int height = overall_return.ascent + overall_return.descent;
+                                                        
+                if (!line_heights[cur->line])
+                        line_heights[cur->line] = height + ds->minimum_line_spacing;
+                else if (line_heights[cur->line] < height)
+                        line_heights[cur->line] = height + ds->minimum_line_spacing;
+        }
+
+        render_queue_add(cur->result,
+                         ds->color,
+                         ds->font,
+                         &cur->xpos,
+                         &cur->ypos,
+                         cur->xpos,
+                         cur->ypos - ds->font_y_offset,
+                         &cur->pixel_width,
+                         line_heights[cur->line],
+                         is_last);
+}
+

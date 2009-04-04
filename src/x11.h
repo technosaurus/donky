@@ -20,6 +20,8 @@
 
 #include <X11/Xlib.h>
 
+#include "text.h"
+
 struct x_connection {
         Display *display;
         xcb_connection_t *connection;
@@ -75,6 +77,16 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
                                          struct window_settings *ws);
 void donky_loop(struct x_connection *x_conn,
                 struct window_settings *ws);
+void handle_TEXT_STATIC(struct text_section *cur,
+                        struct draw_settings *ds,
+                        int *line_heights,
+                        int *calcd_line_heights,
+                        unsigned int *is_last);
+void handle_VARIABLE_STR(struct text_section *cur,
+                         struct draw_settings *ds,
+                         int *line_heights,
+                         int *calcd_line_heights,
+                         unsigned int *is_last);
 
 #endif /* X11_H */
 

@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <xcb/xcb.h>
 
-#include "x11.h"
 #include "render.h"
 #include "config.h"
 #include "util.h"
