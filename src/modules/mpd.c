@@ -115,9 +115,10 @@ void run_cron(void)
         if (start_connection()) {
                 pop_currentsong();
                 pop_status();
-                close(mpd_sock);
+                fprintf(sockout, "close\r\n");
                 fflush(sockin);
                 fflush(sockout);
+                close(mpd_sock);
                 fclose(sockin);
                 fclose(sockout);
         }
