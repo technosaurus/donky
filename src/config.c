@@ -277,18 +277,20 @@ void parse_cfg(void)
                 if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
+                                
                         continue;
                 }
 
                 /* handle [text] - store all lines 'til next [mod] into config_text */
                 if (mod && !strcasecmp(mod, "text")) {
-                        if (!config_text)
+                        if (!config_text) {
                                 config_text = d_strncpy(str, (strlen(str) * sizeof(char)));
-                        else {
+                        } else {
                                 /* resize config_text so we can add more to it */
                                 config_text = realloc(config_text, ((strlen(config_text) + strlen(str) + 2) * sizeof(char)));
                                 strncat(config_text, str, (strlen(str) * sizeof(char)));
                         }
+
                         continue;
                 }
 
@@ -320,6 +322,7 @@ void parse_cfg(void)
                 key = NULL;
         }
 
+        /* Close file descriptor. */
         fclose(cfg_file);
 
         if (config_text == NULL) {
@@ -360,4 +363,7 @@ void clear_cfg(void)
 
                 cur_cfg = next_cfg;
         }
+
+        first_cfg = NULL;
+        last_cfg = NULL;
 }
