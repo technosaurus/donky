@@ -65,15 +65,12 @@ char *get_eee_backlight(char *args)
         int percent;
 
         backlight_now = fopen("/sys/devices/virtual/backlight/eeepc/brightness", "r");
-        if (backlight_now == NULL) {
-                ret_backlight = m_strdup("n/a");
-                return ret_backlight;
-        }
+        if (backlight_now == NULL)
+                return m_strdup("n/a");
 
         if (fgets(now, 16, backlight_now) == NULL) {
                 fclose(backlight_now);
-                ret_backlight = m_strdup("n/a");
-                return ret_backlight;
+                return m_strdup("n/a");
         }
 
         percent = ((atof(now) / atof(max)) * 100);

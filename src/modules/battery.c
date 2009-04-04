@@ -54,10 +54,8 @@ char *get_battery(char *args)
 {
         ret_battery = NULL;
 
-        if (full[0] == '\0') {
-                ret_battery = m_strdup("n/a");
-                return ret_battery;
-        }
+        if (full[0] == '\0')
+                return m_strdup("n/a");
 
         char path[64];
 
@@ -78,15 +76,12 @@ char *get_battery(char *args)
         int charge;
 
         charge_now = fopen(path, "r");
-        if (charge_now == NULL) {
-                ret_battery = m_strdup("n/a");
-                return ret_battery;
-        }
+        if (charge_now == NULL)
+                return m_strdup("n/a");
 
         if (fgets(now, 16, charge_now) == NULL) {
                 fclose(charge_now);
-                ret_battery = m_strdup("n/a");
-                return ret_battery;
+                return m_strdup("n/a");
         }
 
         charge = ((atof(now) / atof(full)) * 100);

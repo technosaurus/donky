@@ -49,20 +49,8 @@ char *get_freehigh(char *args);
 char *get_usedhigh(char *args);
 
 /* Globals. */
-char *ret_uptime = NULL;
-char *ret_loadavg = NULL;
-char *ret_totalram = NULL;
-char *ret_freeram = NULL;
-char *ret_usedram = NULL;
-char *ret_sharedram = NULL;
-char *ret_bufferram = NULL;
-char *ret_totalswap = NULL;
-char *ret_freeswap = NULL;
-char *ret_usedswap = NULL;
-char *ret_procs = NULL;
-char *ret_totalhigh = NULL;
-char *ret_freehigh = NULL;
-char *ret_usedhigh = NULL;
+char *ret = NULL;
+struct sysinfo info;
 
 /**
  * @brief This is run on module initialization.
@@ -136,11 +124,8 @@ char *bytes_to_bigger(unsigned long bytes)
 
 char *get_uptime(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_uptime = m_strdup("n/a");
-                return ret_uptime;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
 
         unsigned long cur_up = info.uptime;
         unsigned long days = cur_up / 86400;
@@ -151,177 +136,126 @@ char *get_uptime(char *args)
         cur_up -= mins * 60;
         int secs = cur_up;
 
-        ret_uptime = malloc(32 * sizeof(char));
-        snprintf(ret_uptime, 32, "%ld day%s, %02d:%02d:%02d",
+        ret = m_malloc(32 * sizeof(char));
+        snprintf(ret, 32, "%ld day%s, %02d:%02d:%02d",
                  days, (days != 1) ? "s" : "",
                  hours, mins, secs);
 
-        return ret_uptime;
+        return ret;
 }
 
 
 char *get_loadavg(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_loadavg = m_strdup("n/a");
-                return ret_loadavg;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
 
         float load0, load1, load2;
         load0 = info.loads[0] / 65536.0;
         load1 = info.loads[1] / 65536.0;
         load2 = info.loads[2] / 65536.0;
 
-        ret_loadavg = malloc(32 * sizeof(char));
-        snprintf(ret_loadavg, 32, "%2.2f, %2.2f, %2.2f",
+        ret = m_malloc(32 * sizeof(char));
+        snprintf(ret, 32, "%2.2f, %2.2f, %2.2f",
                  load0, load1, load2);
 
-        return ret_loadavg;
+        return ret;
 }
 
 char *get_totalram(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_totalram = m_strdup("n/a");
-                return ret_totalram;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_totalram = bytes_to_bigger(info.totalram * info.mem_unit);
-        return ret_totalram;
+        return bytes_to_bigger(info.totalram * info.mem_unit);
 }
 
 char *get_freeram(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_freeram = m_strdup("n/a");
-                return ret_freeram;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_freeram = bytes_to_bigger(info.freeram * info.mem_unit);
-        return ret_freeram;
+        return bytes_to_bigger(info.freeram * info.mem_unit);
 }
 
 char *get_usedram(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_usedram = m_strdup("n/a");
-                return ret_usedram;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_usedram = bytes_to_bigger((info.totalram - info.freeram) *
-                                       info.mem_unit);
-        return ret_usedram;
+        return bytes_to_bigger((info.totalram - info.freeram) * info.mem_unit);
 }
 
 char *get_sharedram(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_sharedram = m_strdup("n/a");
-                return ret_sharedram;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_sharedram = bytes_to_bigger(info.sharedram * info.mem_unit);
-        return ret_sharedram;
+        return bytes_to_bigger(info.sharedram * info.mem_unit);
 }
 
 char *get_bufferram(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_bufferram = m_strdup("n/a");
-                return ret_bufferram;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_bufferram = bytes_to_bigger(info.bufferram * info.mem_unit);
-        return ret_bufferram;
+        return bytes_to_bigger(info.bufferram * info.mem_unit);
 }
 
 char *get_totalswap(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_totalswap = m_strdup("n/a");
-                return ret_totalswap;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_totalswap = bytes_to_bigger(info.totalswap * info.mem_unit);
-        return ret_totalswap;
+        return bytes_to_bigger(info.totalswap * info.mem_unit);
 }
 
 char *get_freeswap(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_freeswap = m_strdup("n/a");
-                return ret_freeswap;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_freeswap = bytes_to_bigger(info.freeswap * info.mem_unit);
-        return ret_freeswap;
+        return bytes_to_bigger(info.freeswap * info.mem_unit);
 }
 
 char *get_usedswap(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_usedswap = m_strdup("n/a");
-                return ret_usedswap;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_usedswap = bytes_to_bigger((info.totalswap - info.freeswap) * info.mem_unit);
-        return ret_usedswap;
+        return bytes_to_bigger((info.totalswap - info.freeswap) * info.mem_unit);
 }
 
 char *get_procs(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_procs = m_strdup("n/a");
-                return ret_procs;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
 
-        ret_procs = malloc(8 * sizeof(char));
-        snprintf(ret_procs, 8, "%d", info.procs);
-        return ret_procs;
+        ret = m_malloc(8 * sizeof(char));
+        snprintf(ret, 8, "%d", info.procs);
+        return ret;
 }
 
 char *get_totalhigh(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_totalhigh = m_strdup("n/a");
-                return ret_totalhigh;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_totalhigh = bytes_to_bigger(info.totalhigh * info.mem_unit);
-        return ret_totalhigh;
+        return bytes_to_bigger(info.totalhigh * info.mem_unit);
 }
 
 char *get_freehigh(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_freehigh = m_strdup("n/a");
-                return ret_freehigh;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_freehigh = bytes_to_bigger(info.freehigh * info.mem_unit);
-        return ret_freehigh;
+        return bytes_to_bigger(info.freehigh * info.mem_unit);
 }
 
 char *get_usedhigh(char *args)
 {
-        struct sysinfo info;
-        if (sysinfo(&info) == -1) {
-                ret_usedhigh = m_strdup("n/a");
-                return ret_usedhigh;
-        }
+        if (sysinfo(&info) == -1)
+                return m_strdup("n/a");
         
-        ret_usedhigh = bytes_to_bigger((info.totalhigh - info.freehigh) * info.mem_unit);
-        return ret_usedhigh;
+        return bytes_to_bigger((info.totalhigh - info.freehigh) * info.mem_unit);
 }

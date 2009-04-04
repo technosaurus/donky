@@ -67,18 +67,16 @@ char *get_volume(char *args)
        
         ret_volume = NULL;
 
-	if (prep_alsa_get_level(&level, args) < 0) {
-		ret_volume = m_strdup("n/a");
-                return ret_volume;
-        }
+	if (prep_alsa_get_level(&level, args) < 0)
+                return m_strdup("n/a");
 
         max = volume_alsaMax;
 	min = volume_alsaMin;
 
 	ret = ((volume_alsaSet / 100.0) * (max - min) + min) + 0.5;
-	if (volume_alsaSet > 0 && ret == level) {
+	if (volume_alsaSet > 0 && ret == level)
 		ret = volume_alsaSet;
-	} else
+	else
 		ret = (int)(100 * (((float)(level - min)) / (max - min)) + 0.5);
 
         close_alsa_mixer();

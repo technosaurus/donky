@@ -47,7 +47,6 @@ struct x_connection *init_x_connection(void)
         struct x_connection *x_conn;
         x_conn = malloc(sizeof(struct x_connection));
 
-        const xcb_setup_t *setup;
         xcb_screen_iterator_t screen_iter;
         int screen_number;
 
@@ -60,11 +59,9 @@ struct x_connection *init_x_connection(void)
                 exit(EXIT_FAILURE);
         }
 
-        setup = xcb_get_setup(x_conn->connection);
-
         x_conn->screen = NULL;
         
-        screen_iter = xcb_setup_roots_iterator(setup);
+        screen_iter = xcb_setup_roots_iterator(xcb_get_setup(x_conn->connection));
 
         /* find our current screen */        
         for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter)) {

@@ -68,15 +68,12 @@ char *get_moc(char *args)
         ret_moc = NULL;
 
         mocp = popen(mocp_line, "r");
-        if (mocp == NULL) {
-                ret_moc = m_strdup("Could not query moc.");
-                return ret_moc;
-        }
+        if (mocp == NULL)
+                return m_strdup("Could not query moc.");
 
         if (fgets(pipe, 160, mocp) == NULL) {
                 pclose(mocp);
-                ret_moc = m_strdup("No music playing.");
-                return ret_moc;
+                return m_strdup("No music playing.");
         }
 
         /* Copy one char less to remove the \n */

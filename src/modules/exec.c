@@ -55,15 +55,12 @@ char *get_exec(char *args)
         ret_exec = NULL;
 
         execp = popen(args, "r");
-        if (execp == NULL) {
-                ret_exec = m_strdup("n/a");
-                return ret_exec;
-        }
+        if (execp == NULL)
+                return m_strdup("n/a");
 
         if (fgets(pipe, 160, execp) == NULL) {
                 pclose(execp);
-                ret_exec = m_strdup("n/a");
-                return ret_exec;
+                return m_strdup("n/a");
         }
 
         ret_exec = m_strdup(pipe);
