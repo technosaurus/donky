@@ -590,8 +590,8 @@ void donky_loop(struct x_connection *x_conn,
 
         /* Cleanup. */
         freeif(line_heights);
+        XFreeFontInfo(NULL, ds->font_struct, 0);
         xcb_close_font(x_conn->connection, ds->font);
-        freeif(ds->font_struct);
         freeif(ds->font_name);
         freeif(ds->color.bg_name);
         freeif(ds->color.fg_name);
