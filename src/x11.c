@@ -95,8 +95,8 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
         char *fg_color_name;
 
         char *alignment;
-        int16_t x_gap;
-        int16_t y_gap;
+        uint16_t x_gap;
+        uint16_t y_gap;
 
         struct window_settings *ws;
         ws = malloc(sizeof(struct window_settings));
@@ -166,7 +166,7 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
 
         /* draw donky in its own window? if not, draw to root */
         ws->own_window = get_bool_key("X11", "own_window");
-        if (ws->own_window <= 0) {
+        if (ws->own_window == -1) {
                 ws->own_window = 0;
                 x_conn->window = x_conn->screen->root;
                 return;
@@ -319,7 +319,7 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
 void donky_loop(struct x_connection *x_conn,
                 struct window_settings *ws)
 {
-        int is_last;
+        unsigned int is_last;
 
         char *str;
         char *(*sym)(char *);
@@ -360,6 +360,7 @@ void donky_loop(struct x_connection *x_conn,
                 if (e = xcb_poll_for_event(x_conn->connection)) {
                         switch (e->response_type & ~0x80) {
                                 case XCB_EXPOSE:
+                                        /* force redraw everything */
                                         force = 1;
                                         break;
                                 default:
@@ -396,12 +397,12 @@ void donky_loop(struct x_connection *x_conn,
                         case TEXT_COLOR:
                                 if (cur->args == NULL)
                                         ds->color.fg = get_color(x_conn->connection,
-                                                                  x_conn->screen,
-                                                                  ds->color.fg_name);
+                                                                 x_conn->screen,
+                                                                 ds->color.fg_name);
                                 else
                                         ds->color.fg = get_color(x_conn->connection,
-                                                                  x_conn->screen,
-                                                                  cur->args);
+                                                                 x_conn->screen,
+                                                                 cur->args);
                                 break;
                         case TEXT_STATIC:
                                 /* If the xpos has changed since last drawn,
@@ -441,9 +442,9 @@ void donky_loop(struct x_connection *x_conn,
                                                          &cur->ypos,
                                                          cur->xpos,
                                                          cur->ypos - ds->font_y_offset,
-                                                         cur->pixel_width,
+                                                         &cur->pixel_width,
                                                          line_heights[cur->line],
-                                                         is_last);
+                                                         &is_last);
                                 }
                                 break;
                         case TEXT_VARIABLE:
@@ -508,9 +509,9 @@ void donky_loop(struct x_connection *x_conn,
                                                          &cur->ypos,
                                                          cur->xpos,
                                                          cur->ypos - ds->font_y_offset,
-                                                         cur->pixel_width,
+                                                         &cur->pixel_width,
                                                          line_heights[cur->line],
-                                                         is_last);
+                                                         &is_last);
                                         break;
                                 case VARIABLE_BAR:
                                         break;
@@ -592,6 +593,5 @@ void donky_loop(struct x_connection *x_conn,
         freeif(ds->color.bg_name);
         freeif(ds->color.fg_name);
         freeif(ds);
-        /* clean Xlib shiz up here too */
 }
 

@@ -90,9 +90,9 @@ void render_queue_add(char *value,
                       int16_t *ypos,
                       int16_t cl_xpos,
                       int16_t cl_ypos,
-                      int16_t cl_width,
+                      int16_t *cl_width,
                       int16_t cl_height,
-                      int is_last)
+                      unsigned int *is_last)
 {
         struct render_queue *n = malloc(sizeof(struct render_queue));
 
@@ -104,9 +104,9 @@ void render_queue_add(char *value,
 
         n->cl_xpos = cl_xpos;
         n->cl_ypos = cl_ypos;
-        n->cl_width = cl_width;
+        n->cl_width = *cl_width;
         n->cl_height = cl_height;
-        n->is_last = is_last;
+        n->is_last = *is_last;
         
         n->next = NULL;
         

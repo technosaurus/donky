@@ -57,6 +57,7 @@ void module_unload(char *name);
 void *module_get_sym(void *handle, char *name);
 void module_load_all(void);
 void clear_module(void);
+void module_var_cron_exec(void);
 
 #endif /* MODULE_H */
 

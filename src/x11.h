@@ -54,14 +54,14 @@ struct draw_settings {
 };
 
 struct window_settings {
-        int8_t own_window;
-        int8_t override;
+        unsigned int own_window;
+        unsigned int override;
 
-        int16_t width;
-        int16_t height;
+        uint16_t width;
+        uint16_t height;
 
-        int16_t x_offset;
-        int16_t y_offset;
+        uint16_t x_offset;
+        uint16_t y_offset;
 
         uint32_t bg_color;
         uint32_t fg_color;

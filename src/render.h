@@ -60,9 +60,9 @@ void render_queue_add(char *value,
                       int16_t *ypos,
                       int16_t cl_xpos,
                       int16_t cl_ypos,
-                      int16_t cl_width,
+                      int16_t *cl_width,
                       int16_t cl_height,
-                      int is_last);
+                      unsigned int *is_last);
 uint32_t get_color(xcb_connection_t *connection,
                    xcb_screen_t *screen,
                    char *name);
