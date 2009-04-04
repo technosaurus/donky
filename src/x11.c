@@ -325,7 +325,6 @@ void donky_loop(struct x_connection *x_conn,
 {
         unsigned int is_last;
 
-        char *str;
         char *(*sym)(char *);
         struct module_var *mod;
 
@@ -594,6 +593,8 @@ void donky_loop(struct x_connection *x_conn,
 
         /* Cleanup. */
         freeif(line_heights);
+        xcb_close_font(x_conn->connection, ds->font);
+        freeif(ds->font_struct);
         freeif(ds->font_name);
         freeif(ds->color.bg_name);
         freeif(ds->color.fg_name);

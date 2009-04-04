@@ -267,6 +267,7 @@ void parse_cfg(void)
 
         /* used by [text] */
         config_text = NULL;
+        char *config_text_mod = NULL;
 
         while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
                 /* Skip comments. */
@@ -277,6 +278,8 @@ void parse_cfg(void)
                 if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
+                        else
+                                config_text_mod = mod;
                                 
                         continue;
                 }
@@ -303,8 +306,10 @@ void parse_cfg(void)
                         value = d_strncpy("True", (sizeof(char) * 4));
                 
                 /* if the value is "" or '', set it to False */
-                if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''")))
+                if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
+                        free(value);
                         value = d_strncpy("False", (sizeof(char) * 5));
+                }
 
                 /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
@@ -321,6 +326,9 @@ void parse_cfg(void)
                 value = NULL;
                 key = NULL;
         }
+
+        /* This is needed since config_text was a special var. */
+        freeif(config_text_mod);
 
         /* Close file descriptor. */
         fclose(cfg_file);
