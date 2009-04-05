@@ -19,15 +19,21 @@
 #define RENDER_H
 
 #include "x11.h"
+#include "module.h"
 
 struct render_queue {
         char *value;
+        int *int_value;
         
         struct donky_color color;  /* Color of this text section. */
         xcb_font_t font;           /* Font for this text section. */
+        enum text_section_type ts_type;
+        enum variable_type v_type;
         
-        int16_t *xpos;             /* Current x position. */
-        int16_t *ypos;             /* Current y position. */
+        int16_t xpos;             /* Current x position. */
+        int16_t ypos;             /* Current y position. */
+        uint16_t width;
+        uint16_t height;
 
         int16_t cl_xpos;
         int16_t cl_ypos;
@@ -39,29 +45,23 @@ struct render_queue {
 };
 
 /* function prototypes */
-void render_text(xcb_connection_t *connection,
-                 xcb_window_t *window,
-                 char *str,
-                 xcb_font_t font,
-                 struct donky_color color,
-                 int16_t x,
-                 int16_t y);
-xcb_gc_t get_font_gc(xcb_connection_t *connection,
-                     xcb_window_t *window,
-                     xcb_font_t font,
-                     uint32_t bg, uint32_t fg);
 void render_queue_exec(xcb_connection_t *connection,
                        xcb_window_t *window,
                        int16_t *window_width);
 void render_queue_add(char *value,
+                      int *int_value,
                       struct donky_color color,
                       xcb_font_t font,
-                      int16_t *xpos,
-                      int16_t *ypos,
+                      enum text_section_type ts_type,
+                      enum variable_type v_type,
+                      int16_t xpos,
+                      int16_t ypos,
+                      uint16_t width,
+                      uint16_t height,
                       int16_t cl_xpos,
                       int16_t cl_ypos,
-                      int16_t *cl_width,
-                      int16_t cl_height,
+                      uint16_t cl_width,
+                      uint16_t cl_height,
                       unsigned int *is_last);
 uint32_t get_color(xcb_connection_t *connection,
                    xcb_screen_t *screen,

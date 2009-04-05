@@ -33,10 +33,31 @@
 #include "default_settings.h"
 #include "mem.h"
 
+/* Function prototypes. */
+struct window_settings *window_settings_load(struct x_connection *x_conn);
+struct draw_settings *draw_settings_load(struct x_connection *x_conn,
+                                         struct window_settings *ws);
+void handle_TEXT_STATIC(struct text_section *cur,
+                        struct draw_settings *ds,
+                        int *line_heights,
+                        int *calcd_line_heights,
+                        unsigned int *is_last);
+void handle_VARIABLE_STR(struct text_section *cur,
+                         struct draw_settings *ds,
+                         int *line_heights,
+                         int *calcd_line_heights,
+                         unsigned int *is_last);
+void handle_VARIABLE_BAR(struct text_section *cur,
+                         struct draw_settings *ds,
+                         int *line_heights,
+                         int *calcd_line_heights,
+                         unsigned int *is_last);
+
+/* Globals. */
 extern int donky_reload;
 extern int donky_exit;
 
-/** 
+/**
  * @brief Connects to the X server and stores all relevant information.
  *        Most things set in here are declared in the header.
  */
@@ -58,10 +79,10 @@ struct x_connection *init_x_connection(void)
         }
 
         x_conn->screen = NULL;
-        
+
         screen_iter = xcb_setup_roots_iterator(xcb_get_setup(x_conn->connection));
 
-        /* find our current screen */        
+        /* find our current screen */
         for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter)) {
                 if (screen_number == 0) {
                         x_conn->screen = screen_iter.data;
@@ -79,12 +100,12 @@ struct x_connection *init_x_connection(void)
         return x_conn;
 }
 
-/** 
+/**
  * @brief Gather and store necessary information for donky's
  *        to-be-drawn window.
- * 
+ *
  * @param x_conn donky's open X connection.
- * 
+ *
  * @return malloc'd & filled windows_settings struct
  */
 struct window_settings *window_settings_load(struct x_connection *x_conn)
@@ -107,7 +128,7 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
                 bg_color_name = d_strcpy(DEFAULT_WINDOW_BGCOLOR);
         if (fg_color_name == NULL)
                 fg_color_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
-                
+
         ws->bg_color = get_color(x_conn->connection,
                                  x_conn->screen,
                                  bg_color_name);
@@ -178,12 +199,12 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
         return ws;
 }
 
-/** 
+/**
  * @brief Gather window settings (see window_settings_load())
  *        and draw window.
- * 
+ *
  * @param x_conn donky's open X connection.
- * 
+ *
  * @return The windows_setting struct used in drawing the window.
  */
 struct window_settings *draw_window(struct x_connection *x_conn)
@@ -217,7 +238,7 @@ struct window_settings *draw_window(struct x_connection *x_conn)
                         mask, values);
         map_cookie = xcb_map_window_checked(x_conn->connection,
                                             x_conn->window);
-                                            
+
         /* some error management */
         error = xcb_request_check(x_conn->connection, window_cookie);
         if (error) {
@@ -225,7 +246,7 @@ struct window_settings *draw_window(struct x_connection *x_conn)
                 xcb_disconnect(x_conn->connection);
                 exit(EXIT_FAILURE);
         }
-        
+
         error = xcb_request_check(x_conn->connection, map_cookie);
         if (error) {
                 printf("Can't map window. Error: %d\n", error->error_code);
@@ -300,10 +321,10 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
 
         /* Setup minimum sleep time. */
         double min_sleep = get_double_key("X11", "global_sleep");
-        
+
         if (min_sleep < 0)
                 min_sleep = DEFAULT_GLOBAL_SLEEP;
-                
+
         int min_seconds = floor(min_sleep);
         long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
         ds->tspec.tv_sec = min_seconds;
@@ -312,7 +333,7 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
         return ds;
 }
 
-/** 
+/**
  * @brief Main donky loop.
  */
 void donky_loop(struct x_connection *x_conn,
@@ -340,9 +361,9 @@ void donky_loop(struct x_connection *x_conn,
         /* Infinite donky loop! (TM) :o */
         while (!donky_reload && !donky_exit) {
                 force = 0;
-                
+
                 /* Do a quick event poll. */
-                if (e = xcb_poll_for_event(x_conn->connection)) {
+                while (e = xcb_poll_for_event(x_conn->connection)) {
                         switch (e->response_type & ~0x80) {
                                 case XCB_EXPOSE:
                                         /* force redraw everything */
@@ -359,7 +380,7 @@ void donky_loop(struct x_connection *x_conn,
 
                 /* Execute cron tabs. */
                 module_var_cron_exec();
-                
+
                 while (cur) {
                         is_last = 0;
 
@@ -408,7 +429,7 @@ void donky_loop(struct x_connection *x_conn,
                                 /* We only update the value of this variable
                                  * if it has timed out or if timeout is set to
                                  * 0, meaning never update.
-                                 * 
+                                 *
                                  * NOTE: we should update if our
                                  * xpos has changed! */
                                 if (((!force) ||
@@ -423,10 +444,12 @@ void donky_loop(struct x_connection *x_conn,
                                 cur->xpos = new_xpos;
                                 cur->ypos = new_ypos;
 
-                                /* Don't wanna crash! */
+                                /* Crash proofing (TM), brought to you by lobo! */
                                 if (cur->mod_var == NULL)
                                         break;
-                                        
+                                if (cur->mod_var->sym == NULL)
+                                        break;
+
                                 switch (cur->mod_var->type) {
                                 case VARIABLE_STR:
                                         handle_VARIABLE_STR(cur,
@@ -436,6 +459,11 @@ void donky_loop(struct x_connection *x_conn,
                                                             &is_last);
                                         break;
                                 case VARIABLE_BAR:
+                                        handle_VARIABLE_BAR(cur,
+                                                            ds,
+                                                            line_heights,
+                                                            &calcd_line_heights,
+                                                            &is_last);
                                         break;
                                 case VARIABLE_GRAPH:
                                         break;
@@ -451,7 +479,7 @@ void donky_loop(struct x_connection *x_conn,
                                 break;
                         }
 
-                        /* if we have a following node, we need 
+                        /* if we have a following node, we need
                            to know where to start drawing it */
                         if (cur->next) {
                                 new_xpos += cur->pixel_width;
@@ -469,7 +497,7 @@ void donky_loop(struct x_connection *x_conn,
                                                 new_ypos += line_heights[cur->line];
                                         else
                                                 new_ypos += ds->minimum_line_height + ds->minimum_line_spacing;
-                                        
+
                                         for (i = 0; i < linediff; i++)
                                                 new_ypos += ds->minimum_line_height + ds->minimum_line_spacing;
                                 }
@@ -530,14 +558,14 @@ void donky_loop(struct x_connection *x_conn,
         printf("Done cleaning up...\n");
 }
 
-/** 
+/**
  * @brief Handles TEXT_STATIC text_section types.
  *        Takes care of drawing any static text.
- * 
+ *
  * @param cur The current text_section node.
  * @param ds Current donky draw settings.
- * @param line_heights 
- * @param calcd_line_heights 
+ * @param line_heights
+ * @param calcd_line_heights
  * @param is_last Whether or not this is the last node
  *                in our text_section list.
  */
@@ -561,13 +589,13 @@ void handle_TEXT_STATIC(struct text_section *cur,
                              &font_ascent_return,
                              &font_descent_return,
                              &overall_return);
-                                                
+
                 cur->pixel_width = overall_return.width;
 
                 /* Calculate line height. */
                 if (!*calcd_line_heights) {
                         int height = overall_return.ascent + overall_return.descent;
-                                                        
+
                         if (!line_heights[cur->line])
                                 line_heights[cur->line] = height + ds->minimum_line_spacing;
                         else if (line_heights[cur->line] < height)
@@ -576,26 +604,30 @@ void handle_TEXT_STATIC(struct text_section *cur,
         }
 
         render_queue_add(cur->value,
+                         NULL,
                          ds->color,
                          ds->font,
-                         &cur->xpos,
-                         &cur->ypos,
+                         cur->type,
+                         0,
+                         cur->xpos,
+                         cur->ypos,
+                         0, 0,
                          cur->xpos,
                          cur->ypos - ds->font_y_offset,
-                         &cur->pixel_width,
+                         cur->pixel_width,
                          line_heights[cur->line],
                          is_last);
 }
 
-/** 
+/**
  * @brief Handles TEXT_VARIABLE->VARIABLE_STR text_section types.
  *        Takes care of any text that can change from one update
  *        to the next.
- * 
+ *
  * @param cur The current text_section node.
  * @param ds Current donky draw settings.
- * @param line_heights 
- * @param calcd_line_heights 
+ * @param line_heights
+ * @param calcd_line_heights
  * @param is_last Whether or not this is the last node
  *                in the text_section list.
  */
@@ -605,12 +637,6 @@ void handle_VARIABLE_STR(struct text_section *cur,
                          int *calcd_line_heights,
                          unsigned int *is_last)
 {
-        /* Don't want to crash in some unexpected situation... */
-        if (!cur->mod_var)
-                return;
-        if (!cur->mod_var->sym)
-                return;
-
         /* Get the function we need to get the variable data. */
         char *(*sym)(char *) = cur->mod_var->sym;
 
@@ -621,42 +647,122 @@ void handle_VARIABLE_STR(struct text_section *cur,
 
         if ((get_time() - cur->last_update >= cur->timeout) ||
             (cur->timeout == 0 && (cur->last_update == 0))) {
-                strncpy(cur->result,
+                memset(cur->str_result, 0, sizeof(cur->str_result));
+                strncpy(cur->str_result,
                         sym(cur->args),
-                        sizeof(cur->result));
+                        sizeof(cur->str_result) - 1);
 
                 cur->last_update = get_time();
                 //printf("Updating... %s\n", mod->name);
         }
 
         XTextExtents(ds->font_struct,
-                     cur->result,
-                     strlen(cur->result),
+                     cur->str_result,
+                     strlen(cur->str_result),
                      &direction_return,
                      &font_ascent_return,
                      &font_descent_return,
                      &overall_return);
-                                                     
+
         cur->pixel_width = overall_return.width;
 
         /* Calculate line height. */
         if (!*calcd_line_heights) {
                 int height = overall_return.ascent + overall_return.descent;
-                                                        
+
                 if (!line_heights[cur->line])
                         line_heights[cur->line] = height + ds->minimum_line_spacing;
                 else if (line_heights[cur->line] < height)
                         line_heights[cur->line] = height + ds->minimum_line_spacing;
         }
 
-        render_queue_add(cur->result,
+        render_queue_add(cur->str_result,
+                         NULL,
                          ds->color,
                          ds->font,
-                         &cur->xpos,
-                         &cur->ypos,
+                         cur->type,
+                         cur->mod_var->type,
+                         cur->xpos,
+                         cur->ypos,
+                         0, 0,
                          cur->xpos,
                          cur->ypos - ds->font_y_offset,
-                         &cur->pixel_width,
+                         cur->pixel_width,
+                         line_heights[cur->line],
+                         is_last);
+}
+
+/**
+ * @brief Handles TEXT_VARIABLE->VARIABLE_STR text_section types.
+ *        Takes care of any text that can change from one update
+ *        to the next.
+ *
+ * @param cur The current text_section node.
+ * @param ds Current donky draw settings.
+ * @param line_heights
+ * @param calcd_line_heights
+ * @param is_last Whether or not this is the last node
+ *                in the text_section list.
+ */
+void handle_VARIABLE_BAR(struct text_section *cur,
+                         struct draw_settings *ds,
+                         int *line_heights,
+                         int *calcd_line_heights,
+                         unsigned int *is_last)
+{
+        /* Get the function we need to get the variable data. */
+        int (*sym)(char *) = cur->mod_var->sym;
+
+        int width;
+        int height;
+        char *rem_args = NULL;
+
+        if ((get_time() - cur->last_update >= cur->timeout) ||
+            (cur->timeout == 0 && (cur->last_update == 0))) {
+                if (sscanf(cur->args, " %d %d ", &width, &height) == 2) {
+                        cur->pixel_width = width;
+                        cur->pixel_height = height;
+                } else if (sscanf(cur->args,
+                                  " %d %d %a[^\n]",
+                                  &width, &height, &rem_args) == 3) {
+                        cur->pixel_width = width;
+                        cur->pixel_height = height;
+                } else {
+                        cur->pixel_width = DEFAULT_BAR_WIDTH;
+                        cur->pixel_height = DEFAULT_BAR_HEIGHT;
+                }
+
+                if (rem_args) {
+                        cur->int_result = sym(m_strdup(rem_args));
+                        free(rem_args);
+                } else {
+                        cur->int_result = sym(cur->args);
+                }
+                        
+                cur->last_update = get_time();
+        }
+
+        /* Calculate line height. */
+        if (!*calcd_line_heights) {
+                if (!line_heights[cur->line])
+                        line_heights[cur->line] = cur->pixel_height + ds->minimum_line_spacing;
+                else if (line_heights[cur->line] < cur->pixel_height)
+                        line_heights[cur->line] = cur->pixel_height + ds->minimum_line_spacing;
+        }
+
+        render_queue_add(NULL,
+                         &cur->int_result,
+                         ds->color,
+                         ds->font,
+                         cur->type,
+                         cur->mod_var->type,
+                         cur->xpos,
+                         cur->ypos - ds->font_y_offset,
+                         cur->pixel_width - 1,
+                         cur->pixel_height,
+                         cur->xpos,
+                         cur->ypos - ds->font_y_offset,
+                         cur->pixel_width,
                          line_heights[cur->line],
                          is_last);
 }

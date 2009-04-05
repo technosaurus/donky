@@ -24,6 +24,28 @@
 #include "config.h"
 #include "util.h"
 
+/* Function prototypes. */
+void render_text(xcb_connection_t *connection,
+                 xcb_window_t *window,
+                 char *str,
+                 xcb_font_t font,
+                 struct donky_color color,
+                 int16_t x,
+                 int16_t y);
+void render_bar(xcb_connection_t *connection,
+                xcb_window_t *window,
+                int *value,
+                xcb_font_t font,
+                struct donky_color color,
+                int16_t x,
+                int16_t y,
+                uint16_t w,
+                uint16_t h);
+xcb_gc_t get_font_gc(xcb_connection_t *connection,
+                     xcb_window_t *window,
+                     xcb_font_t font,
+                     uint32_t bg, uint32_t fg);
+
 /* Globals. */
 struct render_queue *rq_start = NULL;
 struct render_queue *rq_end = NULL;
@@ -57,13 +79,44 @@ void render_queue_exec(xcb_connection_t *connection,
                                    cur->cl_width,
                                    cur->cl_height);
 
-                render_text(connection,
-                            window,
-                            cur->value,
-                            cur->font,
-                            cur->color,
-                            *cur->xpos,
-                            *cur->ypos);
+                switch (cur->ts_type) {
+                case TEXT_STATIC:
+                        render_text(connection,
+                                    window,
+                                    cur->value,
+                                    cur->font,
+                                    cur->color,
+                                    cur->xpos,
+                                    cur->ypos);
+                        break;
+                case TEXT_VARIABLE:
+                        switch (cur->v_type) {
+                        case VARIABLE_STR:
+                                render_text(connection,
+                                            window,
+                                            cur->value,
+                                            cur->font,
+                                            cur->color,
+                                            cur->xpos,
+                                            cur->ypos);
+                                break;
+                        case VARIABLE_BAR:
+                                render_bar(connection,
+                                           window,
+                                           cur->int_value,
+                                           cur->font,
+                                           cur->color,
+                                           cur->xpos,
+                                           cur->ypos,
+                                           cur->width,
+                                           cur->height);
+                                break;
+                        case VARIABLE_GRAPH:
+                                break;
+                        }
+                        break;
+                }
+                
 
                 free(cur);
                 
@@ -83,27 +136,38 @@ void render_queue_exec(xcb_connection_t *connection,
  * @param ypos Y position
  */
 void render_queue_add(char *value,
+                      int *int_value,
                       struct donky_color color,
                       xcb_font_t font,
-                      int16_t *xpos,
-                      int16_t *ypos,
+                      enum text_section_type ts_type,
+                      enum variable_type v_type,
+                      int16_t xpos,
+                      int16_t ypos,
+                      uint16_t width,
+                      uint16_t height,
                       int16_t cl_xpos,
                       int16_t cl_ypos,
-                      int16_t *cl_width,
-                      int16_t cl_height,
+                      uint16_t cl_width,
+                      uint16_t cl_height,
                       unsigned int *is_last)
 {
         struct render_queue *n = malloc(sizeof(struct render_queue));
 
         n->value = value;
+        n->int_value = int_value;
         n->color = color;
         n->font = font;
+        n->ts_type = ts_type;
+        n->v_type = v_type;
+        
         n->xpos = xpos;
         n->ypos = ypos;
+        n->width = width;
+        n->height = height;
 
         n->cl_xpos = cl_xpos;
         n->cl_ypos = cl_ypos;
-        n->cl_width = *cl_width;
+        n->cl_width = cl_width;
         n->cl_height = cl_height;
         n->is_last = *is_last;
         
@@ -153,6 +217,45 @@ void render_text(xcb_connection_t *connection,
                          gc,
                          x, y,
                          str);
+
+        xcb_free_gc(connection, gc);
+}
+
+/**
+ * @brief Render a bar in the donky window.
+ *
+ * @param connection XCB connection object
+ * @param window XCB window
+ * @param value Integer value, representing percent
+ * @param font XCB font, is only needed so i can use the get_font_gc func.
+ * @param color Color structure
+ * @param x X position
+ * @param y Y position
+ * @param w Width
+ * @param h Height
+ */
+void render_bar(xcb_connection_t *connection,
+                xcb_window_t *window,
+                int *value,
+                xcb_font_t font,
+                struct donky_color color,
+                int16_t x,
+                int16_t y,
+                uint16_t w,
+                uint16_t h)
+{
+        xcb_gcontext_t gc = get_font_gc(connection,
+                                        window,
+                                        font,
+                                        color.bg, color.fg);
+
+        int fill_width = (int)((double)w * ((double) *value / (double) 100));
+
+        xcb_rectangle_t rect_outline[] = { x, y, w, h };
+        xcb_rectangle_t rect_fill[] = { x, y, fill_width, h };
+
+        xcb_poly_rectangle(connection, *window, gc, 1, rect_outline);
+        xcb_poly_fill_rectangle(connection, *window, gc, 1, rect_fill);
 
         xcb_free_gc(connection, gc);
 }

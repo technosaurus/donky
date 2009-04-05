@@ -95,6 +95,8 @@ int module_init(void)
         module_var_add(module_name, "mpd_bitrate", "get_bitrate", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_audio", "get_audio", 10.0, VARIABLE_STR);
 
+        module_var_add(module_name, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
+
         /* Add cron job. */
         module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);
 }
@@ -309,6 +311,8 @@ char *get_bitrate(char *args) { return m_strdup(mpdinfo.bitrate); }
 char *get_audio(char *args) { return m_strdup(mpdinfo.audio); }
 char *get_elapsed_time(char *args) { return m_strdup(mpdinfo.etime); }
 char *get_total_time(char *args) { return m_strdup(mpdinfo.ttime); }
+
+int get_volume_bar(char *args) { return strtol(mpdinfo.volume, NULL, 0); }
 
 /**
  * @brief Connect to MPD host.

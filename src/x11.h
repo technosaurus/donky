@@ -71,22 +71,9 @@ struct window_settings {
 
 /* function prototypes */
 struct x_connection *init_x_connection(void);
-struct window_settings *window_settings_load(struct x_connection *x_conn);
 struct window_settings *draw_window(struct x_connection *x_conn);
-struct draw_settings *draw_settings_load(struct x_connection *x_conn,
-                                         struct window_settings *ws);
 void donky_loop(struct x_connection *x_conn,
                 struct window_settings *ws);
-void handle_TEXT_STATIC(struct text_section *cur,
-                        struct draw_settings *ds,
-                        int *line_heights,
-                        int *calcd_line_heights,
-                        unsigned int *is_last);
-void handle_VARIABLE_STR(struct text_section *cur,
-                         struct draw_settings *ds,
-                         int *line_heights,
-                         int *calcd_line_heights,
-                         unsigned int *is_last);
 
 #endif /* X11_H */
 

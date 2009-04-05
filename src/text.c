@@ -34,6 +34,10 @@
         ((c) == '_') \
 )
 
+/* Function prototypes. */
+void text_section_split(char *text, unsigned int line);
+void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
+
 /* Globals. */
 struct text_section *ts_start = NULL;
 struct text_section *ts_end = NULL;
@@ -187,7 +191,9 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
                 n->value = copy_val;
                 n->args = args;
                 n->line = line;
+                n->int_result = 0;
                 n->pixel_width = 0;
+                n->pixel_height = 0;
                 n->xpos = -1;
                 n->ypos = -1;
                 n->timeout = 0.0;

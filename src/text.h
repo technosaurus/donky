@@ -32,8 +32,12 @@ struct text_section {
         char *args;                     /* Arguments given to a variable. ${...} */
         
         unsigned int line;              /* Line number, starts at 0. */
-        char result[64];
+        
+        char str_result[64];            /* Evaluated string for this section. */
+        int int_result;                 /* Evaluated int for this section. */
+        
         uint16_t pixel_width;           /* Pixel width of this section. */
+        uint16_t pixel_height;          /* Pixel height of this section. */
         int16_t xpos;                   /* Current x position. */
         int16_t ypos;                   /* Current y position. */
 
@@ -53,8 +57,6 @@ struct text_section *ts_end;
 
 /* Function prototypes. */
 void clear_text(void);
-void text_section_split(char *text, unsigned int line);
-void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 struct text_section *text_section_var_find(char *value);
 void text_section_var_modvar(char *value,
                              struct module_var *mvar,
