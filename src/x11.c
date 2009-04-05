@@ -16,22 +16,40 @@
  */
 
 #define _GNU_SOURCE
-#include <string.h>
-#include <stdlib.h>
+#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <X11/Xlib.h>
 #include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
-#include <unistd.h>
-#include <time.h>
-#include <math.h>
 
-#include "x11.h"
 #include "config.h"
-#include "render.h"
-#include "module.h"
-#include "util.h"
 #include "default_settings.h"
 #include "mem.h"
+#include "module.h"
+#include "render.h"
+#include "text.h"
+#include "util.h"
+#include "x11.h"
+
+struct draw_settings {
+        xcb_font_t font;
+        XFontStruct *font_struct;
+        char *font_name;
+
+        int16_t font_x_offset;
+        int16_t font_y_offset;
+
+        int16_t minimum_line_height;
+        int16_t minimum_line_spacing;
+
+        struct donky_color color;
+
+        struct timespec tspec;
+};
 
 /* Function prototypes. */
 struct window_settings *window_settings_load(struct x_connection *x_conn);
@@ -52,6 +70,11 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                          int *line_heights,
                          int *calcd_line_heights,
                          unsigned int *is_last);
+void clean_x(struct x_connection *x_conn,
+             struct window_settings *ws,
+             struct draw_settings *ds,
+             int *line_heights);
+
 
 /* Globals. */
 extern int donky_reload;
@@ -333,8 +356,11 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
         return ds;
 }
 
-/**
- * @brief Main donky loop.
+/** 
+ * @brief main donky loop
+ * 
+ * @param x_conn donky's open x_connection struct
+ * @param ws donky's window_settings struct
  */
 void donky_loop(struct x_connection *x_conn,
                 struct window_settings *ws)
@@ -343,7 +369,7 @@ void donky_loop(struct x_connection *x_conn,
         struct draw_settings *ds = draw_settings_load(x_conn, ws);
 
         xcb_generic_event_t *e;
-        uint8_t force;
+        unsigned int force;
 
         /* new_xpos and new_ypos hold the coords
          * of where we'll be drawing anything new */
@@ -367,7 +393,8 @@ void donky_loop(struct x_connection *x_conn,
                         switch (e->response_type & ~0x80) {
                                 case XCB_EXPOSE:
                                         /* force redraw everything */
-                                        force = 1;
+                                        if (!force)
+                                                force = 1;
                                         break;
                                 default:
                                         break;
@@ -382,101 +409,100 @@ void donky_loop(struct x_connection *x_conn,
                 module_var_cron_exec();
 
                 while (cur) {
-                        is_last = 0;
-
-                        if ((cur->next && cur->line != cur->next->line) ||
-                            cur->next == NULL)
-                            is_last = 1;
+                        if ((cur->next == NULL) || (cur->line != cur->next->line))
+                                is_last = 1;
+                        else
+                                is_last = 0;
 
                         switch (cur->type) {
-                        case TEXT_FONT:
-                                /*if (font)
-                                        close_font(font);
+                                case TEXT_FONT:
+                                        /*if (font)
+                                                close_font(font);
 
-                                if (cur->args == NULL)
-                                        font = font_orig;
-                                else if (!strcasecmp(cur->args, font_name))
-                                        font = font_orig;
-                                else
-                                        font = get_font(cur->args);*/
-                                break;
-                        case TEXT_COLOR:
-                                if (cur->args == NULL)
-                                        ds->color.fg = get_color(x_conn->connection,
-                                                                 x_conn->screen,
-                                                                 ds->color.fg_name);
-                                else
-                                        ds->color.fg = get_color(x_conn->connection,
-                                                                 x_conn->screen,
-                                                                 cur->args);
-                                break;
-                        case TEXT_STATIC:
-                                /* If the xpos has changed since last drawn,
-                                 * we will need to redraw this static text.
-                                 * Otherwise, we never redraw it! */
-                                if (cur->xpos == -1 || (cur->xpos != new_xpos) || force) {
+                                        if (cur->args == NULL)
+                                                font = font_orig;
+                                        else if (!strcasecmp(cur->args, font_name))
+                                                font = font_orig;
+                                        else
+                                                font = get_font(cur->args);*/
+                                        break;
+                                case TEXT_COLOR:
+                                        if (cur->args == NULL)
+                                                ds->color.fg = get_color(x_conn->connection,
+                                                                         x_conn->screen,
+                                                                         ds->color.fg_name);
+                                        else
+                                                ds->color.fg = get_color(x_conn->connection,
+                                                                         x_conn->screen,
+                                                                         cur->args);
+                                        break;
+                                case TEXT_STATIC:
+                                        /* If the xpos has changed since last drawn,
+                                         * we will need to redraw this static text.
+                                         * Otherwise, we never redraw it! */
+                                        if (cur->xpos == -1 || (cur->xpos != new_xpos) || force) {
+                                                cur->xpos = new_xpos;
+                                                cur->ypos = new_ypos;
+
+                                                handle_TEXT_STATIC(cur,
+                                                                   ds,
+                                                                   line_heights,
+                                                                   &calcd_line_heights,
+                                                                   &is_last);
+                                        }
+                                        break;
+                                case TEXT_VARIABLE:
+                                        /* if force = 0 and our x position
+                                         * hasn't changed, respect timeouts. */
+                                        if (!force && (cur->xpos == new_xpos)) {
+
+                                                /* if we haven't timed out... */
+                                                if ((get_time() - cur->last_update) < cur->timeout)
+                                                        break;
+
+                                                /* if we've updated variables with
+                                                 * no timeout once already... */
+                                                if (cur->timeout == 0 && (cur->last_update != 0))
+                                                        break;
+                                        }
+
+                                        /* Crash proofing (TM)!
+                                         *  -brought to you by lobo! (d-bag) */
+                                        if (cur->mod_var == NULL)
+                                                break;
+                                        if (cur->mod_var->sym == NULL)
+                                                break;
+
                                         cur->xpos = new_xpos;
                                         cur->ypos = new_ypos;
 
-                                        handle_TEXT_STATIC(cur,
-                                                           ds,
-                                                           line_heights,
-                                                           &calcd_line_heights,
-                                                           &is_last);
-                                }
-                                break;
-                        case TEXT_VARIABLE:
-                                /* We only update the value of this variable
-                                 * if it has timed out or if timeout is set to
-                                 * 0, meaning never update.
-                                 *
-                                 * NOTE: we should update if our
-                                 * xpos has changed! */
-                                if (((!force) ||
-                                     (cur->mod_var == NULL)) &&
-                                    (((get_time() - cur->last_update < cur->timeout) ||
-                                      (cur->timeout == 0 && (cur->last_update != 0))) &&
-                                     (cur->xpos == new_xpos))) {
-                                        //printf("WAITING... %s\n", mod->name);
-                                        break;
-                                }
-
-                                cur->xpos = new_xpos;
-                                cur->ypos = new_ypos;
-
-                                /* Crash proofing (TM), brought to you by lobo! */
-                                if (cur->mod_var == NULL)
-                                        break;
-                                if (cur->mod_var->sym == NULL)
-                                        break;
-
-                                switch (cur->mod_var->type) {
-                                case VARIABLE_STR:
-                                        handle_VARIABLE_STR(cur,
-                                                            ds,
-                                                            line_heights,
-                                                            &calcd_line_heights,
-                                                            &is_last);
-                                        break;
-                                case VARIABLE_BAR:
-                                        handle_VARIABLE_BAR(cur,
-                                                            ds,
-                                                            line_heights,
-                                                            &calcd_line_heights,
-                                                            &is_last);
-                                        break;
-                                case VARIABLE_GRAPH:
-                                        break;
-                                case VARIABLE_CUSTOM:
+                                        switch (cur->mod_var->type) {
+                                                case VARIABLE_STR:
+                                                        handle_VARIABLE_STR(cur,
+                                                                            ds,
+                                                                            line_heights,
+                                                                            &calcd_line_heights,
+                                                                            &is_last);
+                                                        break;
+                                                case VARIABLE_BAR:
+                                                        handle_VARIABLE_BAR(cur,
+                                                                            ds,
+                                                                            line_heights,
+                                                                            &calcd_line_heights,
+                                                                            &is_last);
+                                                        break;
+                                                case VARIABLE_GRAPH:
+                                                        break;
+                                                case VARIABLE_CUSTOM:
+                                                        break;
+                                                default:
+                                                        printf("Invalid module variable_type.\n");
+                                                        break;
+                                        }
                                         break;
                                 default:
-                                        printf("Invalid module variable_type.\n");
+                                        printf("Invalid text_section type.\n");
                                         break;
-                                }
-                                break;
-                        default:
-                                printf("Invalid text_section type.\n");
-                                break;
                         }
 
                         /* if we have a following node, we need
@@ -538,24 +564,7 @@ void donky_loop(struct x_connection *x_conn,
                 }
         }
 
-        /* Cleanup. */
-        freeif(line_heights);
-        XFreeFontInfo(NULL, ds->font_struct, 0);
-        xcb_close_font(x_conn->connection, ds->font);
-        freeif(ds->font_name);
-        freeif(ds->color.bg_name);
-        freeif(ds->color.fg_name);
-        freeif(ds);
-        freeif(ws);
-
-        /* Destroy our window and disconnect from X. */
-        xcb_destroy_window(x_conn->connection, x_conn->window);
-        xcb_flush(x_conn->connection);
-        XCloseDisplay(x_conn->display);
-        xcb_disconnect(x_conn->connection);
-        freeif(x_conn);
-
-        printf("Done cleaning up...\n");
+        clean_x(x_conn, ws, ds, line_heights);
 }
 
 /**
@@ -693,9 +702,8 @@ void handle_VARIABLE_STR(struct text_section *cur,
 }
 
 /**
- * @brief Handles TEXT_VARIABLE->VARIABLE_STR text_section types.
- *        Takes care of any text that can change from one update
- *        to the next.
+ * @brief Handles TEXT_VARIABLE->VARIABLE_BAR text_section types.
+ *        Draws bars. Duh.
  *
  * @param cur The current text_section node.
  * @param ds Current donky draw settings.
@@ -757,7 +765,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                          cur->type,
                          cur->mod_var->type,
                          cur->xpos,
-                         cur->ypos - ds->font_y_offset,
+                         cur->ypos - ds->font_y_offset + ((line_heights[cur->line] - cur->pixel_height) / 4),
                          cur->pixel_width - 1,
                          cur->pixel_height,
                          cur->xpos,
@@ -765,5 +773,40 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                          cur->pixel_width,
                          line_heights[cur->line],
                          is_last);
+}
+
+/** 
+ * @brief Clean up the mess we made in this file. (Or at least try.)
+ * 
+ * @param x_conn donky's open x_connection
+ * @param ws donky's window_settings
+ * @param ds donky's draw_settings
+ * @param line_heights 
+ */
+void clean_x(struct x_connection *x_conn,
+             struct window_settings *ws,
+             struct draw_settings *ds,
+             int *line_heights)
+{
+        printf("Cleaning up... ");
+
+        /* Cleanup. */
+        freeif(line_heights);
+        XFreeFontInfo(NULL, ds->font_struct, 0);
+        xcb_close_font(x_conn->connection, ds->font);
+        freeif(ds->font_name);
+        freeif(ds->color.bg_name);
+        freeif(ds->color.fg_name);
+        freeif(ds);
+        freeif(ws);
+
+        /* Destroy our window and disconnect from X. */
+        xcb_destroy_window(x_conn->connection, x_conn->window);
+        xcb_flush(x_conn->connection);
+        XCloseDisplay(x_conn->display);
+        xcb_disconnect(x_conn->connection);
+        freeif(x_conn);
+
+        printf("done.\n");
 }
 

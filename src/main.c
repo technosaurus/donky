@@ -18,16 +18,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <xcb/xcb.h>
 #include <signal.h>
+#include <xcb/xcb.h>
 
 #include "../config.h"
 #include "config.h"
-#include "text.h"
 #include "module.h"
+#include "render.h"
+#include "text.h"
 #include "util.h"
 #include "x11.h"
-#include "render.h"
 
 #define HELP \
         "donky usage:\n" \

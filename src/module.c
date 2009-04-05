@@ -15,17 +15,26 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <dirent.h>
+#include <dlfcn.h>
+#include <sys/param.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dlfcn.h>
-#include <dirent.h>
-#include <sys/param.h>
 
+#include "config.h"
 #include "module.h"
 #include "text.h"
-#include "config.h"
 #include "util.h"
+
+/* internal prototypes */
+int module_add(char *name, void *handle, void *destroy);
+struct module *module_find(char *name);
+int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type);
+struct module_var *module_var_find(char *name);
+int module_load(char *path);
+void module_unload(char *name);
+void *module_get_sym(void *handle, char *name);
 
 /* Globals. */
 struct module *m_start = NULL, *m_end = NULL;

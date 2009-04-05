@@ -39,22 +39,6 @@ struct donky_color {
         char *fg_name;
 };
 
-struct draw_settings {
-        xcb_font_t font;
-        XFontStruct *font_struct;
-        char *font_name;
-
-        int16_t font_x_offset;
-        int16_t font_y_offset;
-
-        int16_t minimum_line_height;
-        int16_t minimum_line_spacing;
-
-        struct donky_color color;
-
-        struct timespec tspec;
-};
-
 struct window_settings {
         unsigned int own_window;
         unsigned int override;

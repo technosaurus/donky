@@ -18,31 +18,8 @@
 #ifndef RENDER_H
 #define RENDER_H
 
-#include "x11.h"
 #include "module.h"
-
-struct render_queue {
-        char *value;
-        int *int_value;
-        
-        struct donky_color color;  /* Color of this text section. */
-        xcb_font_t font;           /* Font for this text section. */
-        enum text_section_type ts_type;
-        enum variable_type v_type;
-        
-        int16_t xpos;             /* Current x position. */
-        int16_t ypos;             /* Current y position. */
-        uint16_t width;
-        uint16_t height;
-
-        int16_t cl_xpos;
-        int16_t cl_ypos;
-        uint16_t cl_width;
-        uint16_t cl_height;
-        int is_last;
-
-        struct render_queue *next;
-};
+#include "x11.h"
 
 /* function prototypes */
 void render_queue_exec(xcb_connection_t *connection,

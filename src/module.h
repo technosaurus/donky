@@ -48,13 +48,6 @@ struct module_var {
 };
 
 /* Function prototypes. */
-int module_add(char *name, void *handle, void *destroy);
-struct module *module_find(char *name);
-int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type);
-struct module_var *module_var_find(char *name);
-int module_load(char *path);
-void module_unload(char *name);
-void *module_get_sym(void *handle, char *name);
 void module_load_all(void);
 void clear_module(void);
 void module_var_cron_exec(void);

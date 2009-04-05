@@ -18,14 +18,7 @@
 #ifndef MEM_H
 #define MEM_H
 
-struct mem_list {
-        void *ptr;
-        struct mem_list *next;
-};
-
 /* Function prototypes. */
-void mem_list_add(void *ptr);
-void mem_list_clear(void);
 void *m_malloc(size_t size);
 void *m_calloc(size_t nelem, size_t size);
 char *m_strdup(char *str);

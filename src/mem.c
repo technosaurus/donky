@@ -16,12 +16,21 @@
  */
 
 #define _GNU_SOURCE
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "mem.h"
 #include "util.h"
+
+struct mem_list {
+        void *ptr;
+        struct mem_list *next;
+};
+
+/* internal prototypes */
+void mem_list_add(void *ptr);
+void mem_list_clear(void);
 
 /* Globals. */
 struct mem_list *mem_start = NULL;

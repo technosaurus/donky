@@ -15,14 +15,38 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <xcb/xcb.h>
 
-#include "render.h"
 #include "config.h"
+#include "render.h"
 #include "util.h"
+#include "x11.h"
+
+struct render_queue {
+        char *value;
+        int *int_value;
+        
+        struct donky_color color;  /* Color of this text section. */
+        xcb_font_t font;           /* Font for this text section. */
+        enum text_section_type ts_type;
+        enum variable_type v_type;
+        
+        int16_t xpos;             /* Current x position. */
+        int16_t ypos;             /* Current y position. */
+        uint16_t width;
+        uint16_t height;
+
+        int16_t cl_xpos;
+        int16_t cl_ypos;
+        uint16_t cl_width;
+        uint16_t cl_height;
+        int is_last;
+
+        struct render_queue *next;
+};
 
 /* Function prototypes. */
 void render_text(xcb_connection_t *connection,

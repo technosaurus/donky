@@ -38,6 +38,27 @@
         ((c) == '0') \
 )
 
+struct setting {
+        struct setting *next;
+        
+        char *key;
+        char *value;
+};
+
+struct cfg {
+        struct cfg *next;
+
+        char *mod;
+
+        struct setting *first_setting;
+        struct setting *last_setting;
+};
+
+/* internal prototypes */
+void add_mod(char *mod);
+struct cfg *find_mod(char *mod);
+void add_key(char *mod, char *key, char *value);
+
 /* Globals */
 struct cfg *first_cfg = NULL;
 struct cfg *last_cfg = NULL;

@@ -20,10 +20,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "text.h"
 #include "config.h"
-#include "util.h"
 #include "module.h"
+#include "text.h"
+#include "util.h"
 
 #define MAX_TEXT_SIZE 10240
 
