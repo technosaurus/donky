@@ -377,8 +377,8 @@ void donky_loop(struct x_connection *x_conn,
                                 else if (!strcasecmp(cur->args, font_name))
                                         font = font_orig;
                                 else
-                                        font = get_font(cur->args);
-                                break;*/
+                                        font = get_font(cur->args);*/
+                                break;
                         case TEXT_COLOR:
                                 if (cur->args == NULL)
                                         ds->color.fg = get_color(x_conn->connection,
@@ -423,6 +423,10 @@ void donky_loop(struct x_connection *x_conn,
                                 cur->xpos = new_xpos;
                                 cur->ypos = new_ypos;
 
+                                /* Don't wanna crash! */
+                                if (cur->mod_var == NULL)
+                                        break;
+                                        
                                 switch (cur->mod_var->type) {
                                 case VARIABLE_STR:
                                         handle_VARIABLE_STR(cur,
@@ -601,6 +605,13 @@ void handle_VARIABLE_STR(struct text_section *cur,
                          int *calcd_line_heights,
                          unsigned int *is_last)
 {
+        /* Don't want to crash in some unexpected situation... */
+        if (!cur->mod_var)
+                return;
+        if (!cur->mod_var->sym)
+                return;
+
+        /* Get the function we need to get the variable data. */
         char *(*sym)(char *) = cur->mod_var->sym;
 
         int direction_return;
