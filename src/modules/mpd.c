@@ -40,10 +40,16 @@ void module_destroy(void);
 int start_connection(void);
 void pop_currentsong(void);
 void pop_status(void);
+void init_settings(void);
 
 /* Globals. */
 int mpd_sock = -1;
 FILE *sockin, *sockout;
+char *mpd_host;
+char *mpd_port;
+struct addrinfo hints;
+struct addrinfo *result;
+struct addrinfo *rp;
 
 struct mpd_info {
         /* currentsong */
@@ -99,6 +105,9 @@ int module_init(void)
 
         /* Add cron job. */
         module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);
+
+        /* Do some initial shizzy. */
+        init_settings();
 }
 
 /**
@@ -106,7 +115,10 @@ int module_init(void)
  */
 void module_destroy(void)
 {
-        
+        /* Free all my memorah! */
+        freeif(mpd_host);
+        freeif(mpd_port);
+        freeaddrinfo(result);
 }
 
 /**
@@ -126,6 +138,9 @@ void run_cron(void)
         }
 }
 
+/**
+ * @brief Populate the status variables.
+ */
 void pop_status(void)
 {
         char buffer[128];
@@ -238,7 +253,9 @@ void pop_status(void)
         }
 }
 
-/* The comments of the previous function also apply to this one. */
+/**
+ * @brief Populate the currentsong variables.
+ */
 void pop_currentsong(void)
 {
         char buffer[128];
@@ -311,47 +328,47 @@ char *get_bitrate(char *args) { return m_strdup(mpdinfo.bitrate); }
 char *get_audio(char *args) { return m_strdup(mpdinfo.audio); }
 char *get_elapsed_time(char *args) { return m_strdup(mpdinfo.etime); }
 char *get_total_time(char *args) { return m_strdup(mpdinfo.ttime); }
-
 int get_volume_bar(char *args) { return strtol(mpdinfo.volume, NULL, 0); }
 
 /**
- * @brief Connect to MPD host.
+ * @brief Initialize some things that we use quite often.
  */
-int start_connection(void)
+void init_settings(void)
 {
-        struct addrinfo hints;
-        struct addrinfo *result, *rp;
-        char *mpd_host;
-        char *mpd_port;
-        int bytes;
-        char data[32];
         int s;
-
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = 0;
-        hints.ai_protocol = 0;
-
+        
+        /* Read configuration settings, if none exist, use some defaults. */
         if ((mpd_host = get_char_key("mpd", "host")) == NULL)
                 mpd_host = d_strcpy("localhost");
 
         if ((mpd_port = get_char_key("mpd", "port")) == NULL)
                 mpd_port = d_strcpy("6600");
 
+        /* Get address information. */
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = 0;
+        hints.ai_protocol = 0;
+
         if ((s = getaddrinfo(mpd_host, mpd_port, &hints, &result)) != 0) {
                 fprintf(stderr,
                         "mpd: Could not get host [%s] by name: %s",
                         mpd_host,
                         gai_strerror(s));
-                freeif(mpd_host);
-                freeif(mpd_port);
-                return 0;
+                return;
         }
+}
 
+/**
+ * @brief Connect to MPD host.
+ */
+int start_connection(void)
+{
+        int bytes;
+        char data[32];
+        
         //printf("Connecting to [%s]:[%s]\n", mpd_host, mpd_port);
-        free(mpd_host);
-        free(mpd_port);
 
         for (rp = result; rp != NULL; rp = rp->ai_next) {
                 mpd_sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
@@ -369,8 +386,6 @@ int start_connection(void)
                 fprintf(stderr, "Could not connect to mpd server!\n");
                 return 0;
         }
-
-        freeaddrinfo(result);
         
         /* Wait for OK */
         bytes = recv(mpd_sock, data, 32, 0);
