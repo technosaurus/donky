@@ -100,6 +100,21 @@ char *m_strndup(char *str, size_t size)
         return ret;
 }
 
+/** 
+ * @brief Free wrapper.
+ * 
+ * @param ptr Alloc'd pointer
+ * 
+ * @return The same pointer you sent in
+ */
+void *m_freelater(void *ptr)
+{
+        if (ptr != NULL)
+                mem_list_add(ptr);
+
+        return ptr;
+}
+
 /**
  * @brief Add pointer to linked list.
  *

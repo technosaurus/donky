@@ -19,10 +19,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/sysinfo.h>
-#include <math.h>
 
 #include "develop.h"
 #include "../mem.h"
+#include "../util.h"
 
 char module_name[] = "sysinfo"; /* Up to 63 characters, any more and it will
                                    be truncated!  Doesn't matter though, just
@@ -81,47 +81,6 @@ void module_destroy(void)
 
 }
 
-/**
- * @brief Convert raw bytes into formatted values.
- *
- * @param bytes Total bytes
- *
- * @return Formatted string
- */
-char *bytes_to_bigger(unsigned long bytes)
-{
-        char str[32];
-        char label[4];
-        double tera = pow(1024, 4);
-        double giga = pow(1024, 3);
-        double mega = pow(1024, 2);
-        double kilo = 1024;
-        double recalc = 0.0;
-
-        if (bytes >= tera) {
-                recalc = bytes / tera;
-                strncpy(label, "TiB", sizeof(label) - 1);
-        } else if (bytes >= giga) {
-                recalc = bytes / giga;
-                strncpy(label, "GiB", sizeof(label) - 1);
-        } else if (bytes >= mega) {
-                recalc = bytes / mega;
-                strncpy(label, "MiB", sizeof(label) - 1);
-        } else if (bytes >= kilo) {
-                recalc = bytes / kilo;
-                strncpy(label, "KiB", sizeof(label) - 1);
-        } else {
-                recalc = bytes;
-                strncpy(label, "B", sizeof(label) - 1);
-        }
-
-        label[3] = '\0';
-        snprintf(str, sizeof(str),
-                 "%.2f%s", recalc, label);
-
-        return m_strdup(str);
-}
-
 char *get_uptime(char *args)
 {
         if (sysinfo(&info) == -1)
@@ -167,7 +126,7 @@ char *get_totalram(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.totalram * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.totalram * info.mem_unit));
 }
 
 char *get_freeram(char *args)
@@ -175,7 +134,7 @@ char *get_freeram(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.freeram * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.freeram * info.mem_unit));
 }
 
 char *get_usedram(char *args)
@@ -183,7 +142,7 @@ char *get_usedram(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger((info.totalram - info.freeram) * info.mem_unit);
+        return m_freelater(bytes_to_bigger((info.totalram - info.freeram) * info.mem_unit));
 }
 
 char *get_sharedram(char *args)
@@ -191,7 +150,7 @@ char *get_sharedram(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.sharedram * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.sharedram * info.mem_unit));
 }
 
 char *get_bufferram(char *args)
@@ -199,7 +158,7 @@ char *get_bufferram(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.bufferram * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.bufferram * info.mem_unit));
 }
 
 char *get_totalswap(char *args)
@@ -207,7 +166,7 @@ char *get_totalswap(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.totalswap * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.totalswap * info.mem_unit));
 }
 
 char *get_freeswap(char *args)
@@ -215,7 +174,7 @@ char *get_freeswap(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.freeswap * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.freeswap * info.mem_unit));
 }
 
 char *get_usedswap(char *args)
@@ -223,7 +182,7 @@ char *get_usedswap(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger((info.totalswap - info.freeswap) * info.mem_unit);
+        return m_freelater(bytes_to_bigger((info.totalswap - info.freeswap) * info.mem_unit));
 }
 
 char *get_procs(char *args)
@@ -241,7 +200,7 @@ char *get_totalhigh(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.totalhigh * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.totalhigh * info.mem_unit));
 }
 
 char *get_freehigh(char *args)
@@ -249,7 +208,7 @@ char *get_freehigh(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger(info.freehigh * info.mem_unit);
+        return m_freelater(bytes_to_bigger(info.freehigh * info.mem_unit));
 }
 
 char *get_usedhigh(char *args)
@@ -257,5 +216,5 @@ char *get_usedhigh(char *args)
         if (sysinfo(&info) == -1)
                 return m_strdup("n/a");
         
-        return bytes_to_bigger((info.totalhigh - info.freehigh) * info.mem_unit);
+        return m_freelater(bytes_to_bigger((info.totalhigh - info.freehigh) * info.mem_unit));
 }

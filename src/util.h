@@ -30,5 +30,6 @@ double get_time(void);
 void freeif(void *ptr);
 char *d_strcpy(const char *str);
 char *d_strncpy(const char *str, int n);
+char *bytes_to_bigger(unsigned long bytes);
 
 #endif /* UTIL_H */

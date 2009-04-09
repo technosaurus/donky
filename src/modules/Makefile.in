@@ -63,6 +63,12 @@ date_la_OBJECTS = $(am_date_la_OBJECTS)
 date_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(date_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+diskio_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_diskio_la_OBJECTS = diskio.lo
+diskio_la_OBJECTS = $(am_diskio_la_OBJECTS)
+diskio_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(diskio_la_LDFLAGS) $(LDFLAGS) -o $@
 eeepc_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_eeepc_la_OBJECTS = eeepc.lo
 eeepc_la_OBJECTS = $(am_eeepc_la_OBJECTS)
@@ -129,13 +135,14 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) $(eeepc_la_SOURCES) \
-	$(exec_la_SOURCES) $(moc_la_SOURCES) $(mpd_la_SOURCES) \
-	$(pcpuinfo_la_SOURCES) $(scpuinfo_la_SOURCES) \
-	$(sysinfo_la_SOURCES) $(volume_la_SOURCES) $(wifi_la_SOURCES)
+SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
+	$(diskio_la_SOURCES) $(eeepc_la_SOURCES) $(exec_la_SOURCES) \
+	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
+	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
+	$(volume_la_SOURCES) $(wifi_la_SOURCES)
 DIST_SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
-	$(eeepc_la_SOURCES) $(exec_la_SOURCES) $(moc_la_SOURCES) \
-	$(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
+	$(diskio_la_SOURCES) $(eeepc_la_SOURCES) $(exec_la_SOURCES) \
+	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
 	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
 	$(volume_la_SOURCES) $(wifi_la_SOURCES)
 ETAGS = etags
@@ -265,6 +272,7 @@ exec_la_LDFLAGS = -module -avoid-version
 mpd_la_LDFLAGS = -module -avoid-version
 volume_la_LDFLAGS = -module -avoid-version
 eeepc_la_LDFLAGS = -module -avoid-version
+diskio_la_LDFLAGS = -module -avoid-version
 wifi_la_LDFLAGS = -module -avoid-version
 module_LTLIBRARIES = \
 	date.la \
@@ -277,6 +285,7 @@ module_LTLIBRARIES = \
 	mpd.la \
 	volume.la \
 	eeepc.la \
+	diskio.la \
 	wifi.la
 
 date_la_SOURCES = date.c
@@ -289,6 +298,7 @@ exec_la_SOURCES = exec.c
 mpd_la_SOURCES = mpd.c
 volume_la_SOURCES = volume.c
 eeepc_la_SOURCES = eeepc.c
+diskio_la_SOURCES = diskio.c
 wifi_la_SOURCES = wifi.c
 date_la_LIBADD = $(DEPS_LIBS)
 sysinfo_la_LIBADD = $(DEPS_LIBS)
@@ -300,6 +310,7 @@ exec_la_LIBADD = $(DEPS_LIBS)
 mpd_la_LIBADD = $(DEPS_LIBS)
 volume_la_LIBADD = $(DEPS_LIBS) -lasound
 eeepc_la_LIBADD = $(DEPS_LIBS)
+diskio_la_LIBADD = $(DEPS_LIBS)
 wifi_la_LIBADD = $(DEPS_LIBS) -liw
 all: all-am
 
@@ -365,6 +376,8 @@ battery.la: $(battery_la_OBJECTS) $(battery_la_DEPENDENCIES)
 	$(battery_la_LINK) -rpath $(moduledir) $(battery_la_OBJECTS) $(battery_la_LIBADD) $(LIBS)
 date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES) 
 	$(date_la_LINK) -rpath $(moduledir) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
+diskio.la: $(diskio_la_OBJECTS) $(diskio_la_DEPENDENCIES) 
+	$(diskio_la_LINK) -rpath $(moduledir) $(diskio_la_OBJECTS) $(diskio_la_LIBADD) $(LIBS)
 eeepc.la: $(eeepc_la_OBJECTS) $(eeepc_la_DEPENDENCIES) 
 	$(eeepc_la_LINK) -rpath $(moduledir) $(eeepc_la_OBJECTS) $(eeepc_la_LIBADD) $(LIBS)
 exec.la: $(exec_la_OBJECTS) $(exec_la_DEPENDENCIES) 
@@ -392,6 +405,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/battery.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/diskio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eeepc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/moc.Plo@am__quote@

@@ -16,6 +16,7 @@
  */
 
 #define _GNU_SOURCE
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -207,3 +208,45 @@ char *d_strncpy(const char *str, int n)
         newstr[n] = '\0';
         return newstr;
 }
+
+/**
+ * @brief Convert raw bytes into formatted values.
+ *
+ * @param bytes Total bytes
+ *
+ * @return Formatted string
+ */
+char *bytes_to_bigger(unsigned long bytes)
+{
+        char str[32];
+        char label[4];
+        double tera = pow(1024, 4);
+        double giga = pow(1024, 3);
+        double mega = pow(1024, 2);
+        double kilo = 1024;
+        double recalc = 0.0;
+
+        if (bytes >= tera) {
+                recalc = bytes / tera;
+                strncpy(label, "TiB", sizeof(label) - 1);
+        } else if (bytes >= giga) {
+                recalc = bytes / giga;
+                strncpy(label, "GiB", sizeof(label) - 1);
+        } else if (bytes >= mega) {
+                recalc = bytes / mega;
+                strncpy(label, "MiB", sizeof(label) - 1);
+        } else if (bytes >= kilo) {
+                recalc = bytes / kilo;
+                strncpy(label, "KiB", sizeof(label) - 1);
+        } else {
+                recalc = bytes;
+                strncpy(label, "B", sizeof(label) - 1);
+        }
+
+        label[3] = '\0';
+        snprintf(str, sizeof(str),
+                 "%.2f%s", recalc, label);
+
+        return d_strcpy(str);
+}
+
