@@ -10,6 +10,7 @@ exec_la_LDFLAGS     = -module -avoid-version
 mpd_la_LDFLAGS      = -module -avoid-version
 volume_la_LDFLAGS   = -module -avoid-version
 eeepc_la_LDFLAGS    = -module -avoid-version
+wifi_la_LDFLAGS     = -module -avoid-version
 
 module_LTLIBRARIES = \
 	date.la \
@@ -21,7 +22,8 @@ module_LTLIBRARIES = \
 	exec.la \
 	mpd.la \
 	volume.la \
-	eeepc.la
+	eeepc.la \
+	wifi.la
 
 date_la_SOURCES     = date.c
 sysinfo_la_SOURCES  = sysinfo.c
@@ -33,6 +35,7 @@ exec_la_SOURCES     = exec.c
 mpd_la_SOURCES      = mpd.c
 volume_la_SOURCES   = volume.c
 eeepc_la_SOURCES    = eeepc.c
+wifi_la_SOURCES     = wifi.c
 
 date_la_LIBADD     = $(DEPS_LIBS)
 sysinfo_la_LIBADD  = $(DEPS_LIBS)
@@ -44,3 +47,4 @@ exec_la_LIBADD     = $(DEPS_LIBS)
 mpd_la_LIBADD      = $(DEPS_LIBS)
 volume_la_LIBADD   = $(DEPS_LIBS) -lasound
 eeepc_la_LIBADD    = $(DEPS_LIBS)
+wifi_la_LIBADD     = $(DEPS_LIBS) -liw

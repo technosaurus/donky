@@ -111,6 +111,12 @@ volume_la_OBJECTS = $(am_volume_la_OBJECTS)
 volume_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(volume_la_LDFLAGS) $(LDFLAGS) -o $@
+wifi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_wifi_la_OBJECTS = wifi.lo
+wifi_la_OBJECTS = $(am_wifi_la_OBJECTS)
+wifi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(wifi_la_LDFLAGS) \
+	$(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -126,12 +132,12 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) $(eeepc_la_SOURCES) \
 	$(exec_la_SOURCES) $(moc_la_SOURCES) $(mpd_la_SOURCES) \
 	$(pcpuinfo_la_SOURCES) $(scpuinfo_la_SOURCES) \
-	$(sysinfo_la_SOURCES) $(volume_la_SOURCES)
+	$(sysinfo_la_SOURCES) $(volume_la_SOURCES) $(wifi_la_SOURCES)
 DIST_SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
 	$(eeepc_la_SOURCES) $(exec_la_SOURCES) $(moc_la_SOURCES) \
 	$(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
 	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
-	$(volume_la_SOURCES)
+	$(volume_la_SOURCES) $(wifi_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -259,6 +265,7 @@ exec_la_LDFLAGS = -module -avoid-version
 mpd_la_LDFLAGS = -module -avoid-version
 volume_la_LDFLAGS = -module -avoid-version
 eeepc_la_LDFLAGS = -module -avoid-version
+wifi_la_LDFLAGS = -module -avoid-version
 module_LTLIBRARIES = \
 	date.la \
 	sysinfo.la \
@@ -269,7 +276,8 @@ module_LTLIBRARIES = \
 	exec.la \
 	mpd.la \
 	volume.la \
-	eeepc.la
+	eeepc.la \
+	wifi.la
 
 date_la_SOURCES = date.c
 sysinfo_la_SOURCES = sysinfo.c
@@ -281,6 +289,7 @@ exec_la_SOURCES = exec.c
 mpd_la_SOURCES = mpd.c
 volume_la_SOURCES = volume.c
 eeepc_la_SOURCES = eeepc.c
+wifi_la_SOURCES = wifi.c
 date_la_LIBADD = $(DEPS_LIBS)
 sysinfo_la_LIBADD = $(DEPS_LIBS)
 pcpuinfo_la_LIBADD = $(DEPS_LIBS)
@@ -291,6 +300,7 @@ exec_la_LIBADD = $(DEPS_LIBS)
 mpd_la_LIBADD = $(DEPS_LIBS)
 volume_la_LIBADD = $(DEPS_LIBS) -lasound
 eeepc_la_LIBADD = $(DEPS_LIBS)
+wifi_la_LIBADD = $(DEPS_LIBS) -liw
 all: all-am
 
 .SUFFIXES:
@@ -371,6 +381,8 @@ sysinfo.la: $(sysinfo_la_OBJECTS) $(sysinfo_la_DEPENDENCIES)
 	$(sysinfo_la_LINK) -rpath $(moduledir) $(sysinfo_la_OBJECTS) $(sysinfo_la_LIBADD) $(LIBS)
 volume.la: $(volume_la_OBJECTS) $(volume_la_DEPENDENCIES) 
 	$(volume_la_LINK) -rpath $(moduledir) $(volume_la_OBJECTS) $(volume_la_LIBADD) $(LIBS)
+wifi.la: $(wifi_la_OBJECTS) $(wifi_la_DEPENDENCIES) 
+	$(wifi_la_LINK) -rpath $(moduledir) $(wifi_la_OBJECTS) $(wifi_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -388,6 +400,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scpuinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sysinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/volume.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wifi.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
