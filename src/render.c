@@ -104,18 +104,7 @@ void render_queue_exec(xcb_connection_t *connection,
                                    cur->cl_height);
 
                 switch (cur->ts_type) {
-                case TEXT_STATIC:
-                        render_text(connection,
-                                    window,
-                                    cur->value,
-                                    cur->font,
-                                    cur->color,
-                                    cur->xpos,
-                                    cur->ypos);
-                        break;
-                case TEXT_VARIABLE:
-                        switch (cur->v_type) {
-                        case VARIABLE_STR:
+                        case TEXT_STATIC:
                                 render_text(connection,
                                             window,
                                             cur->value,
@@ -124,24 +113,40 @@ void render_queue_exec(xcb_connection_t *connection,
                                             cur->xpos,
                                             cur->ypos);
                                 break;
-                        case VARIABLE_BAR:
-                                render_bar(connection,
-                                           window,
-                                           cur->int_value,
-                                           cur->font,
-                                           cur->color,
-                                           cur->xpos,
-                                           cur->ypos,
-                                           cur->width,
-                                           cur->height);
+                        case TEXT_VARIABLE:
+                                switch (cur->v_type) {
+                                        case VARIABLE_STR:
+                                                render_text(connection,
+                                                            window,
+                                                            cur->value,
+                                                            cur->font,
+                                                            cur->color,
+                                                            cur->xpos,
+                                                            cur->ypos);
+                                                break;
+                                        case VARIABLE_BAR:
+                                                render_bar(connection,
+                                                           window,
+                                                           cur->int_value,
+                                                           cur->font,
+                                                           cur->color,
+                                                           cur->xpos,
+                                                           cur->ypos,
+                                                           cur->width,
+                                                           cur->height);
+                                                break;
+                                        case VARIABLE_GRAPH:
+                                                break;
+                                        case VARIABLE_CUSTOM:
+                                                break;
+                                        default:
+                                                break;
+                                }
                                 break;
-                        case VARIABLE_GRAPH:
+                        default:
                                 break;
-                        }
-                        break;
                 }
                 
-
                 free(cur);
                 
                 cur = next;

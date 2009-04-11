@@ -98,6 +98,7 @@ void module_destroy(void)
 void clear_diskio_stats(void)
 {
 	struct diskio_stat *cur;
+
 	while (stats.next) {
 		cur = stats.next;
 		stats.next = stats.next->next;
@@ -127,11 +128,13 @@ struct diskio_stat *prepare_diskio_stat(const char *s)
 	cur->last = UINT_MAX;
 	cur->last_read = UINT_MAX;
 	cur->last_write = UINT_MAX;
+
 	return cur;
 }
 
 static void update_diskio_values(struct diskio_stat *ds,
-		unsigned int reads, unsigned int writes)
+		                 unsigned int reads,
+                                 unsigned int writes)
 {
 	if (reads < ds->last_read || writes < ds->last_write) {
 		/* counter overflow or reset - rebase to sane values */
@@ -139,6 +142,7 @@ static void update_diskio_values(struct diskio_stat *ds,
 		ds->last_read = 0;
 		ds->last_write = 0;
 	}
+
 	/* since the values in /proc/diskstats are absolute, we have to substract
 	 * our last reading. The numbers stand for "sectors read", and we therefore
 	 * have to divide by two to get KB */
@@ -172,8 +176,9 @@ void update_diskio(void)
 	/* read reads and writes from all disks (minor = 0), including cd-roms
 	 * and floppies, and sum them up */
 	while (fgets(buf, 512, fp)) {
-		col_count = sscanf(buf, "%u %u %s %*u %*u %u %*u %*u %*u %u", &major,
-			&minor, devbuf, &reads, &writes);
+		col_count = sscanf(buf,
+                                   "%u %u %s %*u %*u %u %*u %*u %*u %u",
+                                   &major, &minor, devbuf, &reads, &writes);
 		/* ignore subdevices (they have only 3 matching entries in their line)
 		 * and virtual devices (LVM, network block devices, RAM disks, Loopback)
 		 *
@@ -183,12 +188,14 @@ void update_diskio(void)
 			total_reads += reads;
 			total_writes += writes;
 		} else {
-			col_count = sscanf(buf, "%u %u %s %*u %u %*u %u",
-				&major, &minor, devbuf, &reads, &writes);
+			col_count = sscanf(buf,
+                                           "%u %u %s %*u %u %*u %u",
+                                           &major, &minor, devbuf, &reads, &writes);
 			if (col_count != 5) {
 				continue;
 			}
 		}
+
 		cur = stats.next;
 		while (cur && strcmp(devbuf, cur->dev))
 			cur = cur->next;
@@ -196,6 +203,7 @@ void update_diskio(void)
 		if (cur)
 			update_diskio_values(cur, reads, writes);
 	}
+
 	update_diskio_values(&stats, total_reads, total_writes);
 	fclose(fp);
 }

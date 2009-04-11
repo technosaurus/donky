@@ -78,12 +78,14 @@ void handle_VARIABLE_STR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last);
+                         unsigned int *is_last,
+                         unsigned int *moved);
 void handle_VARIABLE_BAR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last);
+                         unsigned int *is_last,
+                         unsigned int *moved);
 void clean_x(struct x_connection *x_conn,
              struct window_settings *ws,
              struct draw_settings *ds,
@@ -671,8 +673,14 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
         if (cur->mod_var->sym == NULL)
                 return;
 
-        cur->xpos = *new_xpos;
-        cur->ypos = *new_ypos;
+        unsigned int moved = 0;
+
+        if ((cur->xpos != *new_xpos) ||
+            (cur->ypos != *new_ypos)) {
+                cur->xpos = *new_xpos;
+                cur->ypos = *new_ypos;
+                moved = 1;
+        }
 
         switch (cur->mod_var->type) {
                 case VARIABLE_STR:
@@ -680,14 +688,16 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
                                             ds,
                                             line_heights,
                                             calcd_line_heights,
-                                            is_last);
+                                            is_last,
+                                            &moved);
                         break;
                 case VARIABLE_BAR:
                         handle_VARIABLE_BAR(cur,
                                             ds,
                                             line_heights,
                                             calcd_line_heights,
-                                            is_last);
+                                            is_last,
+                                            &moved);
                         break;
                 case VARIABLE_GRAPH:
                         break;
@@ -710,31 +720,45 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
  * @param calcd_line_heights
  * @param is_last Whether or not this is the last node
  *                in the text_section list.
+ * @param moved Has our position moved since last update?
  */
 void handle_VARIABLE_STR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last)
+                         unsigned int *is_last,
+                         unsigned int *moved)
 {
-        /* Get the function we need to get the variable data. */
-        char *(*sym)(char *) = cur->mod_var->sym;
+        int changed = 0;
+
+        if ((get_time() - cur->last_update >= cur->timeout) ||
+            (cur->timeout == 0 && (cur->last_update == 0))) {
+                /* Get the function we need to get the variable data. */
+                char *(*sym)(char *) = cur->mod_var->sym;
+
+                char *new = sym(cur->args);
+
+                /* compare our previous value with our new value */
+                if (strcmp(cur->str_result, new) != 0) {
+                        changed = 1;
+                        memset(cur->str_result, 0, sizeof(cur->str_result));
+                        strncpy(cur->str_result,
+                                new,
+                                sizeof(cur->str_result) - 1);
+                }
+
+                cur->last_update = get_time();
+                //printf("Updating... %s\n", mod->name);
+        }
+
+        /* if our string hasn't changed nor moved, we don't need to redraw it */
+        if (!changed && !*moved)
+                return;
 
         int direction_return;
         int font_ascent_return;
         int font_descent_return;
         XCharStruct overall_return;
-
-        if ((get_time() - cur->last_update >= cur->timeout) ||
-            (cur->timeout == 0 && (cur->last_update == 0))) {
-                memset(cur->str_result, 0, sizeof(cur->str_result));
-                strncpy(cur->str_result,
-                        sym(cur->args),
-                        sizeof(cur->str_result) - 1);
-
-                cur->last_update = get_time();
-                //printf("Updating... %s\n", mod->name);
-        }
 
         XTextExtents(ds->font_struct,
                      cur->str_result,
@@ -786,44 +810,61 @@ void handle_VARIABLE_STR(struct text_section *cur,
  * @param calcd_line_heights
  * @param is_last Whether or not this is the last node
  *                in the text_section list.
+ * @param moved Have we moved position since last update?
  */
 void handle_VARIABLE_BAR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last)
+                         unsigned int *is_last,
+                         unsigned int *moved)
 {
-        /* Get the function we need to get the variable data. */
-        int (*sym)(char *) = cur->mod_var->sym;
-
-        int width;
-        int height;
-        char *rem_args = NULL;
+        int changed = 0;
 
         if ((get_time() - cur->last_update >= cur->timeout) ||
             (cur->timeout == 0 && (cur->last_update == 0))) {
-                if (sscanf(cur->args, " %d %d ", &width, &height) == 2) {
-                        cur->pixel_width = width;
-                        cur->pixel_height = height;
-                } else if (sscanf(cur->args,
-                                  " %d %d %a[^\n]",
-                                  &width, &height, &rem_args) == 3) {
-                        cur->pixel_width = width;
-                        cur->pixel_height = height;
-                } else {
-                        cur->pixel_width = DEFAULT_BAR_WIDTH;
-                        cur->pixel_height = DEFAULT_BAR_HEIGHT;
-                }
+                /* Get the function we need to get the variable data. */
+                int (*sym)(char *) = cur->mod_var->sym;
 
-                if (rem_args) {
-                        cur->int_result = sym(m_strdup(rem_args));
+                int new;
+
+                int width;
+                int height;
+                char *rem_args = NULL;
+
+                if (!cur->pixel_width || !cur->pixel_height) {
+                        if (sscanf(cur->args,
+                                   " %d %d ",
+                                   &width, &height) == 2) {
+                                cur->pixel_width = width;
+                                cur->pixel_height = height;
+                        } else {
+                                cur->pixel_width = DEFAULT_BAR_WIDTH;
+                                cur->pixel_height = DEFAULT_BAR_HEIGHT;
+                        }
+                }
+ 
+                /* TODO - getting rem_args should only ever be done once too.
+                 *        also, this might be a flaky method of doing it. */
+                if (sscanf(cur->args, " %*d %*d %a[^\n]", &rem_args)) {
+                        new = sym(m_strdup(rem_args));
                         free(rem_args);
                 } else {
-                        cur->int_result = sym(cur->args);
+                        new = sym(cur->args);
+                }
+
+                /* compare our previous value with our new value */
+                if (cur->int_result != new) {
+                        cur->int_result = new;
+                        changed = 1;
                 }
                         
                 cur->last_update = get_time();
         }
+
+        /* if our bar hasn't changed nor moved, we don't need to redraw it */
+        if (!changed && !*moved)
+                return;
 
         /* Calculate line height. */
         if (!*calcd_line_heights) {
