@@ -194,8 +194,8 @@ struct batt *prepare_batt(char *args)
 
         struct batt *batt = get_batt(batt_num);
         if (batt->rem == NULL)
-                batt->rem = get_remaining_charge(batt_num);
-        if (batt->rem == NULL || (batt->max == NULL))
+                batt->rem = get_remaining_charge(batt->name);
+        if ((batt->rem == NULL) || (batt->max == NULL))
                 return NULL;
 
         return batt;

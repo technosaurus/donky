@@ -92,9 +92,6 @@ char *get_eeeblp(char *args)
         if ((cur_bl == NULL) || (max_bl == NULL))
                 return m_strdup("n/a");
 
-        printf("cur_bl = [%f]\n", atof(cur_bl));
-        printf("max_bl = [%f]\n", atof(max_bl));
-
         int charge = (atof(cur_bl) / atof(max_bl)) * 100;
 
         char ret_eeeblp[8];
