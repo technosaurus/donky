@@ -69,11 +69,11 @@ diskio_la_OBJECTS = $(am_diskio_la_OBJECTS)
 diskio_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(diskio_la_LDFLAGS) $(LDFLAGS) -o $@
-eeepc_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_eeepc_la_OBJECTS = eeepc.lo
-eeepc_la_OBJECTS = $(am_eeepc_la_OBJECTS)
-eeepc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(eeepc_la_LDFLAGS) \
+eeebl_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_eeebl_la_OBJECTS = eeebl.lo
+eeebl_la_OBJECTS = $(am_eeebl_la_OBJECTS)
+eeebl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(eeebl_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 exec_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_exec_la_OBJECTS = exec.lo
@@ -136,12 +136,12 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
-	$(diskio_la_SOURCES) $(eeepc_la_SOURCES) $(exec_la_SOURCES) \
+	$(diskio_la_SOURCES) $(eeebl_la_SOURCES) $(exec_la_SOURCES) \
 	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
 	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
 	$(volume_la_SOURCES) $(wifi_la_SOURCES)
 DIST_SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
-	$(diskio_la_SOURCES) $(eeepc_la_SOURCES) $(exec_la_SOURCES) \
+	$(diskio_la_SOURCES) $(eeebl_la_SOURCES) $(exec_la_SOURCES) \
 	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
 	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
 	$(volume_la_SOURCES) $(wifi_la_SOURCES)
@@ -271,7 +271,7 @@ battery_la_LDFLAGS = -module -avoid-version
 exec_la_LDFLAGS = -module -avoid-version
 mpd_la_LDFLAGS = -module -avoid-version
 volume_la_LDFLAGS = -module -avoid-version
-eeepc_la_LDFLAGS = -module -avoid-version
+eeebl_la_LDFLAGS = -module -avoid-version
 diskio_la_LDFLAGS = -module -avoid-version
 wifi_la_LDFLAGS = -module -avoid-version
 module_LTLIBRARIES = \
@@ -284,7 +284,7 @@ module_LTLIBRARIES = \
 	exec.la \
 	mpd.la \
 	volume.la \
-	eeepc.la \
+	eeebl.la \
 	diskio.la \
 	wifi.la
 
@@ -297,7 +297,7 @@ battery_la_SOURCES = battery.c
 exec_la_SOURCES = exec.c
 mpd_la_SOURCES = mpd.c
 volume_la_SOURCES = volume.c
-eeepc_la_SOURCES = eeepc.c
+eeebl_la_SOURCES = eeebl.c
 diskio_la_SOURCES = diskio.c
 wifi_la_SOURCES = wifi.c
 date_la_LIBADD = $(DEPS_LIBS)
@@ -309,7 +309,7 @@ battery_la_LIBADD = $(DEPS_LIBS)
 exec_la_LIBADD = $(DEPS_LIBS)
 mpd_la_LIBADD = $(DEPS_LIBS)
 volume_la_LIBADD = $(DEPS_LIBS) -lasound
-eeepc_la_LIBADD = $(DEPS_LIBS)
+eeebl_la_LIBADD = $(DEPS_LIBS)
 diskio_la_LIBADD = $(DEPS_LIBS)
 wifi_la_LIBADD = $(DEPS_LIBS) -liw
 all: all-am
@@ -378,8 +378,8 @@ date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES)
 	$(date_la_LINK) -rpath $(moduledir) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
 diskio.la: $(diskio_la_OBJECTS) $(diskio_la_DEPENDENCIES) 
 	$(diskio_la_LINK) -rpath $(moduledir) $(diskio_la_OBJECTS) $(diskio_la_LIBADD) $(LIBS)
-eeepc.la: $(eeepc_la_OBJECTS) $(eeepc_la_DEPENDENCIES) 
-	$(eeepc_la_LINK) -rpath $(moduledir) $(eeepc_la_OBJECTS) $(eeepc_la_LIBADD) $(LIBS)
+eeebl.la: $(eeebl_la_OBJECTS) $(eeebl_la_DEPENDENCIES) 
+	$(eeebl_la_LINK) -rpath $(moduledir) $(eeebl_la_OBJECTS) $(eeebl_la_LIBADD) $(LIBS)
 exec.la: $(exec_la_OBJECTS) $(exec_la_DEPENDENCIES) 
 	$(exec_la_LINK) -rpath $(moduledir) $(exec_la_OBJECTS) $(exec_la_LIBADD) $(LIBS)
 moc.la: $(moc_la_OBJECTS) $(moc_la_DEPENDENCIES) 
@@ -406,7 +406,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/battery.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/diskio.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eeepc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eeebl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/moc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mpd.Plo@am__quote@

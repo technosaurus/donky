@@ -9,7 +9,7 @@ battery_la_LDFLAGS  = -module -avoid-version
 exec_la_LDFLAGS     = -module -avoid-version
 mpd_la_LDFLAGS      = -module -avoid-version
 volume_la_LDFLAGS   = -module -avoid-version
-eeepc_la_LDFLAGS    = -module -avoid-version
+eeebl_la_LDFLAGS    = -module -avoid-version
 diskio_la_LDFLAGS   = -module -avoid-version
 wifi_la_LDFLAGS     = -module -avoid-version
 
@@ -23,7 +23,7 @@ module_LTLIBRARIES = \
 	exec.la \
 	mpd.la \
 	volume.la \
-	eeepc.la \
+	eeebl.la \
 	diskio.la \
 	wifi.la
 
@@ -36,7 +36,7 @@ battery_la_SOURCES  = battery.c
 exec_la_SOURCES     = exec.c
 mpd_la_SOURCES      = mpd.c
 volume_la_SOURCES   = volume.c
-eeepc_la_SOURCES    = eeepc.c
+eeebl_la_SOURCES    = eeebl.c
 diskio_la_SOURCES   = diskio.c
 wifi_la_SOURCES     = wifi.c
 
@@ -49,6 +49,6 @@ battery_la_LIBADD  = $(DEPS_LIBS)
 exec_la_LIBADD     = $(DEPS_LIBS)
 mpd_la_LIBADD      = $(DEPS_LIBS)
 volume_la_LIBADD   = $(DEPS_LIBS) -lasound
-eeepc_la_LIBADD    = $(DEPS_LIBS)
+eeebl_la_LIBADD    = $(DEPS_LIBS)
 diskio_la_LIBADD   = $(DEPS_LIBS)
 wifi_la_LIBADD     = $(DEPS_LIBS) -liw

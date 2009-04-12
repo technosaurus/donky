@@ -51,7 +51,7 @@ struct diskio_stat {
 
 /* this is the root of all per disk stats,
  * also containing the totals. */
-static struct diskio_stat stats = {
+struct diskio_stat stats = {
 	.next = NULL,
 	.current = 0,
 	.current_read = 0,
@@ -72,7 +72,7 @@ void module_destroy(void);
 char *get_diskio(char *args);
 void clear_diskio_stats(void);
 struct diskio_stat *prepare_diskio_stat(const char *s);
-static void update_diskio_values(struct diskio_stat *ds,
+void update_diskio_values(struct diskio_stat *ds,
 		                 unsigned int reads,
                                  unsigned int writes);
 void update_diskio(void);
@@ -132,9 +132,9 @@ struct diskio_stat *prepare_diskio_stat(const char *s)
 	return cur;
 }
 
-static void update_diskio_values(struct diskio_stat *ds,
-		                 unsigned int reads,
-                                 unsigned int writes)
+void update_diskio_values(struct diskio_stat *ds,
+		          unsigned int reads,
+                          unsigned int writes)
 {
 	if (reads < ds->last_read || writes < ds->last_write) {
 		/* counter overflow or reset - rebase to sane values */
