@@ -248,25 +248,25 @@ int find_batt(struct batt *batt, char *match)
  */
 char *get_remaining_charge(char *args)
 {
-        char path[64];
-        snprintf(path,
-                 sizeof(path) - sizeof(char),
-                 "/sys/class/power_supply/BAT%s/charge_now",
-                 args);
+        char *path = NULL;
+        if (asprintf(&path,
+                     "/sys/class/power_supply/BAT%s/charge_now",
+                     args) == -1)
+                return NULL;
 
         FILE *rem_charge = fopen(path, "r");
+        free(path);
         if (rem_charge == NULL)
                 return NULL;
 
-        char rem[16];
-        if (fgets(rem, 16, rem_charge) == NULL) {
-                fclose(rem_charge);
-                return NULL;
-        }
-
+        char *rem = NULL;
+        int len = 0; /* forces a malloc */
+        int read = getline(&rem, &len, rem_charge);
         fclose(rem_charge);
+        if (read == -1)
+                return NULL;
 
-        return d_strcpy(rem);
+        return rem;
 }
 
 /** 
@@ -280,26 +280,25 @@ char *get_remaining_charge(char *args)
  */
 char *get_max_charge(char *args)
 {
-        char path[64];
-        snprintf(path,
-                 sizeof(path) - sizeof(char),
-                 "/sys/class/power_supply/BAT%s/charge_full",
-                 args);
+        char *path = NULL;
+        if (asprintf(&path,
+                     "/sys/class/power_supply/BAT%s/charge_full",
+                     args) == -1)
+                return NULL;
 
-        FILE *max_charge;
-        max_charge = fopen(path, "r");
+        FILE *max_charge = fopen(path, "r");
+        free(path);
         if (max_charge == NULL)
                 return NULL;
 
-        char max[16];
-        if (fgets(max, 16, max_charge) == NULL) {
-                fclose(max_charge);
-                return NULL;
-        }
-
+        char *max = NULL;
+        int len = 0; /* forces a malloc */
+        int read = getline(&max, &len, max_charge);
         fclose(max_charge);
+        if (read == -1)
+                return NULL;
 
-        return d_strcpy(max);
+        return max;
 }
 
 /** 

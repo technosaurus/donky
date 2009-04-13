@@ -173,7 +173,6 @@ char *get_char_key(char *mod, char *key)
  * 
  * @return The int value of key
  */
-
 int get_int_key(char *mod, char *key)
 {
         struct cfg *cur = find_mod(mod);
@@ -201,7 +200,6 @@ int get_int_key(char *mod, char *key)
  * 
  * @return The double value of key
  */
-
 double get_double_key(char *mod, char *key)
 {
         struct cfg *cur = find_mod(mod);
@@ -229,7 +227,6 @@ double get_double_key(char *mod, char *key)
  * 
  * @return The boolean value of key
  */
-
 int get_bool_key(char *mod, char *key)
 {
         struct cfg *cur = find_mod(mod);
