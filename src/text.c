@@ -47,10 +47,10 @@ struct text_section *ts_end = NULL;
  */
 void parse_text(void)
 {
-        text_section_split(config_text, 0);
+        text_section_split(cfg_text, 0);
 
         /* We don't need this anymore! */
-        freeif(config_text);
+        freeif(cfg_text);
 
         struct text_section *cur = ts_start;
 

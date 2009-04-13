@@ -27,7 +27,7 @@ void parse_cfg (void);
 void clear_cfg(void);
 
 /* holds [text] */
-char *config_text;
+char *cfg_text;
 
 #endif /* CONFIG_H */
 

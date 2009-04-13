@@ -19,12 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/param.h>
 
 #include "config.h"
 #include "util.h"
-
-#define MAX_LINE_SIZE 1024
 
 #define IS_TRUE(c) ( \
         ((c) == 'y') || ((c) == 'Y') || \
@@ -123,10 +120,12 @@ void add_key(char *mod, char *key, char *value)
 
         struct setting *new_set = malloc(sizeof(struct setting));
         
-        new_set->key = key;
-        new_set->value = value;
-
+        new_set->key = NULL;
+        new_set->value = NULL;
         new_set->next = NULL;
+
+        new_set->key = d_strcpy(key);
+        new_set->value = d_strcpy(value);
 
         if (cur->last_setting) {
                 cur->last_setting->next = new_set;
@@ -261,22 +260,21 @@ int get_bool_key(char *mod, char *key)
  */
 void parse_cfg(void)
 {
-        char cfg_file_path[MAXPATHLEN + 1];
-        snprintf(cfg_file_path,
-                 MAXPATHLEN,
+        char *cfg_file_path = NULL;
+        asprintf(&cfg_file_path,
                  "%s/%s",
                  getenv("HOME"), ".donkyrc");
 
         FILE *cfg_file = fopen(cfg_file_path, "r");
-
+        free(cfg_file_path);
         if (cfg_file == NULL) {
                 printf("Error: ~/.donkyrc file not found.\n");
                 exit(EXIT_FAILURE);
         }
 
         /* these will hold/point to lines in .donkyrc */
-        char str[MAX_LINE_SIZE];
-        char *p;
+        char *str = NULL;
+        int len = 0;
         
         /* these will hold successfully parsed... stuff */
         char *mod = NULL;
@@ -284,32 +282,35 @@ void parse_cfg(void)
         char *value = NULL;
 
         /* used by [text] */
-        config_text = NULL;
-        char *config_text_mod = NULL;
+        cfg_text = NULL;
 
-        while (fgets(str, MAX_LINE_SIZE, cfg_file) != NULL) {
+        while ((getline(&str, &len, cfg_file)) != -1) {
                 /* Skip comments. */
-                if (is_comment(str))
+                if (is_comment(str)) {
+                        free(str);
+                        str = NULL;
                         continue;
+                }
 
                 /* scan for [mods] - don't add_mod if [text] */
                 if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
                         if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
-                        else
-                                config_text_mod = mod;
-                                
+
                         continue;
                 }
 
-                /* handle [text] - store all lines 'til next [mod] into config_text */
+                /* handle [text] - store all lines 'til next [mod] into cfg_text */
                 if (mod && !strcasecmp(mod, "text")) {
-                        if (!config_text) {
-                                config_text = d_strncpy(str, (strlen(str) * sizeof(char)));
+                        if (cfg_text == NULL) {
+                                cfg_text = d_strcpy(str);
                         } else {
-                                /* resize config_text so we can add more to it */
-                                config_text = realloc(config_text, ((strlen(config_text) + strlen(str) + 2) * sizeof(char)));
-                                strncat(config_text, str, (strlen(str) * sizeof(char)));
+                                /* resize cfg_text so we can add more to it */
+                                cfg_text = realloc(cfg_text,
+                                                   strlen(cfg_text) +
+                                                        strlen(str) +
+                                                        sizeof(char));
+                                strcat(cfg_text, str);
                         }
 
                         continue;
@@ -340,19 +341,18 @@ void parse_cfg(void)
                         free(chrkey);
                 }
 
-                /* reset pointers */
+                /* free str & reset pointers */
+                free(str);
+                str = NULL;
                 value = NULL;
                 key = NULL;
         }
 
-        /* This is needed since config_text was a special var. */
-        freeif(config_text_mod);
-
         /* Close file descriptor. */
         fclose(cfg_file);
 
-        if (config_text == NULL) {
-                printf("No [text] section in config. Exiting.\n");
+        if (cfg_text == NULL) {
+                printf("Config error: missing [text] section.");
                 clear_cfg();
                 exit(EXIT_FAILURE);
         }
