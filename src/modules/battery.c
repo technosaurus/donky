@@ -20,7 +20,9 @@
 #include <string.h>
 
 #include "develop.h"
+#include "../lists.h"
 #include "../mem.h"
+#include "mod_utils.h"
 #include "../util.h"
 
 /* Module name */
@@ -32,11 +34,9 @@ void module_destroy(void);
 
 /* My function data structures and prototypes */
 struct batt {
-        char *name; /* should be "0", "1", etc. (as in BATT0, BATT1, etc.) */
+        char *num; /* should be "0", "1", etc. (as in BATT0, BATT1, etc.) */
         char *rem;  /* remaining charge in mAh */
         char *max;  /* maximum battery charge capacity in mAh */
-
-        struct batt *next;
 };
 
 char *get_battp(char *args);
@@ -45,21 +45,23 @@ char *get_battm(char *args);
 int get_battb(char *args);
 
 void batt_cron(void);
+void clear_remaining_charge(struct batt *batt);
 
 struct batt *prepare_batt(char *args);
 struct batt *add_batt(char *args);
-struct batt *get_batt(char *args);
+int find_batt(struct batt *cur, char *args);
 char *get_remaining_charge(char *args);
 char *get_max_charge(char *args);
-void clear_batt(void);
+void clear_batt(struct batt *cur);
 
 /* Globals */
-struct batt *first_batt = NULL;
-struct batt *last_batt = NULL;
+struct first_last *fl = NULL;
 
 /* These run on module startup */
 int module_init(void)
 {
+        fl = init_list();
+
         module_var_add(module_name, "battp", "get_battp", 30.0, VARIABLE_STR);
         module_var_add(module_name, "battr", "get_battr", 30.0, VARIABLE_STR);
         module_var_add(module_name, "battm", "get_battm", 30.0, VARIABLE_STR);
@@ -76,7 +78,7 @@ int module_init(void)
 /* These run on module unload */
 void module_destroy(void)
 {
-        clear_batt();
+        del_list(&clear_batt, fl);
 }
 
 /** 
@@ -86,16 +88,20 @@ void module_destroy(void)
  */
 void batt_cron(void)
 {
-        struct batt *cur = first_batt;
-        struct batt *next;
+        act_on_list(&clear_remaining_charge, fl);
+}
 
-        while (cur) {
-                next = cur->next;
-
-                freeif(cur->rem);
-                cur->rem = NULL;
-
-                cur = next;
+/** 
+ * @brief Callback for act_on_list() in batt_cron(). Frees and NULLs the
+ *        remaining charge of the battery node passed to it.
+ * 
+ * @param batt Battery node to act upon.
+ */
+void clear_remaining_charge(struct batt *batt)
+{
+        if (batt->rem) {
+                free(batt->rem);
+                batt->rem = NULL;
         }
 }
 
@@ -108,7 +114,7 @@ void batt_cron(void)
  */
 char *get_battp(char *args)
 {
-        struct batt *batt = prepare_batt(args);
+        struct batt *batt = prepare_batt(handle_args(args, "0"));
         if (batt == NULL)
                 return m_strdup("n/a");
 
@@ -132,7 +138,7 @@ char *get_battp(char *args)
  */
 char *get_battr(char *args)
 {
-        struct batt *batt = prepare_batt(args);
+        struct batt *batt = prepare_batt(handle_args(args, "0"));
         if (batt == NULL)
                 return m_strdup("n/a");
 
@@ -148,7 +154,7 @@ char *get_battr(char *args)
  */
 char *get_battm(char *args)
 {
-        struct batt *batt = prepare_batt(args);
+        struct batt *batt = prepare_batt(handle_args(args, "0"));
         if (batt == NULL)
                 return m_strdup("n/a");
 
@@ -166,7 +172,7 @@ char *get_battm(char *args)
  */
 int get_battb(char *args)
 {
-        struct batt *batt = prepare_batt(args);
+        struct batt *batt = prepare_batt(handle_args(args, "0"));
         if (batt == NULL)
                 return 0;
 
@@ -176,25 +182,19 @@ int get_battb(char *args)
 }
 
 /** 
- * @brief Fetches a node for the requested battery (defaults to BATT0 if
- *        no battery specified).
+ * @brief Fetches a node for the requested battery.
  * 
- * @param args Module args.
+ * @param batt_num Battery number to prepare.
  * 
  * @return NULL if a battery's remaining or maximum charge could not be
  *         determined. Otherwise, a pointer to the battery is returned.
  */
-struct batt *prepare_batt(char *args)
+struct batt *prepare_batt(char *batt_num)
 {
-        char *batt_num = NULL;
-        if (args)
-                batt_num = args;
-        else
-                batt_num = "0";
+        struct batt *batt = get_node(&find_batt, &add_batt, batt_num, fl);
 
-        struct batt *batt = get_batt(batt_num);
         if (batt->rem == NULL)
-                batt->rem = get_remaining_charge(batt->name);
+                batt->rem = get_remaining_charge(batt->num);
         if ((batt->rem == NULL) || (batt->max == NULL))
                 return NULL;
 
@@ -202,55 +202,41 @@ struct batt *prepare_batt(char *args)
 }
 
 /** 
- * @brief Adds a new node to the battery linked list.
+ * @brief Adds a new battery node to the list.
  * 
- * @param args Battery name (number) to add.
+ * @param batt_num Battery number to add. 
  * 
- * @return Pointer to the new battery node.
+ * @return Pointer to the new node.
  */
-struct batt *add_batt(char *args)
+struct batt *add_batt(char *batt_num)
 {
-        struct batt *new_batt = malloc(sizeof(struct batt));
-        new_batt->name = NULL;
-        new_batt->rem = NULL;
-        new_batt->max = NULL;
-        new_batt->next = NULL;
+        struct batt *new = malloc(sizeof(struct batt));
+        new->num = NULL;
+        new->rem = NULL;
+        new->max = NULL;
 
-        new_batt->name = d_strcpy(args);
+        new->num = d_strcpy(batt_num);
 
         /* this never needs to be updated */
-        new_batt->max = get_max_charge(new_batt->name);
+        new->max = get_max_charge(new->num);
 
-        if (last_batt) {
-                last_batt->next = new_batt;
-                last_batt = new_batt;
-        } else {
-                first_batt = last_batt = new_batt;
-        }
-
-        return new_batt;
+        return add_node(new, fl);
 }
 
 /** 
- * @brief Fetches a pointer to the requested battery node. If the node
- *        doesn't exist, it invokes add_batt() and returns the new node.
+ * @brief Callback for get_node() in lists.h
  * 
- * @param args Battery name (number) to look up.
+ * @param batt Battery node whose name we match against
+ * @param match The name of the node we're looking for
  * 
- * @return Pointer to the requested node.
+ * @return 1 if match succeeds, 0 if fails
  */
-struct batt *get_batt(char *args)
+int find_batt(struct batt *batt, char *match)
 {
-        struct batt *cur = first_batt;
-
-        while (cur) {
-                if (!strcmp(cur->name, args))
-                        return cur;
-
-                cur = cur->next;
-        }
-
-        return add_batt(args);
+        if (!strcmp(batt->num, match))
+                return 1;
+        else
+                return 0;
 }
 
 /** 
@@ -317,25 +303,14 @@ char *get_max_charge(char *args)
 }
 
 /** 
- * @brief Frees the battery linked list and its contents from memory.
+ * @brief Frees the contents of a battery node.
+ * 
+ * @param batt Battery node to clear.
  */
-void clear_batt(void)
+void clear_batt(struct batt *batt)
 {
-        struct batt *cur = first_batt;
-        struct batt *next;
-
-        while (cur) {
-                next = cur->next;
-
-                freeif(cur->name);
-                freeif(cur->rem);
-                freeif(cur->max);
-                freeif(cur);
-
-                cur = next;
-        }
-
-        first_batt = NULL;
-        last_batt = NULL;
+        freeif(batt->num);
+        freeif(batt->rem);
+        freeif(batt->max);
 }
 
