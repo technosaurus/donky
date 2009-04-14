@@ -274,7 +274,7 @@ void parse_cfg(void)
 
         /* these will hold/point to lines in .donkyrc */
         char *str = NULL;
-        int len = 0;
+        size_t len = 0;
         
         /* these will hold successfully parsed... stuff */
         char *mod = NULL;
