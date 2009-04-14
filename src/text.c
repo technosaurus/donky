@@ -163,7 +163,7 @@ void text_section_split(char *text, unsigned int line)
 void text_section_add(char *value, int len, unsigned int line, enum text_section_type type)
 {        
         char *copy_val = strndup(value, len);
-        char *alias_contents = get_char_key("alias", copy_val);
+        char *alias_contents = get_char_key("alias", copy_val, NULL);
         char *args = NULL;
         
         if (type == TEXT_VARIABLE && alias_contents) {

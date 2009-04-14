@@ -338,11 +338,8 @@ void init_settings(void)
         int s;
         
         /* Read configuration settings, if none exist, use some defaults. */
-        if ((mpd_host = get_char_key("mpd", "host")) == NULL)
-                mpd_host = d_strcpy("localhost");
-
-        if ((mpd_port = get_char_key("mpd", "port")) == NULL)
-                mpd_port = d_strcpy("6600");
+        mpd_host = get_char_key("mpd", "host", "localhost");
+        mpd_port = get_char_key("mpd", "port", "6600");
 
         /* Get address information. */
         memset(&hints, 0, sizeof(struct addrinfo));

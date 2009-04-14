@@ -149,24 +149,15 @@ struct x_connection *init_x_connection(void)
  */
 struct window_settings *window_settings_load(struct x_connection *x_conn)
 {
-        char *bg_color_name;
-        char *fg_color_name;
-
-        char *alignment;
-        uint16_t x_gap;
-        uint16_t y_gap;
-
-        struct window_settings *ws;
-        ws = malloc(sizeof(struct window_settings));
+        struct window_settings *ws = malloc(sizeof(struct window_settings));
 
         /* Set up window bg and fg colors. */
-        bg_color_name = get_char_key("X11", "window_bgcolor");
-        fg_color_name = get_char_key("X11", "window_fgcolor");
-
-        if (bg_color_name == NULL)
-                bg_color_name = d_strcpy(DEFAULT_WINDOW_BGCOLOR);
-        if (fg_color_name == NULL)
-                fg_color_name = d_strcpy(DEFAULT_WINDOW_FGCOLOR);
+        char *bg_color_name = get_char_key("X11",
+                                           "window_bgcolor",
+                                           DEFAULT_WINDOW_BGCOLOR);
+        char *fg_color_name = get_char_key("X11",
+                                           "window_fgcolor",
+                                           DEFAULT_WINDOW_FGCOLOR);
 
         ws->bg_color = get_color(x_conn->connection,
                                  x_conn->screen,
@@ -178,27 +169,15 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
         free(bg_color_name);
         free(fg_color_name);
 
-        /* get window dimensions from cfg or set to defaults */
-        ws->width = get_int_key("X11", "window_width");
-        ws->height = get_int_key("X11", "window_height");
+        /* get window dimensions, gaps, and calculate alignment */
+        ws->width = get_int_key("X11", "window_width", DEFAULT_WINDOW_WIDTH);
+        ws->height = get_int_key("X11", "window_height", DEFAULT_WINDOW_HEIGHT);
 
-        if (ws->width <= 0)
-                ws->width = DEFAULT_WINDOW_WIDTH;
-        if (ws->height <= 0)
-                ws->height = DEFAULT_WINDOW_HEIGHT;
+        uint16_t x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
+        uint16_t y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
 
-        /* get gaps from cfg or set to defaults */
-        x_gap = get_int_key("X11", "x_gap");
-        y_gap = get_int_key("X11", "y_gap");
+        char *alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
 
-        if (x_gap < 0)
-                x_gap = DEFAULT_X_GAP;
-        if (y_gap < 0)
-                y_gap = DEFAULT_Y_GAP;
-
-        alignment = get_char_key("X11", "alignment");
-
-        /* calculate alignment */
         if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
                 ws->x_offset = 0 + x_gap;
                 ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
@@ -211,29 +190,18 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
         } else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
                 ws->x_offset = x_conn->screen->width_in_pixels - ws->width - x_gap;
                 ws->y_offset = 0 + y_gap;
-        } else {
-                if (alignment)
-                        printf("Unrecognized alignment: %s. Using bottom_left.\n", alignment);
-                else
-                        printf("No alignment specified. Using bottom_left.\n");
-                ws->x_offset = 0 + x_gap;
-                ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
         }
 
-        freeif(alignment);
+        free(alignment);
 
         /* draw donky in its own window? if not, draw to root */
-        ws->own_window = get_bool_key("X11", "own_window");
-        if (ws->own_window == -1) {
-                ws->own_window = 0;
+        ws->own_window = get_bool_key("X11", "own_window", DEFAULT_OWN_WINDOW);
+
+        if (!ws->own_window)
                 x_conn->window = x_conn->screen->root;
-                return;
-        }
 
         /* check if donky's window should override wm control */
-        ws->override = get_bool_key("X11", "override");
-        if (ws->override == -1)
-                ws->override = 0;
+        ws->override = get_bool_key("X11", "override", DEFAULT_OVERRIDE);
 
         return ws;
 }
@@ -307,22 +275,18 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
         struct draw_settings *ds = malloc(sizeof(struct draw_settings));
 
         /* Set up user configured font or default font. */
-        ds->font_name = get_char_key("X11", "default_font");
-
-        if (ds->font_name == NULL)
-                ds->font_name = d_strcpy(DEFAULT_FONT);
+        ds->font_name = get_char_key("X11", "default_font", DEFAULT_FONT);
 
         ds->font_struct = XLoadQueryFont(x_conn->display, ds->font_name);
         ds->font = ds->font_struct->fid;
 
         /* Set up user configured or default font colors. */
-        ds->color.bg_name = get_char_key("X11", "font_bgcolor");
-        ds->color.fg_name = get_char_key("X11", "font_fgcolor");
-
-        if (ds->color.bg_name == NULL)
-                ds->color.bg_name = d_strcpy(DEFAULT_FONT_BGCOLOR);
-        if (ds->color.bg_name == NULL)
-                ds->color.fg_name = d_strcpy(DEFAULT_FONT_FGCOLOR);
+        ds->color.bg_name = get_char_key("X11",
+                                         "font_bgcolor",
+                                         DEFAULT_FONT_BGCOLOR);
+        ds->color.fg_name = get_char_key("X11",
+                                         "font_fgcolor",
+                                         DEFAULT_FONT_FGCOLOR);
 
         ds->color.bg_orig = get_color(x_conn->connection,
                                       x_conn->screen,
@@ -332,25 +296,20 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
                                       ds->color.fg_name);
 
         /* Setup the position of the starting text section. */
-        ds->font_x_offset = get_int_key("X11", "font_x_offset");
-        ds->font_y_offset = get_int_key("X11", "font_y_offset");
+        ds->font_x_offset = get_int_key("X11",
+                                        "font_x_offset",
+                                        DEFAULT_FONT_X_OFFSET);
+        ds->font_y_offset = get_int_key("X11",
+                                        "font_y_offset",
+                                        DEFAULT_FONT_Y_OFFSET);
 
-        if (ds->font_x_offset < 0)
-                ds->font_x_offset = DEFAULT_FONT_X_OFFSET;
-        if (ds->font_y_offset < 0)
-                ds->font_y_offset = DEFAULT_FONT_Y_OFFSET;
-
-        /* Setup minimum line height. */
-        ds->min_line_height = get_int_key("X11", "minimum_line_height");
-
-        if (ds->min_line_height < 0)
-                ds->min_line_height = DEFAULT_MINIMUM_LINE_HEIGHT;
-
-        /* Setup minimum line spacing. */
-        ds->min_line_spacing = get_int_key("X11", "minimum_line_spacing");
-
-        if (ds->min_line_spacing < 0)
-                ds->min_line_spacing = DEFAULT_MINIMUM_LINE_SPACING;
+        /* Setup minimum line height and spacing. */
+        ds->min_line_height = get_int_key("X11",
+                                          "minimum_line_height",
+                                          DEFAULT_MIN_LINE_HEIGHT);
+        ds->min_line_spacing = get_int_key("X11",
+                                           "minimum_line_spacing",
+                                           DEFAULT_MIN_LINE_SPACING);
 
         /* for alignment to work on root drawing */
         if (ws->own_window == 0) {
@@ -359,10 +318,9 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
         }
 
         /* Setup minimum sleep time. */
-        double min_sleep = get_double_key("X11", "global_sleep");
-
-        if (min_sleep < 0)
-                min_sleep = DEFAULT_GLOBAL_SLEEP;
+        double min_sleep = get_double_key("X11",
+                                          "global_sleep",
+                                          DEFAULT_GLOBAL_SLEEP);
 
         int min_seconds = floor(min_sleep);
         long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);

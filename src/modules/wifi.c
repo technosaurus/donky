@@ -62,8 +62,7 @@ int module_init(void)
         /* Add cron job. */
         module_var_cron_add(module_name, "wifi_cron", "run_cron", 5.0, VARIABLE_CRON);
 
-        if ((interface = get_char_key("wifi", "interface")) == NULL)
-                interface = d_strcpy("wlan0");
+        interface = get_char_key("wifi", "interface", "wlan0");
 }
 
 /**

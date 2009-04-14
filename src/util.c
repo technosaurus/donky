@@ -172,8 +172,10 @@ double get_time(void)
  */
 void freeif(void *ptr)
 {
-        if (ptr)
+        if (ptr) {
                 free(ptr);
+                ptr = NULL;
+        }
 }
 
 /** 

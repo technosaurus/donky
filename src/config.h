@@ -19,10 +19,10 @@
 #define CONFIG_H
 
 /* function prototypes */
-char *get_char_key(char *mod, char *key);
-int get_int_key(char *mod, char *key);
-double get_double_key(char *mod, char *key);
-int get_bool_key(char *mod, char *key);
+char *get_char_key(char *mod, char *key, char *otherwise);
+int get_int_key(char *mod, char *key, int otherwise);
+double get_double_key(char *mod, char *key, double otherwise);
+int get_bool_key(char *mod, char *key, int otherwise);
 void parse_cfg (void);
 void clear_cfg(void);
 

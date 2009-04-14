@@ -37,7 +37,7 @@
 
 struct setting {
         struct setting *next;
-        
+
         char *key;
         char *value;
 };
@@ -143,14 +143,18 @@ void add_key(char *mod, char *key, char *value)
  * 
  * @return A pointer to the char value of key
  */
-char *get_char_key(char *mod, char *key)
+char *get_char_key(char *mod, char *key, char *otherwise)
 {
         struct cfg *cur;
         
         cur = find_mod(mod);
 
-        if (!cur)
-                return NULL;
+        if (!cur) {
+                if (!otherwise)
+                        return NULL;
+                else
+                        return d_strcpy(otherwise);
+        }
 
         struct setting *cur_set = cur->first_setting;
 
@@ -161,7 +165,10 @@ char *get_char_key(char *mod, char *key)
                 cur_set = cur_set->next;
         }
 
-        return NULL;
+        if (!otherwise)
+                return NULL;
+        else
+                return d_strcpy(otherwise);
 }
 
 /** 
@@ -172,23 +179,23 @@ char *get_char_key(char *mod, char *key)
  * 
  * @return The int value of key
  */
-int get_int_key(char *mod, char *key)
+int get_int_key(char *mod, char *key, int otherwise)
 {
         struct cfg *cur = find_mod(mod);
 
         if (!cur)
-                return -1;
+                return otherwise;
 
         struct setting *cur_set = cur->first_setting;
 
         while (cur_set) {
                 if(!strcasecmp(cur_set->key, key))
-                        return strtol(cur_set->value, NULL, 0);
+                        return atoi(cur_set->value);
 
                 cur_set = cur_set->next;
         }
 
-        return -1;
+        return otherwise;
 }
 
 /** 
@@ -199,12 +206,12 @@ int get_int_key(char *mod, char *key)
  * 
  * @return The double value of key
  */
-double get_double_key(char *mod, char *key)
+double get_double_key(char *mod, char *key, double otherwise)
 {
         struct cfg *cur = find_mod(mod);
 
         if (!cur)
-                return -1;
+                return otherwise;
 
         struct setting *cur_set = cur->first_setting;
 
@@ -215,7 +222,7 @@ double get_double_key(char *mod, char *key)
                 cur_set = cur_set->next;
         }
 
-        return -1;
+        return otherwise;
 }
 
 /** 
@@ -226,33 +233,29 @@ double get_double_key(char *mod, char *key)
  * 
  * @return The boolean value of key
  */
-int get_bool_key(char *mod, char *key)
+int get_bool_key(char *mod, char *key, int otherwise)
 {
         struct cfg *cur = find_mod(mod);
 
-        int b;
-
         if (!cur)
-                return -1;
+                return otherwise;
 
         struct setting *cur_set = cur->first_setting;
 
         while (cur_set) {
                 if(!strcasecmp(cur_set->key, key)) {
                         if (IS_TRUE(cur_set->value[0]))
-                                b = 1;
+                                return 1;
                         else if (IS_FALSE(cur_set->value[0]))
-                                b = 0;
+                                return 0;
                         else
-                                b = -1;
-
-                        return b;
+                                break;
                 }
 
                 cur_set = cur_set->next;
         }
 
-        return -1;
+        return otherwise;
 }
 
 /** 
@@ -261,12 +264,13 @@ int get_bool_key(char *mod, char *key)
 void parse_cfg(void)
 {
         char *cfg_file_path = NULL;
-        asprintf(&cfg_file_path,
-                 "%s/%s",
-                 getenv("HOME"), ".donkyrc");
+
+        asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), ".donkyrc");
 
         FILE *cfg_file = fopen(cfg_file_path, "r");
+
         free(cfg_file_path);
+
         if (cfg_file == NULL) {
                 printf("Error: ~/.donkyrc file not found.\n");
                 exit(EXIT_FAILURE);
@@ -275,7 +279,7 @@ void parse_cfg(void)
         /* these will hold/point to lines in .donkyrc */
         char *str = NULL;
         size_t len = 0;
-        
+
         /* these will hold successfully parsed... stuff */
         char *mod = NULL;
         char *key = NULL;
@@ -323,7 +327,7 @@ void parse_cfg(void)
                         trim_t(value);
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
                         value = d_strncpy("True", (sizeof(char) * 4));
-                
+ 
                 /* if the value is "" or '', set it to False */
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
                         free(value);
@@ -333,11 +337,11 @@ void parse_cfg(void)
                 /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
                         add_key(mod, key, value);
-                        char *chrkey = get_char_key(mod, key);
+                        char *chrkey = get_char_key(mod, key, "ERROR");
                         printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
                         printf("char: %s || int: %d || double: %f || bool: %d ||\n\n",
-                                chrkey, get_int_key(mod, key),
-                                get_double_key(mod, key), get_bool_key(mod, key));
+                                chrkey, get_int_key(mod, key, -1),
+                                get_double_key(mod, key, -1), get_bool_key(mod, key, -1));
                         free(chrkey);
                 }
 

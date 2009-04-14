@@ -99,6 +99,8 @@ void batt_cron(void)
  */
 void clear_remaining_charge(struct batt *batt)
 {
+        //printf("in clear_remaining_charge()\n");
+        //freeif(batt->rem);
         if (batt->rem) {
                 free(batt->rem);
                 batt->rem = NULL;
@@ -115,18 +117,15 @@ void clear_remaining_charge(struct batt *batt)
 char *get_battp(char *args)
 {
         struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if (batt == NULL)
+        if ((batt == NULL) || (batt->rem == NULL) || (batt->max == NULL))
                 return m_strdup("n/a");
 
         int charge = (atof(batt->rem) / atof(batt->max)) * 100;
 
-        char ret_battp[8];
-        snprintf(ret_battp,
-                 sizeof(ret_battp) - sizeof(char),
-                 "%d",
-                 charge);
+        char *ret_battp = NULL;
+        asprintf(&ret_battp, "%d", charge);
 
-        return m_strdup(ret_battp);
+        return m_freelater(ret_battp);
 }
 
 /** 
@@ -139,7 +138,7 @@ char *get_battp(char *args)
 char *get_battr(char *args)
 {
         struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if (batt == NULL)
+        if ((batt == NULL) || (batt->rem == NULL))
                 return m_strdup("n/a");
 
         return m_strdup(chomp(batt->rem));
@@ -155,7 +154,7 @@ char *get_battr(char *args)
 char *get_battm(char *args)
 {
         struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if (batt == NULL)
+        if ((batt == NULL) || (batt->max == NULL))
                 return m_strdup("n/a");
 
         return m_strdup(chomp(batt->max));
@@ -173,7 +172,7 @@ char *get_battm(char *args)
 int get_battb(char *args)
 {
         struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if (batt == NULL)
+        if ((batt == NULL) || (batt->rem == NULL) || (batt->max == NULL))
                 return 0;
 
         int charge = (atof(batt->rem) / atof(batt->max)) * 100;
@@ -192,11 +191,8 @@ int get_battb(char *args)
 struct batt *prepare_batt(char *batt_num)
 {
         struct batt *batt = get_node(&find_batt, &add_batt, batt_num, fl);
-
         if (batt->rem == NULL)
                 batt->rem = get_remaining_charge(batt->num);
-        if ((batt->rem == NULL) || (batt->max == NULL))
-                return NULL;
 
         return batt;
 }
@@ -235,8 +231,8 @@ int find_batt(struct batt *batt, char *match)
 {
         if (!strcmp(batt->num, match))
                 return 1;
-        else
-                return 0;
+
+        return 0;
 }
 
 /** 
