@@ -55,8 +55,8 @@ struct window_settings {
 
 /* function prototypes */
 struct x_connection *init_x_connection(void);
-struct window_settings *draw_window(struct x_connection *x_conn);
-void donky_loop(struct x_connection *x_conn,
+struct window_settings *draw_window(struct x_connection *xc);
+void donky_loop(struct x_connection *xc,
                 struct window_settings *ws);
 
 #endif /* X11_H */

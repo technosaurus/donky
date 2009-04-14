@@ -111,11 +111,11 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
-        struct x_connection *x_conn;
+        struct x_connection *xc;
         struct window_settings *ws;
 
         while (1) {
-                x_conn = init_x_connection();
+                xc = init_x_connection();
                 printf("made X connection\n");
 
                 parse_cfg();
@@ -127,10 +127,10 @@ void initialize_stuff(void)
                 module_load_all();
                 printf("loaded modules\n");
 
-                ws = draw_window(x_conn);
+                ws = draw_window(xc);
                 printf("drew window\n");
 
-                donky_loop(x_conn, ws);
+                donky_loop(xc, ws);
 
                 clean_up_everything();
 

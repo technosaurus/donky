@@ -52,10 +52,10 @@ struct draw_settings {
 };
 
 /* Function prototypes. */
-struct window_settings *window_settings_load(struct x_connection *x_conn);
-struct draw_settings *draw_settings_load(struct x_connection *x_conn,
+struct window_settings *window_settings_load(struct x_connection *xc);
+struct draw_settings *draw_settings_load(struct x_connection *xc,
                                          struct window_settings *ws);
-void handle_TEXT_COLOR(struct x_connection *x_conn,
+void handle_TEXT_COLOR(struct x_connection *xc,
                        struct text_section *cur,
                        struct draw_settings *ds);
 void handle_TEXT_STATIC(struct text_section *cur,
@@ -86,7 +86,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                          int *calcd_line_heights,
                          unsigned int *is_last,
                          unsigned int *moved);
-void clean_x(struct x_connection *x_conn,
+void clean_x(struct x_connection *xc,
              struct window_settings *ws,
              struct draw_settings *ds,
              int *line_heights);
@@ -102,52 +102,52 @@ extern int donky_exit;
  */
 struct x_connection *init_x_connection(void)
 {
-        struct x_connection *x_conn;
-        x_conn = malloc(sizeof(struct x_connection));
+        struct x_connection *xc;
+        xc = malloc(sizeof(struct x_connection));
 
         xcb_screen_iterator_t screen_iter;
         int screen_number;
 
         /* connect to X server */
-        x_conn->display = XOpenDisplay(NULL);
-        x_conn->connection = XGetXCBConnection(x_conn->display);
+        xc->display = XOpenDisplay(NULL);
+        xc->connection = XGetXCBConnection(xc->display);
 
-        if (!x_conn->connection) {
+        if (!xc->connection) {
                 printf("Can't connect to X server.\n");
                 exit(EXIT_FAILURE);
         }
 
-        x_conn->screen = NULL;
+        xc->screen = NULL;
 
-        screen_iter = xcb_setup_roots_iterator(xcb_get_setup(x_conn->connection));
+        screen_iter = xcb_setup_roots_iterator(xcb_get_setup(xc->connection));
 
         /* find our current screen */
         for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter)) {
                 if (screen_number == 0) {
-                        x_conn->screen = screen_iter.data;
+                        xc->screen = screen_iter.data;
                         break;
                 }
         }
 
         /* exit if we can't find it */
-        if (!x_conn->screen) {
+        if (!xc->screen) {
                 printf("Can't find the current screen.\n");
-                xcb_disconnect(x_conn->connection);
+                xcb_disconnect(xc->connection);
                 exit(EXIT_FAILURE);
         }
 
-        return x_conn;
+        return xc;
 }
 
 /**
  * @brief Gather and store necessary information for donky's
  *        to-be-drawn window.
  *
- * @param x_conn donky's open X connection.
+ * @param xc donky's open X connection.
  *
  * @return malloc'd & filled windows_settings struct
  */
-struct window_settings *window_settings_load(struct x_connection *x_conn)
+struct window_settings *window_settings_load(struct x_connection *xc)
 {
         struct window_settings *ws = malloc(sizeof(struct window_settings));
 
@@ -159,12 +159,8 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
                                            "window_fgcolor",
                                            DEFAULT_WINDOW_FGCOLOR);
 
-        ws->bg_color = get_color(x_conn->connection,
-                                 x_conn->screen,
-                                 bg_color_name);
-        ws->fg_color = get_color(x_conn->connection,
-                                 x_conn->screen,
-                                 fg_color_name);
+        ws->bg_color = get_color(xc->connection, xc->screen, bg_color_name);
+        ws->fg_color = get_color(xc->connection, xc->screen, fg_color_name);
 
         free(bg_color_name);
         free(fg_color_name);
@@ -180,15 +176,15 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
 
         if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
                 ws->x_offset = 0 + x_gap;
-                ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
+                ws->y_offset = xc->screen->height_in_pixels - ws->height - y_gap;
         } else if (alignment && (strcasecmp(alignment, "top_left") == 0)) {
                 ws->x_offset = 0 + x_gap;
                 ws->y_offset = 0 + y_gap;
         } else if (alignment && (strcasecmp(alignment, "bottom_right") == 0)) {
-                ws->x_offset = x_conn->screen->width_in_pixels - ws->width - x_gap;
-                ws->y_offset = x_conn->screen->height_in_pixels - ws->height - y_gap;
+                ws->x_offset = xc->screen->width_in_pixels - ws->width - x_gap;
+                ws->y_offset = xc->screen->height_in_pixels - ws->height - y_gap;
         } else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
-                ws->x_offset = x_conn->screen->width_in_pixels - ws->width - x_gap;
+                ws->x_offset = xc->screen->width_in_pixels - ws->width - x_gap;
                 ws->y_offset = 0 + y_gap;
         }
 
@@ -198,7 +194,7 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
         ws->own_window = get_bool_key("X11", "own_window", DEFAULT_OWN_WINDOW);
 
         if (!ws->own_window)
-                x_conn->window = x_conn->screen->root;
+                xc->window = xc->screen->root;
 
         /* check if donky's window should override wm control */
         ws->override = get_bool_key("X11", "override", DEFAULT_OVERRIDE);
@@ -210,14 +206,14 @@ struct window_settings *window_settings_load(struct x_connection *x_conn)
  * @brief Gather window settings (see window_settings_load())
  *        and draw window.
  *
- * @param x_conn donky's open X connection.
+ * @param xc donky's open X connection.
  *
  * @return The windows_setting struct used in drawing the window.
  */
-struct window_settings *draw_window(struct x_connection *x_conn)
+struct window_settings *draw_window(struct x_connection *xc)
 {
         struct window_settings *ws;
-        ws = window_settings_load(x_conn);
+        ws = window_settings_load(xc);
 
         xcb_void_cookie_t window_cookie;
         uint32_t mask;
@@ -227,37 +223,36 @@ struct window_settings *draw_window(struct x_connection *x_conn)
 
         xcb_generic_error_t *error;
 
-        x_conn->window = xcb_generate_id(x_conn->connection);
+        xc->window = xcb_generate_id(xc->connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         values[0] = ws->bg_color;
         values[1] = ws->override;
         values[2] = XCB_EVENT_MASK_EXPOSURE;
         window_cookie = xcb_create_window(
-                        x_conn->connection,
-                        x_conn->screen->root_depth,
-                        x_conn->window,
-                        x_conn->screen->root,
+                        xc->connection,
+                        xc->screen->root_depth,
+                        xc->window,
+                        xc->screen->root,
                         ws->x_offset, ws->y_offset,
                         ws->width, ws->height,
                         0,
                         XCB_WINDOW_CLASS_INPUT_OUTPUT, /* TODO: learn */
-                        x_conn->screen->root_visual,
+                        xc->screen->root_visual,
                         mask, values);
-        map_cookie = xcb_map_window_checked(x_conn->connection,
-                                            x_conn->window);
+        map_cookie = xcb_map_window_checked(xc->connection, xc->window);
 
         /* some error management */
-        error = xcb_request_check(x_conn->connection, window_cookie);
+        error = xcb_request_check(xc->connection, window_cookie);
         if (error) {
                 printf("Can't create window. Error: %d\n", error->error_code);
-                xcb_disconnect(x_conn->connection);
+                xcb_disconnect(xc->connection);
                 exit(EXIT_FAILURE);
         }
 
-        error = xcb_request_check(x_conn->connection, map_cookie);
+        error = xcb_request_check(xc->connection, map_cookie);
         if (error) {
                 printf("Can't map window. Error: %d\n", error->error_code);
-                xcb_disconnect(x_conn->connection);
+                xcb_disconnect(xc->connection);
                 exit(EXIT_FAILURE);
         }
 
@@ -269,7 +264,7 @@ struct window_settings *draw_window(struct x_connection *x_conn)
  *
  * @return Malloc'd draw_settings structure
  */
-struct draw_settings *draw_settings_load(struct x_connection *x_conn,
+struct draw_settings *draw_settings_load(struct x_connection *xc,
                                          struct window_settings *ws)
 {
         struct draw_settings *ds = malloc(sizeof(struct draw_settings));
@@ -277,7 +272,7 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
         /* Set up user configured font or default font. */
         ds->font_name = get_char_key("X11", "default_font", DEFAULT_FONT);
 
-        ds->font_struct = XLoadQueryFont(x_conn->display, ds->font_name);
+        ds->font_struct = XLoadQueryFont(xc->display, ds->font_name);
         ds->font = ds->font_struct->fid;
 
         /* Set up user configured or default font colors. */
@@ -288,11 +283,11 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
                                          "font_fgcolor",
                                          DEFAULT_FONT_FGCOLOR);
 
-        ds->color.bg_orig = get_color(x_conn->connection,
-                                      x_conn->screen,
+        ds->color.bg_orig = get_color(xc->connection,
+                                      xc->screen,
                                       ds->color.bg_name);
-        ds->color.fg_orig = get_color(x_conn->connection,
-                                      x_conn->screen,
+        ds->color.fg_orig = get_color(xc->connection,
+                                      xc->screen,
                                       ds->color.fg_name);
 
         /* Setup the position of the starting text section. */
@@ -333,14 +328,14 @@ struct draw_settings *draw_settings_load(struct x_connection *x_conn,
 /** 
  * @brief main donky loop
  * 
- * @param x_conn donky's open x_connection struct
+ * @param xc donky's open x_connection struct
  * @param ws donky's window_settings struct
  */
-void donky_loop(struct x_connection *x_conn,
+void donky_loop(struct x_connection *xc,
                 struct window_settings *ws)
 {
         struct text_section *cur = ts_start;
-        struct draw_settings *ds = draw_settings_load(x_conn, ws);
+        struct draw_settings *ds = draw_settings_load(xc, ws);
 
         xcb_generic_event_t *e;
         unsigned int force = 0;
@@ -364,7 +359,7 @@ void donky_loop(struct x_connection *x_conn,
                         force = 0;
 
                 /* Do a quick event poll. */
-                while (e = xcb_poll_for_event(x_conn->connection)) {
+                while (e = xcb_poll_for_event(xc->connection)) {
                         switch (e->response_type & ~0x80) {
                                 case XCB_EXPOSE:
                                         /* force redraw everything */
@@ -394,7 +389,7 @@ void donky_loop(struct x_connection *x_conn,
                                 case TEXT_FONT:
                                         break;
                                 case TEXT_COLOR:
-                                        handle_TEXT_COLOR(x_conn, cur, ds);
+                                        handle_TEXT_COLOR(xc, cur, ds);
                                         break;
                                 case TEXT_STATIC:
                                         handle_TEXT_STATIC(cur,
@@ -461,12 +456,10 @@ void donky_loop(struct x_connection *x_conn,
                 }
 
                 /* Render everything. */
-                render_queue_exec(x_conn->connection,
-                                  &x_conn->window,
-                                  &ws->width);
+                render_queue_exec(xc->connection, &xc->window, &ws->width);
 
                 /* Flush XCB like a friggin' toilet. */
-                xcb_flush(x_conn->connection);
+                xcb_flush(xc->connection);
 
                 /* Clear mem list... */
                 mem_list_clear();
@@ -489,27 +482,27 @@ void donky_loop(struct x_connection *x_conn,
                 }
         }
 
-        clean_x(x_conn, ws, ds, line_heights);
+        clean_x(xc, ws, ds, line_heights);
 }
 
 /** 
  * @brief Handles font color changes.
  * 
- * @param x_conn donky's open X connection
+ * @param xc donky's open X connection
  * @param cur Current text_section node
  * @param ds donky's draw settings
  */
-void handle_TEXT_COLOR(struct x_connection *x_conn,
+void handle_TEXT_COLOR(struct x_connection *xc,
                        struct text_section *cur,
                        struct draw_settings *ds)
 {
         if (cur->args == NULL)
-                ds->color.fg = get_color(x_conn->connection,
-                                         x_conn->screen,
+                ds->color.fg = get_color(xc->connection,
+                                         xc->screen,
                                          ds->color.fg_name);
         else
-                ds->color.fg = get_color(x_conn->connection,
-                                         x_conn->screen,
+                ds->color.fg = get_color(xc->connection,
+                                         xc->screen,
                                          cur->args);
 }
 
@@ -859,12 +852,12 @@ void handle_VARIABLE_BAR(struct text_section *cur,
 /** 
  * @brief Clean up the mess we made in this file. (Or at least try.)
  * 
- * @param x_conn donky's open x_connection
+ * @param xc donky's open x_connection
  * @param ws donky's window_settings
  * @param ds donky's draw_settings
  * @param line_heights 
  */
-void clean_x(struct x_connection *x_conn,
+void clean_x(struct x_connection *xc,
              struct window_settings *ws,
              struct draw_settings *ds,
              int *line_heights)
@@ -874,7 +867,7 @@ void clean_x(struct x_connection *x_conn,
         /* Cleanup. */
         freeif(line_heights);
         XFreeFontInfo(NULL, ds->font_struct, 0);
-        xcb_close_font(x_conn->connection, ds->font);
+        xcb_close_font(xc->connection, ds->font);
         freeif(ds->font_name);
         freeif(ds->color.bg_name);
         freeif(ds->color.fg_name);
@@ -882,11 +875,11 @@ void clean_x(struct x_connection *x_conn,
         freeif(ws);
 
         /* Destroy our window and disconnect from X. */
-        xcb_destroy_window(x_conn->connection, x_conn->window);
-        xcb_flush(x_conn->connection);
-        XCloseDisplay(x_conn->display);
-        xcb_disconnect(x_conn->connection);
-        freeif(x_conn);
+        xcb_destroy_window(xc->connection, xc->window);
+        xcb_flush(xc->connection);
+        XCloseDisplay(xc->display);
+        xcb_disconnect(xc->connection);
+        freeif(xc);
 
         printf("done.\n");
 }
