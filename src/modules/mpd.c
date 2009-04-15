@@ -50,6 +50,27 @@ char *mpd_port;
 struct addrinfo hints;
 struct addrinfo *result;
 struct addrinfo *rp;
+int initialized = 0;
+
+int disable_mpd_file;
+int disable_mpd_artist;
+int disable_mpd_title;
+int disable_mpd_album;
+int disable_mpd_track;
+int disable_mpd_date;
+int disable_mpd_genre;
+int disable_mpd_volume;
+int disable_mpd_repeat;
+int disable_mpd_random;
+int disable_mpd_playlist;
+int disable_mpd_playlistlength;
+int disable_mpd_xfade;
+int disable_mpd_state;
+int disable_mpd_song;
+int disable_mpd_etime;
+int disable_mpd_ttime;
+int disable_mpd_bitrate;
+int disable_mpd_audio;
 
 struct mpd_info {
         /* currentsong */
@@ -104,10 +125,7 @@ int module_init(void)
         module_var_add(module_name, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
 
         /* Add cron job. */
-        module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);
-
-        /* Do some initial shizzy. */
-        init_settings();
+        module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);        
 }
 
 /**
@@ -126,16 +144,17 @@ void module_destroy(void)
  */
 void run_cron(void)
 {
-        if (start_connection()) {
-                pop_currentsong();
-                pop_status();
-                fprintf(sockout, "close\r\n");
-                fflush(sockin);
-                fflush(sockout);
-                close(mpd_sock);
-                fclose(sockin);
-                fclose(sockout);
+        /* Do some initial shizzy. */
+        if (!initialized) {
+                init_settings();
+                initialized = 1;
         }
+
+        if (mpd_sock == -1)
+                start_connection();
+        
+        pop_currentsong();
+        pop_status();
 }
 
 /**
@@ -147,15 +166,22 @@ void pop_status(void)
 
         /* will be used for \n search & removal */
         char *p = NULL;
-        char *c = NULL;
 
         /* will be used for etime and ttime */
-        int elapsed, total;
+        int elapsed;
+        int total;
+        int i;
 
         size_t n = sizeof(char);
         
         /* currentsong */
-        fprintf(sockout, "status\r\n");
+        for (i = 0; i < 3; i++) {
+                if (fprintf(sockout, "status\r\n") == -1)
+                        start_connection();
+                else
+                        break;
+        }
+                
         fflush(sockout);
 
         while (fgets(buffer, sizeof(buffer), sockin)) {
@@ -167,34 +193,34 @@ void pop_status(void)
                  * for every other variable minus checking
                  * playlist vs playlistlength and the etime and ttime
                  * variables for which we use sscanf instead. */
-                else if (!strncmp(buffer, "volume", 6))
+                else if (!disable_mpd_volume && !strncmp(buffer, "volume", 6))
                         p = strncpy(mpdinfo.volume,
                                     (buffer + 8),
                                     sizeof(mpdinfo.volume) - n);
-                else if (!strncmp(buffer, "repeat", 6))
+                else if (!disable_mpd_repeat && !strncmp(buffer, "repeat", 6))
                         p = strncpy(mpdinfo.repeat,
                                     (buffer + 8),
                                     sizeof(mpdinfo.repeat) - n);
-                else if (!strncmp(buffer, "random", 6))
+                else if (!disable_mpd_random && !strncmp(buffer, "random", 6))
                         p = strncpy(mpdinfo.random,
                                     (buffer + 8),
                                     sizeof(mpdinfo.random) - n);
                 /* We must include the ":" here, else this would match
                  * both "playlist" and "playlistlength" */
-                else if (!strncmp(buffer, "playlist:", 9))
+                else if (!disable_mpd_playlist && !strncmp(buffer, "playlist:", 9))
                         p = strncpy(mpdinfo.playlist,
                                     /* ...so the offset is only +1 */
                                     (buffer + 10),
                                     sizeof(mpdinfo.playlist) - n);
-                else if (!strncmp(buffer, "playlistlength", 14))
+                else if (!disable_mpd_playlistlength && !strncmp(buffer, "playlistlength", 14))
                         p = strncpy(mpdinfo.playlistlength,
                                     (buffer + 16),
                                     sizeof(mpdinfo.playlistlength) - n);
-                else if (!strncmp(buffer, "xfade", 5))
+                else if (!disable_mpd_xfade && !strncmp(buffer, "xfade", 5))
                         p = strncpy(mpdinfo.xfade,
                                     (buffer + 7),
                                     sizeof(mpdinfo.xfade) - n);
-                else if (!strncmp(buffer, "state", 5)) {
+                else if (!disable_mpd_state && !strncmp(buffer, "state", 5)) {
                         /* MPD state is one of:
                          * "play", "pause", or "stop". 
                          * These are not very readable, so we
@@ -213,7 +239,7 @@ void pop_status(void)
                                         "Stopped",
                                         sizeof(mpdinfo.state) - n);
                 }
-                else if (!strncmp(buffer, "song", 4))
+                else if (!disable_mpd_song && !strncmp(buffer, "song", 4))
                         p = strncpy(mpdinfo.song,
                                     (buffer + 6),
                                     sizeof(mpdinfo.song) - n);
@@ -221,7 +247,8 @@ void pop_status(void)
                  * elapsed:total format, in seconds. This extracts
                  * those numbers and turns them into 2 separate
                  * elements in MM:SS format. */
-                else if (sscanf(buffer, "time: %d:%d", &elapsed, &total) == 2) {
+                else if (!(disable_mpd_ttime && disable_mpd_etime) &&
+                         sscanf(buffer, "time: %d:%d", &elapsed, &total) == 2) {
                         snprintf(mpdinfo.etime,
                                  sizeof(mpdinfo.etime) - n,
                                  /* %.2d gives us a leading zero */
@@ -233,21 +260,18 @@ void pop_status(void)
                                  "%.2d:%.2d",
                                  (total / 60), (total % 60));
                 }
-                else if (!strncmp(buffer, "bitrate", 7))
+                else if (!disable_mpd_bitrate && !strncmp(buffer, "bitrate", 7))
                         p = strncpy(mpdinfo.bitrate,
                                     (buffer + 9),
                                     sizeof(mpdinfo.bitrate) - n);
-                else if (!strncmp(buffer, "audio", 5))
+                else if (!disable_mpd_audio && !strncmp(buffer, "audio", 5))
                         p = strncpy(mpdinfo.audio,
                                     (buffer + 7),
                                     sizeof(mpdinfo.audio) - n);
 
                 /* Remove newline if there is one. */
                 if (p) {
-                        if (c = strchr(p, '\n')) {
-                                *c = '\0';
-                                c = NULL;
-                        }
+                        chomp(p);
                         p = NULL;
                 }
         }
@@ -260,50 +284,53 @@ void pop_currentsong(void)
 {
         char buffer[128];
         char *p = NULL;
-        char *c = NULL;
         size_t n = sizeof(char);
+        int i;
         
         /* currentsong */
-        fprintf(sockout, "currentsong\r\n");
+        for (i = 0; i < 3; i++) {
+                if (fprintf(sockout, "currentsong\r\n") == -1)
+                        start_connection();
+                else
+                        break;
+        }
+                
         fflush(sockout);
 
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (!strncmp(buffer, "file", 4))
+                else if (!disable_mpd_file && !strncmp(buffer, "file", 4))
                         p = strncpy(mpdinfo.file,
                                     (buffer + 6),
                                     sizeof(mpdinfo.file) - n);
-                else if (!strncmp(buffer, "Artist", 6))
+                else if (!disable_mpd_artist && !strncmp(buffer, "Artist", 6))
                         p = strncpy(mpdinfo.artist,
                                     (buffer + 8),
                                     sizeof(mpdinfo.artist) - n);
-                else if (!strncmp(buffer, "Title", 5))
+                else if (!disable_mpd_title && !strncmp(buffer, "Title", 5))
                         p = strncpy(mpdinfo.title,
                                     (buffer + 7),
                                     sizeof(mpdinfo.title) - n);
-                else if (!strncmp(buffer, "Album", 5))
+                else if (!disable_mpd_album && !strncmp(buffer, "Album", 5))
                         p = strncpy(mpdinfo.album,
                                     (buffer + 7),
                                     sizeof(mpdinfo.album) - n);
-                else if (!strncmp(buffer, "Track", 5))
+                else if (!disable_mpd_track && !strncmp(buffer, "Track", 5))
                         p = strncpy(mpdinfo.track,
                                     (buffer + 7),
                                     sizeof(mpdinfo.track) - n);
-                else if (!strncmp(buffer, "Date", 4))
+                else if (!disable_mpd_date && !strncmp(buffer, "Date", 4))
                         p = strncpy(mpdinfo.date,
                                     (buffer + 6),
                                     sizeof(mpdinfo.date) - n);
-                else if (!strncmp(buffer, "Genre", 5))
+                else if (!disable_mpd_genre && !strncmp(buffer, "Genre", 5))
                         p = strncpy(mpdinfo.genre,
                                     (buffer + 7),
                                     sizeof(mpdinfo.genre) - n);
 
                 if (p) {
-                        if (c = strchr(p, '\n')) {
-                                *c = '\0';
-                                c = NULL;
-                        }
+                        chomp(p);
                         p = NULL;
                 }
         }
@@ -355,6 +382,29 @@ void init_settings(void)
                         gai_strerror(s));
                 return;
         }
+
+        /* Disable settings...
+         * I added these so power users (Spewns) can fine tune what they wouldn't
+         * like to store. */
+        disable_mpd_file = get_bool_key("mpd", "disable_mpd_file", 0);
+        disable_mpd_artist = get_bool_key("mpd", "disable_mpd_artist", 0);
+        disable_mpd_title = get_bool_key("mpd", "disable_mpd_title", 0);
+        disable_mpd_album = get_bool_key("mpd", "disable_mpd_album", 0);
+        disable_mpd_track = get_bool_key("mpd", "disable_mpd_track", 0);
+        disable_mpd_date = get_bool_key("mpd", "disable_mpd_date", 0);
+        disable_mpd_genre = get_bool_key("mpd", "disable_mpd_genre", 0);
+        disable_mpd_volume = get_bool_key("mpd", "disable_mpd_volume", 0);
+        disable_mpd_repeat = get_bool_key("mpd", "disable_mpd_repeat", 0);
+        disable_mpd_random = get_bool_key("mpd", "disable_mpd_random", 0);
+        disable_mpd_playlist = get_bool_key("mpd", "disable_mpd_playlist", 0);
+        disable_mpd_playlistlength = get_bool_key("mpd", "disable_mpd_playlistlength", 0);
+        disable_mpd_xfade = get_bool_key("mpd", "disable_mpd_xfade", 0);
+        disable_mpd_state = get_bool_key("mpd", "disable_mpd_state", 0);
+        disable_mpd_song = get_bool_key("mpd", "disable_mpd_song", 0);
+        disable_mpd_etime = get_bool_key("mpd", "disable_mpd_etime", 0);
+        disable_mpd_ttime = get_bool_key("mpd", "disable_mpd_ttime", 0);
+        disable_mpd_bitrate = get_bool_key("mpd", "disable_mpd_bitrate", 0);
+        disable_mpd_audio = get_bool_key("mpd", "disable_mpd_audio", 0);
 }
 
 /**
