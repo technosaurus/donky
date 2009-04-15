@@ -15,4 +15,9 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef MOD_UTILS_H
+#define MOD_UTILS_H
+
 char *handle_args(char *args, char *otherwise);
+
+#endif /* MOD_UTILS_H */
