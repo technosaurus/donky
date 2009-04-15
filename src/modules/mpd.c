@@ -133,6 +133,16 @@ int module_init(void)
  */
 void module_destroy(void)
 {
+        /* Disconnect from mpd. */
+        if (mpd_sock != -1) {
+                fprintf(sockout, "close\r\n");
+                fflush(sockout);
+                fflush(sockin);
+                fclose(sockout);
+                fclose(sockin);
+                close(mpd_sock);
+        }
+        
         /* Free all my memorah! */
         freeif(mpd_host);
         freeif(mpd_port);
