@@ -149,7 +149,9 @@ void initialize_stuff(void)
  */
 void clean_up_everything(void)
 {
-        clear_cfg();
+        extern struct first_last *cfg_fl;
+
+        del_list(cfg_fl, &clear_cfg);
         clear_text();
         clear_module();
 }

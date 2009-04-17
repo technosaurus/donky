@@ -37,12 +37,12 @@ struct first_last *init_list(void)
 /** 
  * @brief Adds a new node to a linked list.
  * 
- * @param data The content to be inserted into the new node.
  * @param fl The first_last struct of the list you want to add to.
+ * @param data The content to be inserted into the new node.
  * 
  * @return Pointer to the newly created node.
  */
-void *add_node(void *data, struct first_last *fl)
+void *add_node(struct first_last *fl, void *data)
 {
         struct list *new = malloc(sizeof(struct list));
         new->data = data;
@@ -61,67 +61,76 @@ void *add_node(void *data, struct first_last *fl)
 }
 
 /** 
- * @brief Searches for a node in the list.
+ * @brief Looks for a node in a list. It it isn't found, it can create and
+ *        return a new one.
  * 
- * @param match_callback Pointer to a function that checks the content of
- *                       a node to see if it matches what's held in the variable
- *                       "match". Function should return 1 if it matches,
- *                       else 0.
- * @param fallback Pointer to a function to run if a node can't be found. This
- *                 could be a function that adds and returns a new node, for
- *                 example, in effect saying overall "search for a node named
- *                 blah, and if it doesn't exist, _create_ a node named blah
- *                 and return it." This can be NULL.
+ * @param fl The list to search.
+ * @param match_callback Pointer to a function that checks the content of a
+ *                       node against whatever is the paramater "match" below.
+ *                       Function should return 1 if it matches, and 0 if not.
  * @param match Passed to the match_callback function to be matched against.
- * @param fl The first_last struct of the list you want to search.
+ * @param otherwise Pointer to a function that will add a new node to the list
+ *                  and return the new node.
  * 
- * @return 
+ * @return The requested node.
  */
-void *get_node(void *match_callback,
-               void *fallback,
+void *get_node(struct first_last *fl,
+               void *match_callback,
                void *match,
-               struct first_last *fl)
+               void *otherwise)
 {
         int (*call)(void *data, void *match) = match_callback;
-        void *(*fall)(void *match) = fallback;
+        void *(*fallback)(void *match) = otherwise;
 
         struct list *cur = fl->first;
-        struct list *next;
 
         while (cur) {
-                next = cur->next;
-
                 if (call(cur->data, match))
                         return cur->data;
 
-                cur = next;
+                cur = cur->next;
         }
 
-        if (fall != NULL)
-                return fall(match);
+        if (fallback != NULL)
+                return fallback(match);
         else
                 return NULL;
 }
 
 /** 
+ * @brief Convenient and straight "find a node and return NULL if it doesn't
+ *        exist" function.
+ * 
+ * @param fl See above.
+ * @param match_callback See above.
+ * @param match  See above.
+ * 
+ * @return The requested node if it exists, else NULL.
+ */
+void *find_node(struct first_last *fl, void *match_callback, void *match)
+{
+        return get_node(fl, match_callback, match, NULL);
+}
+
+/** 
  * @brief Deletes a node from a linked list.
  * 
+ * @param fl The first_last struct of the list you want to delete from.
  * @param match_callback Used in calling get_node(). See above.
+ * @param match Used in calling get_node(). See above.
  * @param free_external Pointer to a function that frees the module's content
  *                      in the node. This can be NULL if a module's custom
  *                      struct has nothing malloc'd in it. (Memory leaks = bad)
- * @param match Used in calling get_node(). See above.
- * @param fl The first_last struct of the list you want to delete from.
  */
-void del_node(void *match_callback,
-              void *free_external,
+void del_node(struct first_last *fl,
+              void *match_callback,
               void *match,
-              struct first_last *fl)
+              void *free_external)
 {
         int (*call)(void *data, void *match) = match_callback;
         void (*free_ext)(void *data) = free_external;
 
-        struct list *cur = get_node(call, NULL, match, fl);
+        struct list *cur = find_node(fl, call, match);
 
         if (cur) {
                 if (cur->prev)
@@ -144,10 +153,10 @@ void del_node(void *match_callback,
 /** 
  * @brief Deletes a linked list.
  * 
- * @param free_external See del_node() just above.
  * @param fl The first_last struct of the list you wish to delete.
+ * @param free_external See del_node() just above.
  */
-void del_list(void *free_external, struct first_last *fl)
+void del_list(struct first_last *fl, void *free_external)
 {
         void (*free_ext)(void *data) = free_external;
 
@@ -166,28 +175,26 @@ void del_list(void *free_external, struct first_last *fl)
                 cur = next;
         }
 
-        freeif(fl);
+        if (fl)
+                free(fl);
 }
 
 /** 
  * @brief Run a function on the contents of a list.
  * 
+ * @param fl The first_last struct of the list you wish to act upon.
  * @param execute Pointer to a function you wish to run on the contents
  *                of all nodes in a list.
- * @param fl The first_last struct of the list you wish to act upon.
  */
-void act_on_list(void *execute, struct first_last *fl)
+void act_on_list(struct first_last *fl, void *execute)
 {
         void (*exec)(void *data) = execute;
 
         struct list *cur = fl->first;
-        struct list *next;
 
         while (cur) {
-                next = cur->next;
-
                 exec(cur->data);
 
-                cur = next;
+                cur = cur->next;
         }
 }

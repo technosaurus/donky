@@ -27,15 +27,16 @@ struct first_last {
 };
 
 struct first_last *init_list(void);
-void *add_node(void *data, struct first_last *fl);
-void *get_node(void *match_callback,
-                      void *fallback,
-                      void *match,
-                      struct first_last *fl);
-void del_node(void *match_callback,
-              void *free_external,
+void *add_node(struct first_last *fl, void *data);
+void *get_node(struct first_last *fl,
+               void *match_callback,
+               void *match,
+               void *fallback);
+void *find_node(struct first_last *fl, void *match_callback, void *match);
+void del_node(struct first_last *fl,
+              void *match_callback,
               void *match,
-              struct first_last *fl);
-void del_list(void *free_external, struct first_last *fl);
-void act_on_list(void *execute, struct first_last *fl);
+              void *free_external);
+void del_list(struct first_last *fl, void *free_external);
+void act_on_list(struct first_last *fl, void *execute);
 

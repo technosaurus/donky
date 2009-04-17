@@ -21,44 +21,31 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "lists.h"
 #include "util.h"
 
-#define IS_TRUE(c) ( \
-        ((c) == 'y') || ((c) == 'Y') || \
-        ((c) == 't') || ((c) == 'T') || \
-        ((c) == '1') \
-)
+#define IS_TRUE(c) ( ((c) == 'y') || ((c) == 'Y') || \
+                     ((c) == 't') || ((c) == 'T') || \
+                     ((c) == '1') )
 
-#define IS_FALSE(c) ( \
-        ((c) == 'n') || ((c) == 'N') || \
-        ((c) == 'f') || ((c) == 'F') || \
-        ((c) == '0') \
-)
+#define IS_FALSE(c) ( ((c) == 'n') || ((c) == 'N') || \
+                      ((c) == 'f') || ((c) == 'F') || \
+                      ((c) == '0') )
 
+/* internal structs/prototypes */
 struct setting {
-        struct setting *next;
-
         char *key;
         char *value;
 };
 
-struct cfg {
-        struct cfg *next;
-
-        char *mod;
-
-        struct setting *first_setting;
-        struct setting *last_setting;
-};
-
-/* internal prototypes */
 void add_mod(char *mod);
-struct cfg *find_mod(char *mod);
+int find_mod(struct cfg *cur, char *mod);
 void add_key(char *mod, char *key, char *value);
+int find_key(struct setting *cur, char *key);
+void clear_settings(struct setting *cur_s);
 
 /* Globals */
-struct cfg *first_cfg = NULL;
-struct cfg *last_cfg = NULL;
+struct first_last *cfg_fl = NULL;
 
 /** 
  * @brief Add a mod to the configuration list
@@ -70,50 +57,39 @@ void add_mod(char *mod)
         struct cfg *new_mod = malloc(sizeof(struct cfg));
 
         new_mod->mod = mod;
-        new_mod->next = NULL;
-        new_mod->first_setting = NULL;
-        new_mod->last_setting = NULL;
+        new_mod->setting_fl = NULL;
 
-        if (last_cfg) {
-                last_cfg->next = new_mod;
-                last_cfg = new_mod;
-        } else {
-                first_cfg = last_cfg = new_mod;
-        }
+        new_mod->setting_fl = init_list();
+
+        add_node(cfg_fl, new_mod);
 }
 
 /** 
- * @brief Find a mod in the main configuration list
+ * @brief Callback used in finding a mod in the coming functions.
  * 
- * @param mod The name of the mod to find
+ * @param cur cfg node whose mod we check against
+ * @param mod Mod name we're looking for
  * 
- * @return Pointer to the found mod
+ * @return 1 if this is the node we want, 0 if not
  */
-struct cfg *find_mod(char *mod)
+int find_mod(struct cfg *cur, char *mod)
 {
-        struct cfg *cur = first_cfg;
-
-        while (cur) {
-                if (!strcasecmp(cur->mod, mod))
-                        return cur;
-
-                cur = cur->next;
-        }
-        
-        return NULL;
+        if (!strcasecmp(cur->mod, mod))
+                return 1;
+        else
+                return 0;
 }
 
 /** 
  * @brief Add a key (setting, option) and its value to its respective mod
  * 
- * @param mod Name of mod to add key to
+ * @param mod Name of the mod to add the key to
  * @param key Name of key
- * @param value Value of the char key or NULL
- * @param int_value Value of the int key or NULL
+ * @param value Value of the key to add (as a string)
  */
 void add_key(char *mod, char *key, char *value)
 {
-        struct cfg *cur = find_mod(mod);
+        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
 
         if (!cur)
                 return;
@@ -122,17 +98,27 @@ void add_key(char *mod, char *key, char *value)
         
         new_set->key = NULL;
         new_set->value = NULL;
-        new_set->next = NULL;
 
         new_set->key = d_strcpy(key);
         new_set->value = d_strcpy(value);
 
-        if (cur->last_setting) {
-                cur->last_setting->next = new_set;
-                cur->last_setting = new_set;
-        } else {
-                cur->first_setting = cur->last_setting = new_set;
-        }
+        add_node(cur->setting_fl, new_set);
+}
+
+/** 
+ * @brief Callback used in finding a key in the coming functions.
+ * 
+ * @param cur setting node whose key we check against
+ * @param mod Key name we're looking for
+ * 
+ * @return 1 if this is the node we want, 0 if not
+ */
+int find_key(struct setting *cur, char *key)
+{
+        if(!strcasecmp(cur->key, key))
+                return 1;
+        else
+                return 0;
 }
 
 /** 
@@ -140,35 +126,29 @@ void add_key(char *mod, char *key, char *value)
  * 
  * @param mod Name of mod
  * @param key Name of key
+ * @param otherwise Value to return if we cannot determine a key
  * 
- * @return A pointer to the char value of key
+ * @return Malloc'd char value of either key or 'otherwise'
  */
 char *get_char_key(char *mod, char *key, char *otherwise)
 {
-        struct cfg *cur;
-        
-        cur = find_mod(mod);
+        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
 
         if (!cur) {
-                if (!otherwise)
-                        return NULL;
-                else
+                if (otherwise)
                         return d_strcpy(otherwise);
+                else
+                        return NULL;
         }
 
-        struct setting *cur_set = cur->first_setting;
+        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        while (cur_set) {
-                if(!strcasecmp(cur_set->key, key))
-                        return d_strcpy(cur_set->value);
-
-                cur_set = cur_set->next;
-        }
-
-        if (!otherwise)
-                return NULL;
-        else
+        if (cur_s && (cur_s->value))
+                return d_strcpy(cur_s->value);
+        else if (otherwise)
                 return d_strcpy(otherwise);
+        else
+                return NULL;
 }
 
 /** 
@@ -176,26 +156,23 @@ char *get_char_key(char *mod, char *key, char *otherwise)
  * 
  * @param mod Name of mod
  * @param key Name of key
+ * @param otherwise Value to return if we cannot determine a key
  * 
- * @return The int value of key
+ * @return The int value of key, or 'otherwise'
  */
 int get_int_key(char *mod, char *key, int otherwise)
 {
-        struct cfg *cur = find_mod(mod);
+        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
 
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_set = cur->first_setting;
+        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        while (cur_set) {
-                if(!strcasecmp(cur_set->key, key))
-                        return atoi(cur_set->value);
-
-                cur_set = cur_set->next;
-        }
-
-        return otherwise;
+        if (cur_s)
+                return atoi(cur_s->value);
+        else
+                return otherwise;
 }
 
 /** 
@@ -203,56 +180,48 @@ int get_int_key(char *mod, char *key, int otherwise)
  * 
  * @param mod Name of mod
  * @param key Name of key
+ * @param otherwise Value to return if we cannot determine a key
  * 
- * @return The double value of key
+ * @return The double value of key, or 'otherwise'
  */
 double get_double_key(char *mod, char *key, double otherwise)
 {
-        struct cfg *cur = find_mod(mod);
+        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
 
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_set = cur->first_setting;
+        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        while (cur_set) {
-                if(!strcasecmp(cur_set->key, key))
-                        return atof(cur_set->value);
-
-                cur_set = cur_set->next;
-        }
-
-        return otherwise;
+        if (cur_s)
+                return atof(cur_s->value);
+        else
+                return otherwise;
 }
 
 /** 
- * @brief Get the boolean value of a key of a mod
+ * @brief Get the boolean value of a key
  * 
  * @param mod Name of mod
  * @param key Name of key
+ * @param otherwise Value to return if we cannot determine a key
  * 
- * @return The boolean value of key
+ * @return The boolean value of key, or 'otherwise'
  */
 int get_bool_key(char *mod, char *key, int otherwise)
 {
-        struct cfg *cur = find_mod(mod);
+        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
 
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_set = cur->first_setting;
+        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        while (cur_set) {
-                if(!strcasecmp(cur_set->key, key)) {
-                        if (IS_TRUE(cur_set->value[0]))
-                                return 1;
-                        else if (IS_FALSE(cur_set->value[0]))
-                                return 0;
-                        else
-                                break;
-                }
-
-                cur_set = cur_set->next;
+        if (cur_s) {
+                if (IS_TRUE(cur_s->value[0]))
+                        return 1;
+                else if (IS_FALSE(cur_s->value[0]))
+                        return 0;
         }
 
         return otherwise;
@@ -275,6 +244,9 @@ void parse_cfg(void)
                 printf("Error: ~/.donkyrc file not found.\n");
                 exit(EXIT_FAILURE);
         }
+
+        /* initialize our cfg list */
+        cfg_fl = init_list();
 
         /* these will hold/point to lines in .donkyrc */
         char *str = NULL;
@@ -304,7 +276,8 @@ void parse_cfg(void)
                         continue;
                 }
 
-                /* handle [text] - store all lines 'til next [mod] into cfg_text */
+                /* handle [text]: store all lines until the
+                 * next [mod] into cfg_text */
                 if (mod && !strcasecmp(mod, "text")) {
                         if (cfg_text == NULL) {
                                 cfg_text = d_strcpy(str);
@@ -326,12 +299,12 @@ void parse_cfg(void)
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value) == 2)
                         trim_t(value);
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
-                        value = d_strncpy("True", (sizeof(char) * 4));
+                        value = d_strcpy("True");
  
                 /* if the value is "" or '', set it to False */
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
                         free(value);
-                        value = d_strncpy("False", (sizeof(char) * 5));
+                        value = d_strcpy("False");
                 }
 
                 /* if we have all required ingredients, make an entry */
@@ -352,48 +325,34 @@ void parse_cfg(void)
                 key = NULL;
         }
 
-        /* Close file descriptor. */
         fclose(cfg_file);
 
         if (cfg_text == NULL) {
                 printf("Config error: missing [text] section.");
-                clear_cfg();
+                del_list(cfg_fl, &clear_cfg);
                 exit(EXIT_FAILURE);
         }
 }
 
 /** 
- * @brief Free all cfg nodes from memory
+ * @brief Frees the contents of the cfg struct passed to it.
+ * 
+ * @param cur cfg struct to clean
  */
-void clear_cfg(void)
+void clear_cfg(struct cfg *cur)
 {
-        struct cfg *cur_cfg = first_cfg;
-        struct cfg *next_cfg;
-        
-        struct setting *cur_setting;
-        struct setting *next_setting;
-
-        while (cur_cfg) {
-                next_cfg = cur_cfg->next;
-                
-                cur_setting = cur_cfg->first_setting;
-
-                while (cur_setting) {
-                        next_setting = cur_setting->next;
-
-                        freeif(cur_setting->key);
-                        freeif(cur_setting->value);
-                        freeif(cur_setting);
-
-                        cur_setting = next_setting;
-                }
-
-                freeif(cur_cfg->mod);
-                freeif(cur_cfg);
-
-                cur_cfg = next_cfg;
-        }
-
-        first_cfg = NULL;
-        last_cfg = NULL;
+        freeif(cur->mod);
+        del_list(cur->setting_fl, &clear_settings);
 }
+
+/** 
+ * @brief Frees the contents of the setting struct passed to it.
+ * 
+ * @param cur_s setting struct to clean
+ */
+void clear_settings(struct setting *cur_s)
+{
+        freeif(cur_s->key);
+        freeif(cur_s->value);
+}
+

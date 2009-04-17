@@ -78,7 +78,7 @@ int module_init(void)
 /* These run on module unload */
 void module_destroy(void)
 {
-        del_list(&clear_batt, fl);
+        del_list(fl, &clear_batt);
 }
 
 /** 
@@ -88,7 +88,7 @@ void module_destroy(void)
  */
 void batt_cron(void)
 {
-        act_on_list(&clear_remaining_charge, fl);
+        act_on_list(fl, &clear_remaining_charge);
 }
 
 /** 
@@ -99,7 +99,6 @@ void batt_cron(void)
  */
 void clear_remaining_charge(struct batt *batt)
 {
-        //printf("in clear_remaining_charge()\n");
         //freeif(batt->rem);
         if (batt->rem) {
                 free(batt->rem);
@@ -190,7 +189,7 @@ int get_battb(char *args)
  */
 struct batt *prepare_batt(char *batt_num)
 {
-        struct batt *batt = get_node(&find_batt, &add_batt, batt_num, fl);
+        struct batt *batt = get_node(fl, &find_batt, batt_num, &add_batt);
         if (batt->rem == NULL)
                 batt->rem = get_remaining_charge(batt->num);
 
@@ -216,7 +215,7 @@ struct batt *add_batt(char *batt_num)
         /* this never needs to be updated */
         new->max = get_max_charge(new->num);
 
-        return add_node(new, fl);
+        return add_node(fl, new);
 }
 
 /** 
