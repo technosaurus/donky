@@ -79,12 +79,14 @@ void handle_VARIABLE_STR(struct text_section *cur,
                          int *line_heights,
                          int *calcd_line_heights,
                          unsigned int *is_last,
+                         unsigned int *force,
                          unsigned int *moved);
 void handle_VARIABLE_BAR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
                          unsigned int *is_last,
+                         unsigned int *force,
                          unsigned int *moved);
 void clean_x(struct x_connection *xc,
              struct window_settings *ws,
@@ -102,16 +104,12 @@ extern int donky_exit;
  */
 struct x_connection *init_x_connection(void)
 {
-        struct x_connection *xc;
-        xc = malloc(sizeof(struct x_connection));
-
+        struct x_connection *xc = malloc(sizeof(struct x_connection));
         xcb_screen_iterator_t screen_iter;
         int screen_number;
 
-        /* connect to X server */
         xc->display = XOpenDisplay(NULL);
         xc->connection = XGetXCBConnection(xc->display);
-
         if (!xc->connection) {
                 printf("Can't connect to X server.\n");
                 exit(EXIT_FAILURE);
@@ -122,7 +120,8 @@ struct x_connection *init_x_connection(void)
         screen_iter = xcb_setup_roots_iterator(xcb_get_setup(xc->connection));
 
         /* find our current screen */
-        for (; screen_iter.rem != 0; screen_number--, xcb_screen_next(&screen_iter)) {
+        for (; screen_iter.rem != 0; screen_number--,
+                                     xcb_screen_next(&screen_iter)) {
                 if (screen_number == 0) {
                         xc->screen = screen_iter.data;
                         break;
@@ -150,50 +149,48 @@ struct x_connection *init_x_connection(void)
 struct window_settings *window_settings_load(struct x_connection *xc)
 {
         struct window_settings *ws = malloc(sizeof(struct window_settings));
+        char *bg_color_name = NULL;
+        char *fg_color_name = NULL;
+        uint16_t x_gap;
+        uint16_t y_gap;
+        char *alignment = NULL;
 
-        /* Set up window bg and fg colors. */
-        char *bg_color_name = get_char_key("X11",
-                                           "window_bgcolor",
-                                           DEFAULT_WINDOW_BGCOLOR);
-        char *fg_color_name = get_char_key("X11",
-                                           "window_fgcolor",
-                                           DEFAULT_WINDOW_FGCOLOR);
-
+        /* Setup window bg and fg colors */
+        bg_color_name = get_char_key("X11",
+                                     "window_bgcolor",
+                                     DEFAULT_WINDOW_BGCOLOR);
+        fg_color_name = get_char_key("X11",
+                                     "window_fgcolor",
+                                     DEFAULT_WINDOW_FGCOLOR);
         ws->bg_color = get_color(xc->connection, xc->screen, bg_color_name);
         ws->fg_color = get_color(xc->connection, xc->screen, fg_color_name);
-
         free(bg_color_name);
         free(fg_color_name);
 
         /* get window dimensions, gaps, and calculate alignment */
         ws->width = get_int_key("X11", "window_width", DEFAULT_WINDOW_WIDTH);
         ws->height = get_int_key("X11", "window_height", DEFAULT_WINDOW_HEIGHT);
-
-        uint16_t x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
-        uint16_t y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
-
-        char *alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
-
-        if (alignment && (strcasecmp(alignment, "bottom_left") == 0)) {
+        x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
+        y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
+        alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
+        if (strcasecmp(alignment, "bottom_left") == 0) {
                 ws->x_offset = 0 + x_gap;
                 ws->y_offset = xc->screen->height_in_pixels - ws->height - y_gap;
-        } else if (alignment && (strcasecmp(alignment, "top_left") == 0)) {
+        } else if (strcasecmp(alignment, "top_left") == 0) {
                 ws->x_offset = 0 + x_gap;
                 ws->y_offset = 0 + y_gap;
-        } else if (alignment && (strcasecmp(alignment, "bottom_right") == 0)) {
+        } else if (strcasecmp(alignment, "bottom_right") == 0) {
                 ws->x_offset = xc->screen->width_in_pixels - ws->width - x_gap;
                 ws->y_offset = xc->screen->height_in_pixels - ws->height - y_gap;
-        } else if (alignment && (strcasecmp(alignment, "top_right") == 0)) {
+        } else if (strcasecmp(alignment, "top_right") == 0) {
                 ws->x_offset = xc->screen->width_in_pixels - ws->width - x_gap;
                 ws->y_offset = 0 + y_gap;
         }
-
         free(alignment);
 
         /* draw donky in its own window? if not, draw to root */
         ws->own_window = get_bool_key("X11", "own_window", DEFAULT_OWN_WINDOW);
-
-        if (!ws->own_window)
+        if (ws->own_window <= 0)
                 xc->window = xc->screen->root;
 
         /* check if donky's window should override wm control */
@@ -212,15 +209,11 @@ struct window_settings *window_settings_load(struct x_connection *xc)
  */
 struct window_settings *draw_window(struct x_connection *xc)
 {
-        struct window_settings *ws;
-        ws = window_settings_load(xc);
-
+        struct window_settings *ws = window_settings_load(xc);
         xcb_void_cookie_t window_cookie;
         uint32_t mask;
         uint32_t values[3];
-
         xcb_void_cookie_t map_cookie;
-
         xcb_generic_error_t *error;
 
         xc->window = xcb_generate_id(xc->connection);
@@ -228,20 +221,18 @@ struct window_settings *draw_window(struct x_connection *xc)
         values[0] = ws->bg_color;
         values[1] = ws->override;
         values[2] = XCB_EVENT_MASK_EXPOSURE;
-        window_cookie = xcb_create_window(
-                        xc->connection,
-                        xc->screen->root_depth,
-                        xc->window,
-                        xc->screen->root,
-                        ws->x_offset, ws->y_offset,
-                        ws->width, ws->height,
-                        0,
-                        XCB_WINDOW_CLASS_INPUT_OUTPUT, /* TODO: learn */
-                        xc->screen->root_visual,
-                        mask, values);
+        window_cookie = xcb_create_window(xc->connection,
+                                          xc->screen->root_depth,
+                                          xc->window,
+                                          xc->screen->root,
+                                          ws->x_offset, ws->y_offset,
+                                          ws->width, ws->height,
+                                          0,
+                                          XCB_WINDOW_CLASS_INPUT_OUTPUT,
+                                          xc->screen->root_visual,
+                                          mask, values);
         map_cookie = xcb_map_window_checked(xc->connection, xc->window);
 
-        /* some error management */
         error = xcb_request_check(xc->connection, window_cookie);
         if (error) {
                 printf("Can't create window. Error: %d\n", error->error_code);
@@ -268,10 +259,12 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
                                          struct window_settings *ws)
 {
         struct draw_settings *ds = malloc(sizeof(struct draw_settings));
+        double min_sleep;
+        int min_seconds;
+        long min_nanoseconds;
 
         /* Set up user configured font or default font. */
         ds->font_name = get_char_key("X11", "default_font", DEFAULT_FONT);
-
         ds->font_struct = XLoadQueryFont(xc->display, ds->font_name);
         ds->font = ds->font_struct->fid;
 
@@ -282,7 +275,6 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
         ds->color.fg_name = get_char_key("X11",
                                          "font_fgcolor",
                                          DEFAULT_FONT_FGCOLOR);
-
         ds->color.bg_orig = get_color(xc->connection,
                                       xc->screen,
                                       ds->color.bg_name);
@@ -313,14 +305,11 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
         }
 
         /* Setup minimum sleep time. */
-        double min_sleep = get_double_key("X11",
-                                          "global_sleep",
-                                          DEFAULT_GLOBAL_SLEEP);
-
-        int min_seconds = floor(min_sleep);
-        long min_nanosec = (min_sleep - min_seconds) * pow(10, 9);
+        min_sleep = get_double_key("X11", "global_sleep", DEFAULT_GLOBAL_SLEEP);
+        min_seconds = floor(min_sleep);
+        min_nanoseconds = (min_sleep - min_seconds) * pow(10, 9);
         ds->tspec.tv_sec = min_seconds;
-        ds->tspec.tv_nsec = min_nanosec;
+        ds->tspec.tv_nsec = min_nanoseconds;
 
         return ds;
 }
@@ -337,7 +326,7 @@ void donky_loop(struct x_connection *xc,
         struct text_section *cur = ts_start;
         struct draw_settings *ds = draw_settings_load(xc, ws);
 
-        xcb_generic_event_t *e;
+        xcb_generic_event_t *e = NULL;
         unsigned int force = 0;
 
         /* new_xpos and new_ypos hold the coords
@@ -361,13 +350,13 @@ void donky_loop(struct x_connection *xc,
                 /* Do a quick event poll. */
                 while (e = xcb_poll_for_event(xc->connection)) {
                         switch (e->response_type & ~0x80) {
-                                case XCB_EXPOSE:
-                                        /* force redraw everything */
-                                        if (!force)
-                                                force = 1;
-                                        break;
-                                default:
-                                        break;
+                        case XCB_EXPOSE:
+                                /* force redraw everything */
+                                if (!force)
+                                        force = 1;
+                                break;
+                        default:
+                                break;
                         }
                         free(e);
                 }
@@ -386,34 +375,34 @@ void donky_loop(struct x_connection *xc,
                                 is_last = 0;
 
                         switch (cur->type) {
-                                case TEXT_FONT:
-                                        break;
-                                case TEXT_COLOR:
-                                        handle_TEXT_COLOR(xc, cur, ds);
-                                        break;
-                                case TEXT_STATIC:
-                                        handle_TEXT_STATIC(cur,
-                                                           ds,
-                                                           &new_xpos,
-                                                           &new_ypos,
-                                                           &force,
-                                                           line_heights,
-                                                           &calcd_line_heights,
-                                                           &is_last);
-                                        break;
-                                case TEXT_VARIABLE:
-                                        handle_TEXT_VARIABLE(cur,
-                                                             ds,
-                                                             &new_xpos,
-                                                             &new_ypos,
-                                                             &force,
-                                                             line_heights,
-                                                             &calcd_line_heights,
-                                                             &is_last);
-                                        break;
-                                default:
-                                        printf("Invalid text_section type.\n");
-                                        break;
+                        case TEXT_FONT:
+                                break;
+                        case TEXT_COLOR:
+                                handle_TEXT_COLOR(xc, cur, ds);
+                                break;
+                        case TEXT_STATIC:
+                                handle_TEXT_STATIC(cur,
+                                                   ds,
+                                                   &new_xpos,
+                                                   &new_ypos,
+                                                   &force,
+                                                   line_heights,
+                                                   &calcd_line_heights,
+                                                   &is_last);
+                                break;
+                        case TEXT_VARIABLE:
+                                handle_TEXT_VARIABLE(cur,
+                                                     ds,
+                                                     &new_xpos,
+                                                     &new_ypos,
+                                                     &force,
+                                                     line_heights,
+                                                     &calcd_line_heights,
+                                                     &is_last);
+                                break;
+                        default:
+                                printf("Invalid text_section type.\n");
+                                break;
                         }
 
                         /* if we have a following node, we need
@@ -428,9 +417,8 @@ void donky_loop(struct x_connection *xc,
                                         /* Calculate the difference in lines
                                          * (Needed for multiple blank lines
                                          *  between text.) */
-                                        linediff =
-                                                cur->next->line -
-                                                cur->line - 1;
+                                        linediff = cur->next->line -
+                                                   cur->line - 1;
 
                                         if (line_heights[cur->line] >
                                             ds->min_line_height)
@@ -457,11 +445,8 @@ void donky_loop(struct x_connection *xc,
 
                 /* Render everything. */
                 render_queue_exec(xc->connection, &xc->window, &ws->width);
-
-                /* Flush XCB like a friggin' toilet. */
                 xcb_flush(xc->connection);
 
-                /* Clear mem list... */
                 mem_list_clear();
 
                 /* Reset cur. */
@@ -634,29 +619,31 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
         }
 
         switch (cur->mod_var->type) {
-                case VARIABLE_STR:
-                        handle_VARIABLE_STR(cur,
-                                            ds,
-                                            line_heights,
-                                            calcd_line_heights,
-                                            is_last,
-                                            &moved);
-                        break;
-                case VARIABLE_BAR:
-                        handle_VARIABLE_BAR(cur,
-                                            ds,
-                                            line_heights,
-                                            calcd_line_heights,
-                                            is_last,
-                                            &moved);
-                        break;
-                case VARIABLE_GRAPH:
-                        break;
-                case VARIABLE_CUSTOM:
-                        break;
-                default:
-                        printf("Invalid module variable_type.\n");
-                        break;
+        case VARIABLE_STR:
+                handle_VARIABLE_STR(cur,
+                                    ds,
+                                    line_heights,
+                                    calcd_line_heights,
+                                    is_last,
+                                    force,
+                                    &moved);
+                break;
+        case VARIABLE_BAR:
+                handle_VARIABLE_BAR(cur,
+                                    ds,
+                                    line_heights,
+                                    calcd_line_heights,
+                                    is_last,
+                                    force,
+                                    &moved);
+                break;
+        case VARIABLE_GRAPH:
+                break;
+        case VARIABLE_CUSTOM:
+                break;
+        default:
+                printf("Invalid module variable_type.\n");
+                break;
         }
 }
 
@@ -678,6 +665,7 @@ void handle_VARIABLE_STR(struct text_section *cur,
                          int *line_heights,
                          int *calcd_line_heights,
                          unsigned int *is_last,
+                         unsigned int *force,
                          unsigned int *moved)
 {
         int changed = 0;
@@ -703,7 +691,7 @@ void handle_VARIABLE_STR(struct text_section *cur,
         }
 
         /* if our string hasn't changed nor moved, we don't need to redraw it */
-        if (!changed && !*moved)
+        if ((!changed) && (!*moved) && (!*force))
                 return;
 
         int direction_return;
@@ -768,6 +756,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                          int *line_heights,
                          int *calcd_line_heights,
                          unsigned int *is_last,
+                         unsigned int *force,
                          unsigned int *moved)
 {
         int changed = 0;
@@ -814,7 +803,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
         }
 
         /* if our bar hasn't changed nor moved, we don't need to redraw it */
-        if (!changed && !*moved)
+        if ((!changed) && (!*moved) && (!*force))
                 return;
 
         /* Calculate line height. */

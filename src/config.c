@@ -169,7 +169,7 @@ int get_int_key(char *mod, char *key, int otherwise)
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        if (cur_s)
+        if (cur_s && (cur_s->value))
                 return atoi(cur_s->value);
         else
                 return otherwise;
@@ -193,7 +193,7 @@ double get_double_key(char *mod, char *key, double otherwise)
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        if (cur_s)
+        if (cur_s && (cur_s->value))
                 return atof(cur_s->value);
         else
                 return otherwise;
@@ -217,7 +217,7 @@ int get_bool_key(char *mod, char *key, int otherwise)
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
 
-        if (cur_s) {
+        if (cur_s && (cur_s->value)) {
                 if (IS_TRUE(cur_s->value[0]))
                         return 1;
                 else if (IS_FALSE(cur_s->value[0]))

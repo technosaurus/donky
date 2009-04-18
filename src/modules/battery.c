@@ -22,7 +22,6 @@
 #include "develop.h"
 #include "../lists.h"
 #include "../mem.h"
-#include "mod_utils.h"
 #include "../util.h"
 
 /* Module name */
@@ -34,9 +33,10 @@ void module_destroy(void);
 
 /* My function data structures and prototypes */
 struct batt {
-        char *num; /* should be "0", "1", etc. (as in BATT0, BATT1, etc.) */
-        char *rem;  /* remaining charge in mAh */
-        char *max;  /* maximum battery charge capacity in mAh */
+        char *number;           /* battery number ("0" for BATT0) */
+
+        char *remaining_charge; /* remaining charge in mAh */
+        char *maximum_charge;   /* maximum charge capacity in mAh */
 };
 
 char *get_battp(char *args);
@@ -48,10 +48,11 @@ void batt_cron(void);
 void clear_remaining_charge(struct batt *batt);
 
 struct batt *prepare_batt(char *args);
-struct batt *add_batt(char *args);
 int find_batt(struct batt *cur, char *args);
+struct batt *add_batt(char *args);
 char *get_remaining_charge(char *args);
-char *get_max_charge(char *args);
+char *get_maximum_charge(char *args);
+
 void clear_batt(struct batt *cur);
 
 /* Globals */
@@ -99,10 +100,9 @@ void batt_cron(void)
  */
 void clear_remaining_charge(struct batt *batt)
 {
-        //freeif(batt->rem);
-        if (batt->rem) {
-                free(batt->rem);
-                batt->rem = NULL;
+        if (batt->remaining_charge) {
+                free(batt->remaining_charge);
+                batt->remaining_charge = NULL;
         }
 }
 
@@ -115,16 +115,20 @@ void clear_remaining_charge(struct batt *batt)
  */
 char *get_battp(char *args)
 {
-        struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if ((batt == NULL) || (batt->rem == NULL) || (batt->max == NULL))
+        struct batt *batt = prepare_batt((args) ? args : "0");
+        if ((batt == NULL) ||
+            (batt->remaining_charge == NULL) || (batt->maximum_charge == NULL))
                 return m_strdup("n/a");
 
-        int charge = (atof(batt->rem) / atof(batt->max)) * 100;
+        double rem = atof(batt->remaining_charge);
+        double max = atof(batt->maximum_charge);
+        int percentage = (rem / max) * 100;
 
-        char *ret_battp = NULL;
-        asprintf(&ret_battp, "%d", charge);
+        char *battp = NULL;
+        if (asprintf(&battp, "%d", percentage) == -1)
+                return m_strdup("n/a");
 
-        return m_freelater(ret_battp);
+        return m_freelater(battp);
 }
 
 /** 
@@ -136,11 +140,11 @@ char *get_battp(char *args)
  */
 char *get_battr(char *args)
 {
-        struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if ((batt == NULL) || (batt->rem == NULL))
+        struct batt *batt = prepare_batt((args) ? args : "0");
+        if ((batt == NULL) || (batt->remaining_charge == NULL))
                 return m_strdup("n/a");
 
-        return m_strdup(chomp(batt->rem));
+        return m_strdup(chomp(batt->remaining_charge));
 }
 
 /** 
@@ -152,11 +156,11 @@ char *get_battr(char *args)
  */
 char *get_battm(char *args)
 {
-        struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if ((batt == NULL) || (batt->max == NULL))
+        struct batt *batt = prepare_batt((args) ? args : "0");
+        if ((batt == NULL) || (batt->maximum_charge == NULL))
                 return m_strdup("n/a");
 
-        return m_strdup(chomp(batt->max));
+        return m_strdup(chomp(batt->maximum_charge));
 }
 
 /** 
@@ -170,13 +174,16 @@ char *get_battm(char *args)
  */
 int get_battb(char *args)
 {
-        struct batt *batt = prepare_batt(handle_args(args, "0"));
-        if ((batt == NULL) || (batt->rem == NULL) || (batt->max == NULL))
+        struct batt *batt = prepare_batt((args) ? args : "0");
+        if ((batt == NULL) ||
+            (batt->remaining_charge == NULL) || (batt->maximum_charge == NULL))
                 return 0;
 
-        int charge = (atof(batt->rem) / atof(batt->max)) * 100;
+        double rem = atof(batt->remaining_charge);
+        double max = atof(batt->maximum_charge);
+        int percentage = (rem / max) * 100;
 
-        return charge;
+        return percentage;
 }
 
 /** 
@@ -187,11 +194,11 @@ int get_battb(char *args)
  * @return NULL if a battery's remaining or maximum charge could not be
  *         determined. Otherwise, a pointer to the battery is returned.
  */
-struct batt *prepare_batt(char *batt_num)
+struct batt *prepare_batt(char *batt_number)
 {
-        struct batt *batt = get_node(fl, &find_batt, batt_num, &add_batt);
-        if (batt->rem == NULL)
-                batt->rem = get_remaining_charge(batt->num);
+        struct batt *batt = get_node(fl, &find_batt, batt_number, &add_batt);
+        if (batt->remaining_charge == NULL)
+                batt->remaining_charge = get_remaining_charge(batt->number);
 
         return batt;
 }
@@ -203,17 +210,15 @@ struct batt *prepare_batt(char *batt_num)
  * 
  * @return Pointer to the new node.
  */
-struct batt *add_batt(char *batt_num)
+struct batt *add_batt(char *batt_number)
 {
         struct batt *new = malloc(sizeof(struct batt));
-        new->num = NULL;
-        new->rem = NULL;
-        new->max = NULL;
+        new->number = NULL;
+        new->remaining_charge = NULL;
+        new->maximum_charge = NULL;
 
-        new->num = d_strcpy(batt_num);
-
-        /* this never needs to be updated */
-        new->max = get_max_charge(new->num);
+        new->number = d_strcpy(batt_number);
+        new->maximum_charge = get_maximum_charge(new->number);
 
         return add_node(fl, new);
 }
@@ -228,7 +233,7 @@ struct batt *add_batt(char *batt_num)
  */
 int find_batt(struct batt *batt, char *match)
 {
-        if (!strcmp(batt->num, match))
+        if (!strcmp(batt->number, match))
                 return 1;
 
         return 0;
@@ -249,19 +254,19 @@ char *get_remaining_charge(char *args)
                      args) == -1)
                 return NULL;
 
-        FILE *rem_charge = fopen(path, "r");
+        FILE *fptr = fopen(path, "r");
         free(path);
-        if (rem_charge == NULL)
+        if (fptr == NULL)
                 return NULL;
 
-        char *rem = NULL;
+        char *remaining_charge = NULL;
         int len = 0; /* forces a malloc */
-        int read = getline(&rem, &len, rem_charge);
-        fclose(rem_charge);
+        int read = getline(&remaining_charge, &len, fptr);
+        fclose(fptr);
         if (read == -1)
                 return NULL;
 
-        return rem;
+        return remaining_charge;
 }
 
 /** 
@@ -273,7 +278,7 @@ char *get_remaining_charge(char *args)
  * 
  * @return Maximum mAh charge in string format.
  */
-char *get_max_charge(char *args)
+char *get_maximum_charge(char *args)
 {
         char *path = NULL;
         if (asprintf(&path,
@@ -281,19 +286,19 @@ char *get_max_charge(char *args)
                      args) == -1)
                 return NULL;
 
-        FILE *max_charge = fopen(path, "r");
+        FILE *fptr = fopen(path, "r");
         free(path);
-        if (max_charge == NULL)
+        if (fptr == NULL)
                 return NULL;
 
-        char *max = NULL;
+        char *maximum_charge = NULL;
         int len = 0; /* forces a malloc */
-        int read = getline(&max, &len, max_charge);
-        fclose(max_charge);
+        int read = getline(&maximum_charge, &len, fptr);
+        fclose(fptr);
         if (read == -1)
                 return NULL;
 
-        return max;
+        return maximum_charge;
 }
 
 /** 
@@ -303,8 +308,8 @@ char *get_max_charge(char *args)
  */
 void clear_batt(struct batt *batt)
 {
-        freeif(batt->num);
-        freeif(batt->rem);
-        freeif(batt->max);
+        freeif(batt->number);
+        freeif(batt->remaining_charge);
+        freeif(batt->maximum_charge);
 }
 
