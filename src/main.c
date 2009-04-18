@@ -153,7 +153,6 @@ void clean_up_everything(void)
         extern struct first_last *ts_fl;
 
         del_list(cfg_fl, &clear_cfg);
-        //clear_text();
         del_list(ts_fl, &clear_text);
         clear_module();
 }

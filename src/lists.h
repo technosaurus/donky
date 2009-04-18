@@ -39,6 +39,7 @@ void del_node(struct first_last *fl,
               void *free_external);
 void del_list(struct first_last *fl, void *free_external);
 void act_on_list(struct first_last *fl, void *execute);
+/*...*/
 void act_on_list_raw(struct first_last *fl, void *execute);
 void act_on_list_if(struct first_last *fl, void *execute,
                     void *match_callback, void *match);
