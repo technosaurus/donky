@@ -24,6 +24,7 @@
 #include "module.h"
 #include "text.h"
 #include "util.h"
+#include "lists.h"
 
 #define MAX_TEXT_SIZE 10240
 
@@ -39,8 +40,7 @@ void text_section_split(char *text, unsigned int line);
 void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 
 /* Globals. */
-struct text_section *ts_start = NULL;
-struct text_section *ts_end = NULL;
+struct first_last *ts_fl = NULL;
 
 /**
  * @brief Start up the output text parsing.
@@ -51,13 +51,6 @@ void parse_text(void)
 
         /* We don't need this anymore! */
         freeif(cfg_text);
-
-        struct text_section *cur = ts_start;
-
-        while (cur != NULL) {
-                printf("LINE %d STR = [%s], ARGS = [%s]\n", cur->line, cur->value, cur->args);
-                cur = cur->next;
-        }
 }
 
 /**
@@ -199,8 +192,6 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
                 n->timeout = 0.0;
                 n->last_update = 0.0;
                 n->mod_var = NULL;
-                n->next = NULL;
-                n->prev = NULL;
 
                 /* Set the type.  We do a little interception here to find
                  * some built-in variables. */
@@ -211,15 +202,11 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
                 else
                         n->type = type;
 
-                /* Add to linked list. */
-                if (ts_start == NULL) {
-                        ts_start = n;
-                        ts_end = n;
-                } else {
-                        ts_end->next = n;
-                        n->prev = ts_end;
-                        ts_end = n;
-                }
+                /* Initialize linked list, then add it. */
+                if (ts_fl == NULL)
+                        ts_fl = init_list();
+
+                add_node(ts_fl, n);
         }
 }
 
@@ -232,16 +219,26 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
  */
 struct text_section *text_section_var_find(char *value)
 {
-        struct text_section *cur = ts_start;
+        return find_node(ts_fl,
+                         &text_section_var_find_cb,
+                         value);
+}
 
-        while (cur != NULL) {
-                if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value))
-                    return cur;
+/**
+ * @brief Callback for the find_node call used in text_section_var_find...
+ *
+ * @param cur Current text_section node.
+ * @param match Match text
+ *
+ * @return 1 if this node is what we want, 0 if its not.
+ */
+int text_section_var_find_cb(struct text_section *cur,
+                                              char *match)
+{
+        if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value))
+                return 1;
                 
-                cur = cur->next;
-        }
-        
-        return NULL;
+        return 0;
 }
 
 /**
@@ -254,33 +251,18 @@ void text_section_var_modvar(char *value,
                              struct module_var *mvar,
                              double timeout)
 {
-        struct text_section *cur = ts_start;
-
-        while (cur != NULL) {
-                if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value)) {
-                        cur->mod_var = mvar;
-                        cur->timeout = timeout;
-                }
-                
-                cur = cur->next;
+        struct text_section *cur = text_section_var_find(value);
+        
+        if (cur) {
+                cur->mod_var = mvar;
+                cur->timeout = timeout;
         }
 }
 
 /**
  * @brief Clear out the text sections linked list and free any allocated memory.
  */
-void clear_text(void)
+void clear_text(struct text_section *cur)
 {
-        struct text_section *cur = ts_start, *to_free;
-
-        while (cur != NULL) {
-                to_free = cur;
-                cur = cur->next;
-
-                freeif(to_free->value);
-                freeif(to_free);
-        }
-
-        ts_start = NULL;
-        ts_end = NULL;
+        freeif(cur->value);
 }

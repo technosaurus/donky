@@ -85,7 +85,7 @@ void *get_node(struct first_last *fl,
         struct list *cur = fl->first;
 
         while (cur) {
-                if (call(cur->data, match))
+                if (call && call(cur->data, match))
                         return cur->data;
 
                 cur = cur->next;
@@ -193,7 +193,79 @@ void act_on_list(struct first_last *fl, void *execute)
         struct list *cur = fl->first;
 
         while (cur) {
-                exec(cur->data);
+                if (exec)
+                        exec(cur->data);
+
+                cur = cur->next;
+        }
+}
+
+/**
+ * @brief Run a function on the contents of a list but pass the raw 'list'
+ *        structure.
+ *
+ * @param fl First last struct...
+ * @param execute Callback! Ex. void meth(struct list *cur);
+ */
+void act_on_list_raw(struct first_last *fl, void *execute)
+{
+        void (*exec)(struct list *cur) = execute;
+
+        struct list *cur = fl->first;
+
+        while (cur) {
+                if (exec)
+                        exec(cur);
+
+                cur = cur->next;
+        }
+}
+
+/**
+ * @brief Act on the list if the condition is met by the match_callback.
+ *
+ * @param fl
+ * @param execute
+ * @param match_callback
+ * @param match
+ */
+void act_on_list_if(struct first_last *fl, void *execute,
+                    void *match_callback, void *match)
+{
+        int (*call)(void *data, void *match) = match_callback;
+        void (*exec)(void *data) = execute;
+
+        struct list *cur = fl->first;
+
+        while (cur) {
+                if (call && call(cur->data, match))
+                        if (exec)
+                                exec(cur->data);
+
+                cur = cur->next;
+        }
+}
+
+/**
+ * @brief Act on the list if the condition is met by the match_callback.
+ *
+ * @param fl
+ * @param execute
+ * @param match_callback
+ * @param match
+ */
+void act_on_list_raw_if(struct first_last *fl, void *execute,
+                        void *match_callback, void *match)
+{
+        int (*call)(struct list *cur, void *match) = match_callback;
+        void (*exec)(struct list *cur) = execute;
+
+        struct list *cur = fl->first;
+
+        while (cur) {
+                if (call && call(cur, match))
+                        if (exec)
+                                exec(cur);
 
                 cur = cur->next;
         }

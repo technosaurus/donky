@@ -48,6 +48,9 @@ void sigint_handler(int signum);
 int donky_reload = 0;
 int donky_exit = 0;
 
+struct x_connection *xc;
+struct window_settings *ws;
+
 /**
  * @brief Program entry point.
  *
@@ -111,9 +114,6 @@ int main(int argc, char **argv)
  */
 void initialize_stuff(void)
 {
-        struct x_connection *xc;
-        struct window_settings *ws;
-
         while (1) {
                 xc = init_x_connection();
                 printf("made X connection\n");
@@ -150,9 +150,11 @@ void initialize_stuff(void)
 void clean_up_everything(void)
 {
         extern struct first_last *cfg_fl;
+        extern struct first_last *ts_fl;
 
         del_list(cfg_fl, &clear_cfg);
-        clear_text();
+        //clear_text();
+        del_list(ts_fl, &clear_text);
         clear_module();
 }
 

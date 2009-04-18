@@ -18,7 +18,7 @@
 #ifndef TEXT_H
 #define TEXT_H
 
-#include <xcb/xcb.h>
+#include <stdint.h>
 
 enum text_section_type {
         TEXT_STATIC,    /* This is static text.  It does not need to be evaluated. */
@@ -48,12 +48,12 @@ struct text_section {
 
         struct module_var *mod_var;     /* Pointer to corresponding module var. */
 
-        struct text_section *next;      /* Next node in this linked list. */
-        struct text_section *prev;      /* Previous node in linked list. */
+        //struct text_section *next;      /* Next node in this linked list. */
+        //struct text_section *prev;      /* Previous node in linked list. */
 };
 
-struct text_section *ts_start;
-struct text_section *ts_end;
+//struct text_section *ts_start;
+//struct text_section *ts_end;
 
 /* Function prototypes. */
 void clear_text(void);
