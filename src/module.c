@@ -429,8 +429,8 @@ void *module_get_sym(void *handle, char *name)
 void clear_module(void)
 {
         del_list(module_var_fl, NULL);
-        module_fl = NULL;
+        module_var_fl = NULL;
         
         del_list(module_fl, &module_unload_free);
-        module_var_fl = NULL;
+        module_fl = NULL;
 }
