@@ -34,6 +34,7 @@
 #include "text.h"
 #include "util.h"
 #include "x11.h"
+#include "lists.h"
 
 struct draw_settings {
         xcb_font_t font;
@@ -323,8 +324,12 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
 void donky_loop(struct x_connection *xc,
                 struct window_settings *ws)
 {
-        struct text_section *cur = ts_start;
+        extern struct first_last *ts_fl;
+        
+        struct list *cur = ts_fl->first;
         struct draw_settings *ds = draw_settings_load(xc, ws);
+
+        struct text_section *ts_cur = NULL;
 
         xcb_generic_event_t *e = NULL;
         unsigned int force = 0;
@@ -335,7 +340,8 @@ void donky_loop(struct x_connection *xc,
         int16_t new_ypos = ds->font_y_offset;
 
         /* Line height pewp. */
-        int *line_heights = calloc(sizeof(int), ts_end->line + 1);
+        int *line_heights = calloc(sizeof(int),
+                                   ((struct text_section *) ts_fl->last->data)->line + 1);
         int calcd_line_heights = 0;
         int linediff;
         int i;
@@ -368,20 +374,23 @@ void donky_loop(struct x_connection *xc,
                 module_var_cron_exec();
 
                 while (cur) {
+                        ts_cur = cur->data;
+                        
                         if ((cur->next == NULL) ||
-                            (cur->line != cur->next->line))
+                            (ts_cur->line !=
+                             ((struct text_section *) cur->next->data)->line))
                                 is_last = 1;
                         else
                                 is_last = 0;
 
-                        switch (cur->type) {
+                        switch (ts_cur->type) {
                         case TEXT_FONT:
                                 break;
                         case TEXT_COLOR:
-                                handle_TEXT_COLOR(xc, cur, ds);
+                                handle_TEXT_COLOR(xc, ts_cur, ds);
                                 break;
                         case TEXT_STATIC:
-                                handle_TEXT_STATIC(cur,
+                                handle_TEXT_STATIC(ts_cur,
                                                    ds,
                                                    &new_xpos,
                                                    &new_ypos,
@@ -391,7 +400,7 @@ void donky_loop(struct x_connection *xc,
                                                    &is_last);
                                 break;
                         case TEXT_VARIABLE:
-                                handle_TEXT_VARIABLE(cur,
+                                handle_TEXT_VARIABLE(ts_cur,
                                                      ds,
                                                      &new_xpos,
                                                      &new_ypos,
@@ -408,22 +417,23 @@ void donky_loop(struct x_connection *xc,
                         /* if we have a following node, we need
                            to know where to start drawing it */
                         if (cur->next) {
-                                new_xpos += cur->pixel_width;
+                                new_xpos += ts_cur->pixel_width;
 
-                                if (cur->line != cur->next->line) {
+                                if (ts_cur->line !=
+                                    ((struct text_section *) cur->next->data)->line) {
                                         /* Set xpos to beginning of line! */
                                         new_xpos = ds->font_x_offset;
 
                                         /* Calculate the difference in lines
                                          * (Needed for multiple blank lines
                                          *  between text.) */
-                                        linediff = cur->next->line -
-                                                   cur->line - 1;
+                                        linediff = ((struct text_section *) cur->next->data)->line -
+                                                   ts_cur->line - 1;
 
-                                        if (line_heights[cur->line] >
+                                        if (line_heights[ts_cur->line] >
                                             ds->min_line_height)
                                                 new_ypos +=
-                                                        line_heights[cur->line];
+                                                        line_heights[ts_cur->line];
                                         else
                                                 new_ypos +=
                                                         ds->min_line_height +
@@ -450,7 +460,7 @@ void donky_loop(struct x_connection *xc,
                 mem_list_clear();
 
                 /* Reset cur. */
-                cur = ts_start;
+                cur = ts_fl->first;
 
                 /* Set a flag so we know we've
                  * already calc'd all line heights. */

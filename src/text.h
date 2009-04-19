@@ -50,7 +50,7 @@ struct text_section {
 };
 
 /* Function prototypes. */
-void clear_text(void);
+void clear_text(struct text_section *cur);
 struct text_section *text_section_var_find(char *value);
 void text_section_var_modvar(char *value,
                              struct module_var *mvar,

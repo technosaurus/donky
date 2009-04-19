@@ -211,6 +211,23 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
 }
 
 /**
+ * @brief Callback for the find_node call used in text_section_var_find...
+ *
+ * @param cur Current text_section node.
+ * @param match Match text
+ *
+ * @return 1 if this node is what we want, 0 if its not.
+ */
+int text_section_var_find_cb(struct text_section *cur,
+                             char *match)
+{
+        if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, match))
+                return 1;
+                
+        return 0;
+}
+
+/**
  * @brief Find a text section of TEXT_VARIABLE type by value.
  *
  * @param value Value string
@@ -222,23 +239,6 @@ struct text_section *text_section_var_find(char *value)
         return find_node(ts_fl,
                          &text_section_var_find_cb,
                          value);
-}
-
-/**
- * @brief Callback for the find_node call used in text_section_var_find...
- *
- * @param cur Current text_section node.
- * @param match Match text
- *
- * @return 1 if this node is what we want, 0 if its not.
- */
-int text_section_var_find_cb(struct text_section *cur,
-                                              char *match)
-{
-        if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, value))
-                return 1;
-                
-        return 0;
 }
 
 /**
