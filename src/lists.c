@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 #include "lists.h"
+#include "util.h"
 
 /** 
  * @brief Prepares a struct of pointers used in maintaining a linked list.
@@ -169,14 +170,13 @@ void del_list(struct first_last *fl, void *free_external)
                 if (free_ext != NULL)
                         free_ext(cur->data);
 
-                free(cur->data);
+                freeif(cur->data);
                 free(cur);
 
                 cur = next;
         }
 
-        if (fl)
-                free(fl);
+        freeif(fl);
 }
 
 /** 

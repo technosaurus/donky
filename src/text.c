@@ -40,13 +40,14 @@ void text_section_split(char *text, unsigned int line);
 void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 
 /* Globals. */
-struct first_last *ts_fl = NULL;
+struct first_last *ts_fl;
 
 /**
  * @brief Start up the output text parsing.
  */
 void parse_text(void)
 {
+        ts_fl = init_list();
         text_section_split(cfg_text, 0);
 
         /* We don't need this anymore! */
@@ -202,10 +203,7 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
                 else
                         n->type = type;
 
-                /* Initialize linked list, then add it. */
-                if (ts_fl == NULL)
-                        ts_fl = init_list();
-
+                /* Add node to linked list. */
                 add_node(ts_fl, n);
         }
 }

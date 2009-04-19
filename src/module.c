@@ -201,7 +201,7 @@ int module_var_cron_add(char *parent, char *name, char *method, double timeout)
 
         /* Set the timeout.  User configured timeouts take precedence over
          * module defined default! */
-        double user_timeout = get_double_key("cron", parent, timeout);
+        double user_timeout = get_double_key("cron", name, timeout);
 
         printf("Adding [%s] to cron with timeout [%f]\n", name, user_timeout);
         
