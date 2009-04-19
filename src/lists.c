@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "lists.h"
@@ -45,7 +46,7 @@ struct first_last *init_list(void)
  */
 void *add_node(struct first_last *fl, void *data)
 {
-        if (fl == NULL)
+        if (!fl)
                 return;
         
         struct list *new = malloc(sizeof(struct list));
@@ -83,7 +84,7 @@ void *get_node(struct first_last *fl,
                void *match,
                void *otherwise)
 {
-        if (fl == NULL)
+        if (!fl)
                 return NULL;
         
         int (*call)(void *data, void *match) = match_callback;
@@ -92,13 +93,14 @@ void *get_node(struct first_last *fl,
         struct list *cur = fl->first;
 
         while (cur) {
-                if (call && call(cur->data, match))
-                        return cur->data;
+                if (call && cur->data)
+                        if (call(cur->data, match))
+                                return cur->data;
 
                 cur = cur->next;
         }
 
-        if (fallback != NULL)
+        if (fallback && match)
                 return fallback(match);
         else
                 return NULL;
@@ -133,27 +135,89 @@ void del_node(struct first_last *fl,
               void *match_callback,
               void *match,
               void *free_external)
-{        
-        int (*call)(void *data, void *match) = match_callback;
+{
+        if (!fl)
+                return;
+        
         void (*free_ext)(void *data) = free_external;
 
-        struct list *cur = find_node(fl, call, match);
+        void *result = find_node(fl, match_callback, match);
+        struct list *cur = fl->first;
 
-        if (cur) {
-                if (cur->prev)
-                        cur->prev->next = cur->next;
-                if (cur->next)
-                        cur->next->prev = cur->prev;
-                if (cur == fl->first)
-                        fl->first = cur->next;
-                if (cur == fl->last)
-                        fl->last = cur->prev;
+        if (!result)
+                return;
+                
+        while (cur) {
+                if (cur->data == result) {
+                        if (cur->prev)
+                                cur->prev->next = cur->next;
+                        if (cur->next)
+                                cur->next->prev = cur->prev;
+                        if (cur == fl->first)
+                                fl->first = cur->next;
+                        if (cur == fl->last)
+                                fl->last = cur->prev;
 
-                if (free_ext != NULL)
-                        free_ext(cur->data);
+                        if (free_ext && cur->data)
+                                free_ext(cur->data);
 
-                free(cur->data);
-                free(cur);
+                        freeif(cur->data);
+                        free(cur);
+
+                        return;
+                }
+
+                cur = cur->next;
+        }
+}
+
+/**
+ * @brief Delete all nodes matching.
+ *
+ * @param fl
+ * @param match_callback
+ * @param match
+ * @param free_external
+ */
+void del_nodes(struct first_last *fl,
+               void *match_callback,
+               void *match,
+               void *free_external)
+{
+        if (!fl)
+                return;
+        
+        void (*free_ext)(void *data) = free_external;
+
+        void *result;
+        struct list *cur = fl->first;
+        struct list *next;
+                
+        while (cur) {
+                result = find_node(fl, match_callback, match);
+                if (!result)
+                        return;
+                
+                next = cur->next;
+                
+                if (cur->data == result) {
+                        if (cur->prev)
+                                cur->prev->next = cur->next;
+                        if (cur->next)
+                                cur->next->prev = cur->prev;
+                        if (cur == fl->first)
+                                fl->first = cur->next;
+                        if (cur == fl->last)
+                                fl->last = cur->prev;
+
+                        if (free_ext && cur->data)
+                                free_ext(cur->data);
+
+                        freeif(cur->data);
+                        free(cur);
+                }
+
+                cur = next;
         }
 }
 
@@ -165,7 +229,7 @@ void del_node(struct first_last *fl,
  */
 void del_list(struct first_last *fl, void *free_external)
 {
-        if (fl == NULL)
+        if (!fl)
                 return;
         
         void (*free_ext)(void *data) = free_external;
@@ -176,7 +240,7 @@ void del_list(struct first_last *fl, void *free_external)
         while (cur) {
                 next = cur->next;
 
-                if (free_ext != NULL)
+                if (free_ext && cur->data)
                         free_ext(cur->data);
 
                 freeif(cur->data);

@@ -26,6 +26,7 @@
 #include "module.h"
 #include "text.h"
 #include "util.h"
+#include "lists.h"
 
 /* internal prototypes */
 int module_add(char *name, void *handle, void *destroy);
@@ -37,8 +38,8 @@ void module_unload(char *name);
 void *module_get_sym(void *handle, char *name);
 
 /* Globals. */
-struct module *m_start = NULL, *m_end = NULL;
-struct module_var *mv_start = NULL, *mv_end = NULL;
+struct first_last *module_fl = NULL;
+struct first_last *module_var_fl = NULL;
 int module_var_used = 0;
 
 /**
@@ -58,18 +59,30 @@ int module_add(char *name, void *handle, void *destroy)
         strncpy(n->name, name, sizeof(n->name) - 1);
         n->handle = handle;
         n->destroy = destroy;
-        n->next = NULL;
 
         /* Add to linked list. */
-        if (m_start == NULL) {
-                m_start = n;
-                m_end = n;
-        } else {
-                m_end->next = n;
-                m_end = n;
-        }
+        if (module_fl == NULL)
+                module_fl = init_list();
+
+        add_node(module_fl, n);
 
         return 1;
+}
+
+/**
+ * @brief Callback for find_node for module_find.
+ *
+ * @param cur
+ * @param match
+ *
+ * @return 1 = match, 0 = not match
+ */
+int module_find_cb(struct module *cur, char *match)
+{
+        if (!strcasecmp(cur->name, match))
+                return 1;
+
+        return 0;
 }
 
 /**
@@ -81,16 +94,7 @@ int module_add(char *name, void *handle, void *destroy)
  */
 struct module *module_find(char *name)
 {
-        struct module *cur = m_start;
-
-        while (cur != NULL) {
-                if (!strcasecmp(cur->name, name))
-                        return cur;
-
-                cur = cur->next;
-        }
-
-        return NULL;
+        return find_node(module_fl, &module_find_cb, name);
 }
 
 /**
@@ -130,7 +134,6 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         n->timeout = 0.0;
         n->last_update = 0.0;
         n->parent = mod;
-        n->next = NULL;
 
         /* Set the timeout.  User configured timeouts take precedence over
          * module defined default! */
@@ -140,15 +143,28 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         text_section_var_modvar(name, n, user_timeout);
 
         /* Add to linked list. */
-        if (mv_start == NULL) {
-                mv_start = n;
-                mv_end = n;
-        } else {
-                mv_end->next = n;
-                mv_end = n;
-        }
+        if (module_var_fl == NULL)
+                module_var_fl = init_list();
+
+        add_node(module_var_fl, n);
 
         return 1;
+}
+
+/**
+ * @brief Callback for find_node in module_var_find.
+ *
+ * @param cur
+ * @param match
+ *
+ * @return 1 = match, 0 = not match
+ */
+int module_var_find_cb(struct module_var *cur, char *match)
+{
+        if (!strcasecmp(cur->name, match))
+                return 1;
+
+        return 0;
 }
 
 /**
@@ -160,16 +176,7 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
  */
 struct module_var *module_var_find(char *name)
 {
-        struct module_var *cur = mv_start;
-
-        while (cur != NULL) {
-                if (!strcasecmp(cur->name, name))
-                        return cur;
-
-                cur = cur->next;
-        }
-
-        return NULL;
+        return find_node(module_var_fl, &module_var_find_cb, name);
 }
 
 /**
@@ -208,18 +215,30 @@ int module_var_cron_add(char *parent, char *name, char *method, double timeout)
         n->timeout = user_timeout;
         n->last_update = 0.0;
         n->parent = mod;
-        n->next = NULL;
 
         /* Add to linked list. */
-        if (mv_start == NULL) {
-                mv_start = n;
-                mv_end = n;
-        } else {
-                mv_end->next = n;
-                mv_end = n;
-        }
+        if (module_var_fl == NULL)
+                module_var_fl = init_list();
+
+        add_node(module_var_fl, n);
 
         return 1;
+}
+
+/**
+ * @brief Call back for del_node in module_var_cron_clear.
+ *
+ * @param cur
+ * @param parent
+ *
+ * @return 1 = match, 0 = not match
+ */
+int module_var_cron_clear_cb(struct module_var *cur, struct module *parent)
+{
+        if (cur->parent == parent)
+                return 1;
+
+        return 0;
 }
 
 /**
@@ -229,27 +248,24 @@ int module_var_cron_add(char *parent, char *name, char *method, double timeout)
  */
 void module_var_cron_clear(struct module *parent)
 {
-        struct module_var *cur = mv_start, *prev = NULL, *next = NULL;
+        del_nodes(module_var_fl, &module_var_cron_clear_cb, parent, NULL);
+}
 
-        while (cur != NULL) {
-                next = cur->next;
-                
-                if (cur->parent == parent) {
-                        if (prev)
-                                prev->next = cur->next;
-                        if (cur == mv_start)
-                                mv_start = cur->next;
-                        if (cur == mv_end)
-                                mv_end = prev;
+/**
+ * @brief Callback for act_on_list in module_var_cron_exec.
+ *
+ * @param cur
+ */
+void module_var_cron_exec_cb(struct module_var *cur)
+{
+        void *(*sym)(void);
 
-                        printf("Clearing cron job [%s], parent module was not used!\n",
-                               cur->name);
-                        free(cur);
-                        cur = NULL;
-                }
+        if (cur->type == VARIABLE_CRON &&
+            (get_time() - cur->last_update) >= cur->timeout) {
+                if ((sym = cur->sym) != NULL)
+                        sym();
 
-                prev = cur;
-                cur = next;
+                cur->last_update = get_time();
         }
 }
 
@@ -258,20 +274,7 @@ void module_var_cron_clear(struct module *parent)
  */
 void module_var_cron_exec(void)
 {
-        struct module_var *cur = mv_start;
-        void *(*sym)(void);
-
-        while (cur != NULL) {
-                if (cur->type == VARIABLE_CRON &&
-                    (get_time() - cur->last_update) >= cur->timeout) {
-                        sym = cur->sym;
-                        sym();
-
-                        cur->last_update = get_time();
-                }
-                
-                cur = cur->next;
-        }
+        act_on_list(module_var_fl, &module_var_cron_exec_cb);
 }
 
 /**
@@ -317,36 +320,45 @@ int module_load(char *path)
 }
 
 /**
+ * @brief Callback for del_node in module_unload.
+ *
+ * @param cur
+ * @param match
+ *
+ * @return 1 = match, 0 = not match
+ */
+int module_unload_find(struct module *cur, char *match)
+{
+        if (!strcasecmp(cur->name, match))
+                return 1;
+
+        return 0;
+}
+
+/**
+ * @brief Callback for del_node in module_unload.
+ *
+ * @param cur
+ */
+void module_unload_free(struct module *cur)
+{
+        void (*module_destroy)(void);
+
+        if ((module_destroy = cur->destroy) != NULL)
+                module_destroy();
+                
+        dlclose(cur->handle);
+        module_var_cron_clear(cur);
+}
+
+/**
  * @brief Unload a module.
  *
  * @param name Unique name of the module
  */
 void module_unload(char *name)
 {
-        struct module *cur = m_start, *prev = NULL;
-        void (*module_destroy)(void);
-
-        while (cur != NULL) {
-                if (!strcasecmp(cur->name, name)) {
-                        if (prev)
-                                prev->next = cur->next;
-                        if (cur == m_start)
-                                m_start = cur->next;
-                        if (cur == m_end)
-                                m_end = prev;
-
-                        module_destroy = cur->destroy;
-                        module_destroy();
-                        dlclose(cur->handle);
-                        module_var_cron_clear(cur);
-                        free(cur);
-                        
-                        return;
-                }
-
-                prev = cur;
-                cur = cur->next;
-        }
+        del_node(module_fl, &module_unload_find, name, &module_unload_free);
 }
 
 /**
@@ -416,33 +428,9 @@ void *module_get_sym(void *handle, char *name)
  */
 void clear_module(void)
 {
-        /* Clear out module_var linked list. */
-        struct module_var *cur_mv = mv_start, *next_mv;
-
-        while (cur_mv != NULL) {
-                next_mv = cur_mv->next;
-                free(cur_mv);
-                cur_mv = next_mv;
-        }
-
-        mv_start = NULL;
-        mv_end = NULL;
-
-        /* Clear out module linked list. */
-        struct module *cur_mod = m_start, *next_mod;
-        void (*module_destroy)(void);
-
-        while (cur_mod != NULL) {
-                next_mod = cur_mod->next;
-
-                module_destroy = cur_mod->destroy;
-                module_destroy();
-                dlclose(cur_mod->handle);
-                free(cur_mod);
-                
-                cur_mod = next_mod;
-        }
-
-        m_start = NULL;
-        m_end = NULL;
+        del_list(module_var_fl, NULL);
+        module_fl = NULL;
+        
+        del_list(module_fl, &module_unload_free);
+        module_var_fl = NULL;
 }

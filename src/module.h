@@ -30,8 +30,6 @@ struct module {
         char name[64];          /* Unique identifier, value really doesn't matter. */
         void *handle;           /* Handle to the code in memory. */
         void *destroy;          /* Pointer to the module_destroy function. */
-
-        struct module *next;    /* Next node in linked list. */
 };
 
 struct module_var {
@@ -44,7 +42,6 @@ struct module_var {
         double last_update;             /* Ditto */
 
         struct module *parent;          /* Parent of this module. */
-        struct module_var *next;        /* Next node in linked list. */
 };
 
 /* Function prototypes. */
