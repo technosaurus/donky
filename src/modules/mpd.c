@@ -121,6 +121,7 @@ void run_cron(void)
 {
         if (!mpd_conn)
                 mpd_conn = mpd_new(mpd_host, mpd_port, mpd_pass);
+
         if (mpd_conn && (!mpd_check_connected(mpd_conn))) {
                 if (mpd_connect(mpd_conn) != MPD_OK) {
                         printf("Could not connect to MPD server.\n");
@@ -130,10 +131,10 @@ void run_cron(void)
                                 mpd_song = NULL;
                         return;
                 }
+        } else {
+                mpd_status_update(mpd_conn);
+                mpd_song = mpd_playlist_get_current_song(mpd_conn);
         }
-
-        mpd_song = mpd_playlist_get_current_song(mpd_conn);
-        mpd_status_queue_update(mpd_conn);
 }
 
 char *get_state(char *args) {
@@ -151,94 +152,55 @@ char *get_state(char *args) {
 }
 
 char *get_file(char *args) {
-        if (mpd_song)
-                return (mpd_song->file) ? mpd_song->file : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->file) ? mpd_song->file : "\0";
 }
 
 char *get_artist(char *args) {
-        if (mpd_song)
-                return (mpd_song->artist) ? mpd_song->artist : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->artist) ? mpd_song->artist : "\0";
 }
 
 char *get_title(char *args) {
-        if (mpd_song)
-                return (mpd_song->title) ? mpd_song->title : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->title) ? mpd_song->title : "\0";
 }
 
 char *get_album(char *args) {
-        if (mpd_song)
-                return (mpd_song->album) ? mpd_song->album : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->album) ? mpd_song->album : "\0";
 }
 
 char *get_track(char *args) {
-        if (mpd_song)
-                return (mpd_song->track) ? mpd_song->track : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->track) ? mpd_song->track : "\0";
 }
 
 char *get_name(char *args) {
-        if (mpd_song)
-                return (mpd_song->name) ? mpd_song->name : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->name) ? mpd_song->name : "\0";
 }
 
 char *get_date(char *args) {
-        if (mpd_song)
-                return (mpd_song->date) ? mpd_song->date : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->date) ? mpd_song->date : "\0";
 }
 
 char *get_genre(char *args) {
-        if (mpd_song)
-                return (mpd_song->genre) ? mpd_song->genre : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->genre) ? mpd_song->genre : "\0";
 }
 
 char *get_composer(char *args) {
-        if (mpd_song)
-                return (mpd_song->composer) ? mpd_song->composer : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->composer) ? mpd_song->composer : "\0";
 }
 
 char *get_performer(char *args) {
-        if (mpd_song)
-                return (mpd_song->performer) ? mpd_song->performer : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->performer) ? mpd_song->performer : "\0";
 }
 
 char *get_disc(char *args) {
-        if (mpd_song)
-                return (mpd_song->disc) ? mpd_song->disc : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->disc) ? mpd_song->disc : "\0";
 }
 
 char *get_comment(char *args) {
-        if (mpd_song)
-                return (mpd_song->comment) ? mpd_song->comment : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->comment) ? mpd_song->comment : "\0";
 }
 
 char *get_albumartist(char *args) {
-        if (mpd_song)
-                return (mpd_song->albumartist) ? mpd_song->albumartist : "\0";
-
-        return "\0";
+        return (mpd_song && mpd_song->albumartist) ? mpd_song->albumartist : "\0";
 }
 
 char *get_volume(char *args) {
