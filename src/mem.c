@@ -22,10 +22,14 @@
 
 #include "mem.h"
 #include "util.h"
+#include "lists.h"
 
-struct mem_list {
+/* Spewns: do not mess with this.  I'm planning on doing that context thing
+ * I spoke of some time in the future.  By don't mess with this I mean, don't
+ * delete this because it only has one ptr in it which could obviously just
+ * be pointed to by the data ptr in the linked list crap */
+struct mem_data {
         void *ptr;
-        struct mem_list *next;
 };
 
 /* internal prototypes */
@@ -33,8 +37,7 @@ void mem_list_add(void *ptr);
 void mem_list_clear(void);
 
 /* Globals. */
-struct mem_list *mem_start = NULL;
-struct mem_list *mem_end = NULL;
+struct first_last *mem_fl = NULL;
 
 /**
  * @brief Malloc wrapper.
@@ -122,19 +125,23 @@ void *m_freelater(void *ptr)
  */
 void mem_list_add(void *ptr)
 {
-        struct mem_list *n = malloc(sizeof(struct mem_list));
+        struct mem_data *n = malloc(sizeof(struct mem_data));
 
         n->ptr = ptr;
-        n->next = NULL;
 
         /* Add to linked list. */
-        if (mem_start == NULL) {
-                mem_start = n;
-                mem_end = n;
-        } else {
-                mem_end->next = n;
-                mem_end = n;
-        }
+        if (mem_fl == NULL)
+                mem_fl = init_list();
+
+        add_node(mem_fl, n);
+}
+
+/**
+ * @brief Callback for the del_list thinger!
+ */
+void mem_list_clear_cb(struct mem_data *cur)
+{
+        freeif(cur->ptr);
 }
 
 /**
@@ -142,17 +149,6 @@ void mem_list_add(void *ptr)
  */
 void mem_list_clear(void)
 {
-        struct mem_list *cur = mem_start, *next;
-
-        while (cur != NULL) {
-                next = cur->next;
-
-                free(cur->ptr);
-                free(cur);
-
-                cur = next;
-        }
-
-        mem_start = NULL;
-        mem_end = NULL;
+        del_list(mem_fl, &mem_list_clear_cb);
+        mem_fl = NULL;
 }

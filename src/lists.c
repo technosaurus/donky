@@ -45,6 +45,9 @@ struct first_last *init_list(void)
  */
 void *add_node(struct first_last *fl, void *data)
 {
+        if (fl == NULL)
+                return;
+        
         struct list *new = malloc(sizeof(struct list));
         new->data = data;
         new->next = NULL;
@@ -80,6 +83,9 @@ void *get_node(struct first_last *fl,
                void *match,
                void *otherwise)
 {
+        if (fl == NULL)
+                return NULL;
+        
         int (*call)(void *data, void *match) = match_callback;
         void *(*fallback)(void *match) = otherwise;
 
@@ -127,7 +133,7 @@ void del_node(struct first_last *fl,
               void *match_callback,
               void *match,
               void *free_external)
-{
+{        
         int (*call)(void *data, void *match) = match_callback;
         void (*free_ext)(void *data) = free_external;
 
@@ -159,6 +165,9 @@ void del_node(struct first_last *fl,
  */
 void del_list(struct first_last *fl, void *free_external)
 {
+        if (fl == NULL)
+                return;
+        
         void (*free_ext)(void *data) = free_external;
 
         struct list *cur = fl->first;
