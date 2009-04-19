@@ -15,15 +15,20 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
+//#include <sys/socket.h>
+//#include <sys/types.h>
+//#include <netinet/in.h>
+//#include <netdb.h>
+//#include <unistd.h>
+//#include <errno.h>
+#include <libmpd-1.0/libmpd/libmpd.h>
+#include <libmpd-1.0/libmpd/libmpdclient.h>
+#include <libmpd-1.0/libmpd/libmpd-playlist.h>
+#include <libmpd-1.0/libmpd/libmpd-status.h>
 
 #include "develop.h"
 #include "../util.h"
@@ -36,87 +41,30 @@ char module_name[] = "mpd";
 int module_init(void);
 void module_destroy(void);
 
-/* My function prototypes. */
-int start_connection(void);
-void mpd_free_everythang(void);
-void pop_currentsong(void);
-void pop_status(void);
-void init_settings(void);
-
 /* Globals. */
-int mpd_sock = -1;
-FILE *sockin, *sockout;
-char *mpd_host;
-char *mpd_port;
-struct addrinfo hints;
-struct addrinfo *result;
-struct addrinfo *rp;
-int initialized = 0;
-
-int disable_mpd_file;
-int disable_mpd_artist;
-int disable_mpd_title;
-int disable_mpd_album;
-int disable_mpd_track;
-int disable_mpd_date;
-int disable_mpd_genre;
-int disable_mpd_volume;
-int disable_mpd_repeat;
-int disable_mpd_random;
-int disable_mpd_playlist;
-int disable_mpd_playlistlength;
-int disable_mpd_xfade;
-int disable_mpd_state;
-int disable_mpd_song;
-int disable_mpd_etime;
-int disable_mpd_ttime;
-int disable_mpd_bitrate;
-int disable_mpd_audio;
-
-struct mpd_info {
-        /* currentsong */
-        char *file;
-        char *artist;
-        char *title;
-        char *album;
-        char *track;
-        char *date;
-        char *genre;
-
-        /* status */
-        char *volume;
-        char *repeat;
-        char *random;
-        char *playlist;
-        char *playlistlength;
-        char *xfade;
-        char *state;
-        char *song;
-        int etime;
-        int ttime;
-        char *bitrate;
-        char *audio;
-};
-
-struct mpd_info mpdinfo = {
-        NULL,
-        NULL, NULL,
-        NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL,
-        NULL,    0,    0, NULL, NULL /* Pretty huh! */
-};
+char *mpd_host = NULL;
+int mpd_port = 0;
+char *mpd_pass = NULL;
+MpdObj *mpd_conn = NULL;
+mpd_Song *mpd_song = NULL;
 
 /**
  * @brief This is run on module initialization.
  */
 int module_init(void)
 {
+        mpd_host = get_char_key("mpd", "host", "localhost");
+        mpd_port = get_int_key("mpd", "port", 6600);
+        mpd_pass = get_char_key("mpd", "password", NULL);
+
+        if (!mpd_song) mpd_song = mpd_newSong();
+
         module_var_add(module_name, "mpd_file", "get_file", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_artist", "get_artist", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_title", "get_title", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_album", "get_album", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_track", "get_track", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "mpd_name", "get_name", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_date", "get_date", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_genre", "get_genre", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_volume", "get_volume", 10.0, VARIABLE_STR);
@@ -135,7 +83,7 @@ int module_init(void)
         module_var_add(module_name, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
 
         /* Add cron job. */
-        module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);        
+        module_var_cron_add(module_name, "mpd_cron", "run_cron", 10.0, VARIABLE_CRON);        
 }
 
 /**
@@ -143,273 +91,214 @@ int module_init(void)
  */
 void module_destroy(void)
 {
-        /* Disconnect from mpd. */
-        if (mpd_sock != -1) {
-                fprintf(sockout, "close\r\n");
-                fflush(sockout);
-                fflush(sockin);
-                fclose(sockout);
-                fclose(sockin);
-                close(mpd_sock);
+        if (mpd_conn) {
+                if (mpd_check_connected(mpd_conn))
+                        mpd_disconnect(mpd_conn);
+
+                mpd_free(mpd_conn);
+                mpd_conn = NULL;
         }
-        
-        /* Free all my memorah! */
-        freeif(mpd_host);
-        freeif(mpd_port);
-        freeaddrinfo(result);
+
+        if (mpd_host) {
+                free(mpd_host);
+                mpd_host = NULL;
+        }
+
+        if (mpd_port)
+                mpd_port = 0;
+
+        if (mpd_pass) {
+                free(mpd_pass);
+                mpd_pass = NULL;
+        }
 }
 
-/**
- * @brief Free a bunch of CRAP!
- */
-void mpd_free_everythang(void)
-{
-        freeif(mpdinfo.file); mpdinfo.file = NULL;
-        freeif(mpdinfo.artist); mpdinfo.artist = NULL;
-        freeif(mpdinfo.title); mpdinfo.title = NULL;
-        freeif(mpdinfo.album); mpdinfo.album = NULL;
-        freeif(mpdinfo.track); mpdinfo.track = NULL;
-        freeif(mpdinfo.date); mpdinfo.date = NULL;
-        freeif(mpdinfo.genre); mpdinfo.genre = NULL;
-        freeif(mpdinfo.volume); mpdinfo.volume = NULL;
-        freeif(mpdinfo.repeat); mpdinfo.repeat = NULL;
-        freeif(mpdinfo.random); mpdinfo.random = NULL;
-        freeif(mpdinfo.playlist); mpdinfo.playlist = NULL;
-        freeif(mpdinfo.playlistlength); mpdinfo.playlistlength = NULL;
-        freeif(mpdinfo.xfade); mpdinfo.xfade = NULL;
-        freeif(mpdinfo.state); mpdinfo.state = NULL;
-        freeif(mpdinfo.song); mpdinfo.song = NULL;
-        freeif(mpdinfo.bitrate); mpdinfo.bitrate = NULL;
-        freeif(mpdinfo.audio); mpdinfo.audio = NULL;
-        mpdinfo.ttime = 0;
-        mpdinfo.etime = 0;
-}
-
-/**
- * @brief This is run every cron timeout.
+/** 
+ * @brief Check if we're connected. If we aren't, try to connect.
+ *        If we have a connection, point mpd_song to the current song.
  */
 void run_cron(void)
 {
-        /* Do some initial shizzy. */
-        if (!initialized) {
-                init_settings();
-                initialized = 1;
+        if (!mpd_conn)
+                mpd_conn = mpd_new(mpd_host, mpd_port, mpd_pass);
+        if (mpd_conn && (!mpd_check_connected(mpd_conn))) {
+                if (mpd_connect(mpd_conn) != MPD_OK) {
+                        printf("Could not connect to MPD server.\n");
+                        mpd_free(mpd_conn);
+                        mpd_conn = NULL;
+                        if (mpd_song)
+                                mpd_song = NULL;
+                        return;
+                }
         }
 
-        if (mpd_sock == -1)
-                start_connection();
-
-        mpd_free_everythang();
-        pop_currentsong();
-        pop_status();
+        mpd_song = mpd_playlist_get_current_song(mpd_conn);
+        mpd_status_queue_update(mpd_conn);
 }
 
-/**
- * @brief Populate the status variables.
- */
-void pop_status(void)
-{
-        char buffer[128];
-        int i;
-
-        size_t n = sizeof(char);
-        
-        /* currentsong */
-        for (i = 0; i < 3; i++) {
-                if (fprintf(sockout, "status\r\n") == -1)
-                        start_connection();
-                else
-                        break;
+char *get_state(char *args) {
+        if (mpd_conn) {
+                switch (mpd_player_get_state(mpd_conn)) {
+                case MPD_PLAYER_PAUSE:          return "Paused";
+	        case MPD_PLAYER_PLAY:           return "Playing";
+	        case MPD_PLAYER_STOP:           return "Stopped";
+                case MPD_PLAYER_UNKNOWN:        return "\0";
+                default:                        return "\0";
+                }
         }
-                
-        fflush(sockout);
 
-        while (fgets(buffer, sizeof(buffer), sockin)) {
-                if (!strcmp(buffer, "OK\n"))
-                        break;
-                else if (!disable_mpd_volume &&
-                         sscanf(buffer, "volume: %a[^\n]", &mpdinfo.volume) == 1) { }
-                else if (!disable_mpd_repeat &&
-                         sscanf(buffer, "repeat: %a[^\n]", &mpdinfo.repeat) == 1) { }
-                else if (!disable_mpd_random &&
-                         sscanf(buffer, "random: %a[^\n]", &mpdinfo.random) == 1) { }
-                else if (!disable_mpd_playlist &&
-                         sscanf(buffer, "playlist: %a[^\n]", &mpdinfo.playlist) == 1) { }
-                else if (!disable_mpd_playlistlength &&
-                         sscanf(buffer, "playlistlength: %a[^\n]", &mpdinfo.playlistlength) == 1) { }
-                else if (!disable_mpd_xfade &&
-                         sscanf(buffer, "xfade: %a[^\n]", &mpdinfo.xfade) == 1) { }
-                else if (!disable_mpd_state &&
-                         sscanf(buffer, "state: %a[^\n]", &mpdinfo.state) == 1) { }
-                else if (!disable_mpd_song &&
-                         sscanf(buffer, "song: %a[^\n]", &mpdinfo.song) == 1) { }
-                else if (!(disable_mpd_ttime && disable_mpd_etime) &&
-                         sscanf(buffer, "time: %d:%d", &mpdinfo.etime, &mpdinfo.ttime) == 2) { }
-                else if (!disable_mpd_bitrate &&
-                         sscanf(buffer, "bitrate: %a[^\n]", &mpdinfo.bitrate) == 1) { }
-                else if (!disable_mpd_audio &&
-                         sscanf(buffer, "audio: %a[^\n]", &mpdinfo.audio) == 1) { }
-        }
+        return "\0";
 }
 
-/**
- * @brief Populate the currentsong variables.
- */
-void pop_currentsong(void)
-{
-        char buffer[128];
-        int i;
-        
-        /* currentsong */
-        for (i = 0; i < 3; i++) {
-                if (fprintf(sockout, "currentsong\r\n") == -1)
-                        start_connection();
-                else
-                        break;
-        }
-                
-        fflush(sockout);
+char *get_file(char *args) {
+        if (mpd_song)
+                return (mpd_song->file) ? mpd_song->file : "\0";
 
-        while (fgets(buffer, sizeof(buffer), sockin)) {
-                if (!strcmp(buffer, "OK\n"))
-                        break;
-                else if (!disable_mpd_file &&
-                         sscanf(buffer, "file: %a[^\n]", &mpdinfo.file) == 1) { }
-                else if (!disable_mpd_artist &&
-                         sscanf(buffer, "Artist: %a[^\n]", &mpdinfo.artist) == 1) { }
-                else if (!disable_mpd_title &&
-                         sscanf(buffer, "Title: %a[^\n]", &mpdinfo.title) == 1) { }
-                else if (!disable_mpd_album &&
-                         sscanf(buffer, "Album: %a[^\n]", &mpdinfo.album) == 1) { }
-                else if (!disable_mpd_track &&
-                         sscanf(buffer, "Track: %a[^\n]", &mpdinfo.track) == 1) { }
-                else if (!disable_mpd_date &&
-                         sscanf(buffer, "Date: %a[^\n]", &mpdinfo.date) == 1) { }
-                else if (!disable_mpd_genre &&
-                         sscanf(buffer, "Genre: %a[^\n]", &mpdinfo.genre) == 1) { }
-        }
+        return "\0";
 }
 
-char *get_file(char *args) { return (mpdinfo.file) ? mpdinfo.file : "\0"; }
-char *get_artist(char *args) { return (mpdinfo.artist) ? mpdinfo.artist : "\0"; }
-char *get_title(char *args) { return (mpdinfo.title) ? mpdinfo.title : "\0"; }
-char *get_album(char *args) { return (mpdinfo.album) ? mpdinfo.album : "\0"; }
-char *get_track(char *args) { return (mpdinfo.track) ? mpdinfo.track : "\0"; }
-char *get_date(char *args) { return (mpdinfo.date) ? mpdinfo.date : "\0"; }
-char *get_genre(char *args) { return (mpdinfo.genre) ? mpdinfo.genre : "\0"; }
-char *get_volume(char *args) { return (mpdinfo.volume) ? mpdinfo.volume : "\0"; }
-char *get_repeat(char *args) { return (mpdinfo.repeat) ? mpdinfo.repeat : "\0"; }
-char *get_random(char *args) { return (mpdinfo.random) ? mpdinfo.random : "\0"; }
-char *get_playlist(char *args) { return (mpdinfo.playlist) ? mpdinfo.playlist : "\0"; }
-char *get_playlistlength(char *args) { return (mpdinfo.playlistlength) ? mpdinfo.playlistlength : "\0"; }
-char *get_xfade(char *args) { return (mpdinfo.xfade) ? mpdinfo.xfade : "\0"; }
-char *get_state(char *args) { return (mpdinfo.state) ? mpdinfo.state : "\0"; }
-char *get_song(char *args) { return (mpdinfo.song) ? mpdinfo.song : "\0"; }
-char *get_bitrate(char *args) { return (mpdinfo.bitrate) ? mpdinfo.bitrate : "\0"; }
-char *get_audio(char *args) { return (mpdinfo.audio) ? mpdinfo.audio : "\0"; }
+char *get_artist(char *args) {
+        if (mpd_song)
+                return (mpd_song->artist) ? mpd_song->artist : "\0";
+
+        return "\0";
+}
+
+char *get_title(char *args) {
+        if (mpd_song)
+                return (mpd_song->title) ? mpd_song->title : "\0";
+
+        return "\0";
+}
+
+char *get_album(char *args) {
+        if (mpd_song)
+                return (mpd_song->album) ? mpd_song->album : "\0";
+
+        return "\0";
+}
+
+char *get_track(char *args) {
+        if (mpd_song)
+                return (mpd_song->track) ? mpd_song->track : "\0";
+
+        return "\0";
+}
+
+char *get_name(char *args) {
+        if (mpd_song)
+                return (mpd_song->name) ? mpd_song->name : "\0";
+
+        return "\0";
+}
+
+char *get_date(char *args) {
+        if (mpd_song)
+                return (mpd_song->date) ? mpd_song->date : "\0";
+
+        return "\0";
+}
+
+char *get_genre(char *args) {
+        if (mpd_song)
+                return (mpd_song->genre) ? mpd_song->genre : "\0";
+
+        return "\0";
+}
+
+char *get_composer(char *args) {
+        if (mpd_song)
+                return (mpd_song->composer) ? mpd_song->composer : "\0";
+
+        return "\0";
+}
+
+char *get_performer(char *args) {
+        if (mpd_song)
+                return (mpd_song->performer) ? mpd_song->performer : "\0";
+
+        return "\0";
+}
+
+char *get_disc(char *args) {
+        if (mpd_song)
+                return (mpd_song->disc) ? mpd_song->disc : "\0";
+
+        return "\0";
+}
+
+char *get_comment(char *args) {
+        if (mpd_song)
+                return (mpd_song->comment) ? mpd_song->comment : "\0";
+
+        return "\0";
+}
+
+char *get_albumartist(char *args) {
+        if (mpd_song)
+                return (mpd_song->albumartist) ? mpd_song->albumartist : "\0";
+
+        return "\0";
+}
+
+char *get_volume(char *args) {
+        if (mpd_conn) {
+                char *volume = NULL;
+                asprintf(&volume, "%d", mpd_status_get_volume(mpd_conn));
+                return m_freelater(volume);
+        }
+
+        return "0";
+}
+
+//char *get_repeat(char *args) { return (mpd_song->repeat) ? mpd_song->repeat : "\0"; }
+//char *get_random(char *args) { return (mpd_song->random) ? mpd_song->random : "\0"; }
+//char *get_playlist(char *args) { return (mpd_song->playlist) ? mpd_song->playlist : "\0"; }
+//char *get_playlistlength(char *args) { return (mpd_song->playlistlength) ? mpd_song->playlistlength : "\0"; }
+//char *get_xfade(char *args) { return (mpd_song->xfade) ? mpd_song->xfade : "\0"; }
+//char *get_song(char *args) { return (mpd_song->song) ? mpd_song->song : "\0"; }
+
+char *get_bitrate(char *args) {
+        if (mpd_conn) {
+                char *bitrate = NULL;
+                asprintf(&bitrate, "%d", mpd_status_get_bitrate(mpd_conn));
+                return m_freelater(bitrate);
+        }
+
+        return "0";
+}
+
+//char *get_audio(char *args) { return (mpd_song->audio) ? mpd_song->audio : "\0"; }
 
 char *get_elapsed_time(char *args) {
-        char *ret = m_malloc(8);
-        snprintf(ret, 8, "%.2d:%.2d", mpdinfo.etime / 60, mpdinfo.etime % 60);
-        return ret;
+        if (mpd_conn) {
+                int elapsed = mpd_status_get_elapsed_song_time(mpd_conn);
+                char *ret = NULL;
+                asprintf(&ret, "%.2d:%.2d", elapsed / 60, elapsed % 60);
+                return m_freelater(ret);
+        }
+
+        return "00:00";
 }
 
 char *get_total_time(char *args) {
-        char *ret = m_malloc(8);
-        snprintf(ret, 8, "%.2d:%.2d", mpdinfo.ttime / 60, mpdinfo.ttime % 60);
-        return ret;
-}
+        if (mpd_conn) {
+                int total = mpd_status_get_total_song_time(mpd_conn);
+                char *ret = NULL;
+                asprintf(&ret, "%.2d:%.2d", total / 60, total % 60);
+                return m_freelater(ret);
+        }
+
+        return "00:00";
+} 
 
 int get_volume_bar(char *args) {
-        if (mpdinfo.volume)
-                return strtol(mpdinfo.volume, NULL, 0);
-        return 0;
-}
-
-/**
- * @brief Initialize some things that we use quite often.
- */
-void init_settings(void)
-{
-        int s;
-        
-        /* Read configuration settings, if none exist, use some defaults. */
-        mpd_host = get_char_key("mpd", "host", "localhost");
-        mpd_port = get_char_key("mpd", "port", "6600");
-
-        /* Get address information. */
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = 0;
-        hints.ai_protocol = 0;
-
-        if ((s = getaddrinfo(mpd_host, mpd_port, &hints, &result)) != 0) {
-                fprintf(stderr,
-                        "mpd: Could not get host [%s] by name: %s",
-                        mpd_host,
-                        gai_strerror(s));
-                return;
-        }
-
-        /* Disable settings...
-         * I added these so power users (Spewns) can fine tune what they wouldn't
-         * like to store. */
-        disable_mpd_file = get_bool_key("mpd", "disable_mpd_file", 0);
-        disable_mpd_artist = get_bool_key("mpd", "disable_mpd_artist", 0);
-        disable_mpd_title = get_bool_key("mpd", "disable_mpd_title", 0);
-        disable_mpd_album = get_bool_key("mpd", "disable_mpd_album", 0);
-        disable_mpd_track = get_bool_key("mpd", "disable_mpd_track", 0);
-        disable_mpd_date = get_bool_key("mpd", "disable_mpd_date", 0);
-        disable_mpd_genre = get_bool_key("mpd", "disable_mpd_genre", 0);
-        disable_mpd_volume = get_bool_key("mpd", "disable_mpd_volume", 0);
-        disable_mpd_repeat = get_bool_key("mpd", "disable_mpd_repeat", 0);
-        disable_mpd_random = get_bool_key("mpd", "disable_mpd_random", 0);
-        disable_mpd_playlist = get_bool_key("mpd", "disable_mpd_playlist", 0);
-        disable_mpd_playlistlength = get_bool_key("mpd", "disable_mpd_playlistlength", 0);
-        disable_mpd_xfade = get_bool_key("mpd", "disable_mpd_xfade", 0);
-        disable_mpd_state = get_bool_key("mpd", "disable_mpd_state", 0);
-        disable_mpd_song = get_bool_key("mpd", "disable_mpd_song", 0);
-        disable_mpd_etime = get_bool_key("mpd", "disable_mpd_etime", 0);
-        disable_mpd_ttime = get_bool_key("mpd", "disable_mpd_ttime", 0);
-        disable_mpd_bitrate = get_bool_key("mpd", "disable_mpd_bitrate", 0);
-        disable_mpd_audio = get_bool_key("mpd", "disable_mpd_audio", 0);
-}
-
-/**
- * @brief Connect to MPD host.
- */
-int start_connection(void)
-{
-        int bytes;
-        char data[32];
-
-        for (rp = result; rp != NULL; rp = rp->ai_next) {
-                mpd_sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-                
-                if (mpd_sock == -1)
-                        continue;
-
-                if (connect(mpd_sock, rp->ai_addr, rp->ai_addrlen) != -1)
-                        break;
-
-                close(mpd_sock);
-        }
-
-        if (rp == NULL) {
-                fprintf(stderr, "Could not connect to mpd server!\n");
-                return 0;
-        }
-        
-        /* Wait for OK */
-        bytes = recv(mpd_sock, data, 32, 0);
-        data[bytes] = '\0';
-
-        if (strstr(data, "OK MPD")) {
-                sockin = fdopen(mpd_sock, "r");
-                sockout = fdopen(mpd_sock, "w");
-                return 1;
+        if (mpd_conn) {
+                int volume = mpd_status_get_volume(mpd_conn);
+                if (volume >= 0)
+                        return volume;
         }
 
         return 0;
 }
+

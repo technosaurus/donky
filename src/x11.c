@@ -28,13 +28,13 @@
 
 #include "config.h"
 #include "default_settings.h"
+#include "lists.h"
 #include "mem.h"
 #include "module.h"
 #include "render.h"
 #include "text.h"
 #include "util.h"
 #include "x11.h"
-#include "lists.h"
 
 struct draw_settings {
         xcb_font_t font;
@@ -94,10 +94,6 @@ void clean_x(struct x_connection *xc,
              struct draw_settings *ds,
              int *line_heights);
 
-
-/* Globals. */
-extern int donky_reload;
-extern int donky_exit;
 
 /**
  * @brief Connects to the X server and stores all relevant information.
@@ -321,15 +317,16 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
  * @param xc donky's open x_connection struct
  * @param ws donky's window_settings struct
  */
-void donky_loop(struct x_connection *xc,
-                struct window_settings *ws)
+void donky_loop(struct x_connection *xc, struct window_settings *ws)
 {
-        extern struct first_last *ts_fl;
-        
-        struct list *cur = ts_fl->first;
-        struct draw_settings *ds = draw_settings_load(xc, ws);
+        extern int donky_reload;
+        extern int donky_exit;
 
+        extern struct first_last *ts_fl;
+        struct list *cur = ts_fl->first;
         struct text_section *ts_cur = NULL;
+
+        struct draw_settings *ds = draw_settings_load(xc, ws);
 
         xcb_generic_event_t *e = NULL;
         unsigned int force = 0;
@@ -783,9 +780,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                 char *rem_args = NULL;
 
                 if (!cur->pixel_width || !cur->pixel_height) {
-                        if (sscanf(cur->args,
-                                   " %d %d ",
-                                   &width, &height) == 2) {
+                        if (sscanf(cur->args, " %d %d ", &width, &height) == 2) {
                                 cur->pixel_width = width;
                                 cur->pixel_height = height;
                         } else {
@@ -849,7 +844,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
 }
 
 /** 
- * @brief Clean up the mess we made in this file. (Or at least try.)
+ * @brief Cleans up the mess we made in this file and and disconnects from X.
  * 
  * @param xc donky's open x_connection
  * @param ws donky's window_settings
@@ -863,7 +858,6 @@ void clean_x(struct x_connection *xc,
 {
         printf("Cleaning up... ");
 
-        /* Cleanup. */
         freeif(line_heights);
         XFreeFontInfo(NULL, ds->font_struct, 0);
         xcb_close_font(xc->connection, ds->font);
@@ -873,7 +867,6 @@ void clean_x(struct x_connection *xc,
         freeif(ds);
         freeif(ws);
 
-        /* Destroy our window and disconnect from X. */
         xcb_destroy_window(xc->connection, xc->window);
         xcb_flush(xc->connection);
         XCloseDisplay(xc->display);
