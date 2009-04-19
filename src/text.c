@@ -249,11 +249,19 @@ void text_section_var_modvar(char *value,
                              struct module_var *mvar,
                              double timeout)
 {
-        struct text_section *cur = text_section_var_find(value);
-        
-        if (cur) {
-                cur->mod_var = mvar;
-                cur->timeout = timeout;
+        struct list *cur = ts_fl->first;
+        struct text_section *ts_cur;
+
+        while (cur != NULL) {
+                ts_cur = cur->data;
+
+                if (ts_cur->type == TEXT_VARIABLE &&
+                    !strcasecmp(ts_cur->value, value)) {
+                        ts_cur->mod_var = mvar;
+                        ts_cur->timeout = timeout;
+                }
+                
+                cur = cur->next;
         }
 }
 
