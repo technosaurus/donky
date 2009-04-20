@@ -30,14 +30,13 @@ void module_destroy(void);
 
 /* My function prototypes */
 char *get_exec(char *args);
-
-/* Globals */
-char *ret_exec = NULL;
+int get_execbar(char *args);
 
 /* These run on module startup */
 int module_init(void)
 {
         module_var_add(module_name, "exec", "get_exec", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "execbar", "get_execbar", 10.0, VARIABLE_BAR);
 }
 
 /* These run on module unload */
@@ -48,26 +47,44 @@ void module_destroy(void)
 
 char *get_exec(char *args)
 {
-        FILE *execp;
-        
+       FILE *execp;
         char pipe[160];
-        
-        ret_exec = NULL;
+        char *ret = NULL;
 
         execp = popen(args, "r");
         if (execp == NULL)
-                return m_strdup("n/a");
+                return "n/a";
 
-        if (fgets(pipe, 160, execp) == NULL) {
+        if (fgets(pipe, sizeof(pipe), execp) == NULL) {
                 pclose(execp);
-                return m_strdup("n/a");
+                return "n/a";
         }
 
-        ret_exec = m_strdup(pipe);
-        chomp(ret_exec);
+        pclose(execp);
+        
+        ret = m_strdup(pipe);
+        chomp(ret);
+
+        return ret;
+}
+
+int get_execbar(char *args)
+{
+        FILE *execp;
+        char pipe[8];
+
+        execp = popen(args, "r");
+        if (execp == NULL)
+                return 0;
+
+        if (fgets(pipe, sizeof(pipe), execp) == NULL) {
+                pclose(execp);
+                return 0;
+        }
 
         pclose(execp);
+        chomp(pipe);
 
-        return ret_exec;
+        return strtol(pipe, NULL, 0);
 }
 
