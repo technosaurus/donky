@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -94,13 +95,10 @@ char *get_eeeblp(char *args)
 
         int charge = (atof(cur_bl) / atof(max_bl)) * 100;
 
-        char ret_eeeblp[8];
-        snprintf(ret_eeeblp,
-                 sizeof(ret_eeeblp) - sizeof(char),
-                 "%d",
-                 charge);
+        char *ret_eeeblp = NULL;
+        asprintf(&ret_eeeblp, "%d", charge);
 
-        return m_strdup(ret_eeeblp);
+        return m_freelater(ret_eeeblp);
 }
 
 /** 
@@ -114,8 +112,8 @@ char *get_eeeblc(char *args)
 {
         if (cur_bl == NULL)
                 return "n/a";
-        else
-                return m_strdup(cur_bl);
+
+        return cur_bl;
 }
 
 /** 
@@ -129,8 +127,8 @@ char *get_eeeblm(char *args)
 {
         if (max_bl == NULL)
                 return "n/a";
-        else
-                return m_strdup(max_bl);
+
+        return max_bl;
 }
 
 /** 
@@ -156,23 +154,15 @@ int get_eeeblb(char *args)
 void get_cur_bl(void)
 {
         char *path = "/sys/devices/virtual/backlight/eeepc/brightness";
-
         FILE *cur_bl_file = fopen(path, "r");
-        if (cur_bl_file == NULL) {
-                cur_bl = NULL;
+        if (cur_bl_file == NULL)
                 return;
-        }
 
-        char cur[16];
-        if (fgets(cur, 16, cur_bl_file) == NULL) {
-                fclose(cur_bl_file);
-                cur_bl = NULL;
-                return;
-        }
-
+        size_t len = 0;
+        int read = getline(&cur_bl, &len, cur_bl_file);
         fclose(cur_bl_file);
-
-        cur_bl = d_strcpy(chomp(cur));
+        if (cur_bl && (read != -1))
+                chomp(cur_bl);
 }
 
 /** 
@@ -182,23 +172,14 @@ void get_cur_bl(void)
 void get_max_bl(void)
 {
         char *path = "/sys/devices/virtual/backlight/eeepc/max_brightness";
-
-        FILE *max_bl_file;
-        max_bl_file = fopen(path, "r");
-        if (max_bl_file == NULL) {
-                cur_bl = NULL;
+        FILE *max_bl_file = fopen(path, "r");
+        if (max_bl_file == NULL)
                 return;
-        }
 
-        char max[16];
-        if (fgets(max, 16, max_bl_file) == NULL) {
-                fclose(max_bl_file);
-                cur_bl = NULL;
-                return;
-        }
-
+        size_t len = 0;
+        int read = getline(&max_bl, &len, max_bl_file);
         fclose(max_bl_file);
-
-        max_bl = d_strcpy(chomp(max));
+        if (max_bl && (read != -1))
+                chomp(max_bl);
 }
 

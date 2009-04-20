@@ -23,6 +23,7 @@
 
 #include "develop.h"
 #include "../mem.h"
+#include "../util.h"
 
 /* Module name */
 char module_name[] = "moc";

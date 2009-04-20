@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,13 +33,14 @@ void module_destroy(void);
 /* My function prototypes */
 char *get_scpufreq(char *args);
 
-/* Globals */
-char *ret_scpufreq = NULL;
-
 /* These run on module startup */
 int module_init(void)
 {
-        module_var_add(module_name, "scpufreq", "get_scpufreq", 1.0, VARIABLE_STR);
+        module_var_add(module_name,
+                       "scpufreq",
+                       "get_scpufreq",
+                       1.0,
+                       VARIABLE_STR);
 }
 
 /* These run on module unload */
@@ -49,38 +51,30 @@ void module_destroy(void)
 
 char *get_scpufreq(char *args)
 {
-        FILE *freq_file;
-        
-        char path[64];
-
-        if (args == NULL)
-                strncpy(path,
-                        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq",
-                        (54 * sizeof(char)));
-        else
-                snprintf(path,
-                        (63 * sizeof(char)),
-                        "/sys/devices/system/cpu/cpu%s/cpufreq/scaling_cur_freq",
-                        args);
-
-        char freq[10];
-
-        ret_scpufreq = NULL;
-
-        freq_file = fopen(path, "r");
-        if (freq_file == NULL)
+        char *path = NULL;
+        if ((asprintf(&path,
+                      "/sys/devices/system/cpu/cpu%s/cpufreq/scaling_cur_freq",
+                      (args) ? args : "0") == -1))
                 return "n/a";
 
-        if (fgets(freq, 10, freq_file) == NULL) {
-                fclose(freq_file);
+        FILE *freq_file = fopen(path, "r");
+        free(path);
+        if (!freq_file)
                 return "n/a";
-        }
 
-        ret_scpufreq = m_malloc(6 * sizeof(char));
-        snprintf(ret_scpufreq, (5 * sizeof(char)), "%d", (atoi(freq) / 1000));
-        
+        char *freq = NULL;
+        size_t len = 0;
+        int read = getline(&freq, &len, freq_file);
         fclose(freq_file);
+        if (!freq || (read == -1))
+                return "n/a";
 
-        return ret_scpufreq;
+        char *ret = NULL;
+        int check = asprintf(&ret, "%d", (atoi(freq) / 1000));
+        free(freq);
+        if (check == -1)
+                return "n/a";
+
+        return m_freelater(ret);
 }
 

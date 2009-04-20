@@ -144,7 +144,7 @@ char *get_battr(char *args)
         if ((batt == NULL) || (batt->remaining_charge == NULL))
                 return "n/a";
 
-        return m_strdup(chomp(batt->remaining_charge));
+        return batt->remaining_charge;
 }
 
 /** 
@@ -160,7 +160,7 @@ char *get_battm(char *args)
         if ((batt == NULL) || (batt->maximum_charge == NULL))
                 return "n/a";
 
-        return m_strdup(chomp(batt->maximum_charge));
+        return batt->maximum_charge;
 }
 
 /** 
@@ -260,13 +260,13 @@ char *get_remaining_charge(char *args)
                 return NULL;
 
         char *remaining_charge = NULL;
-        int len = 0; /* forces a malloc */
+        size_t len = 0; /* forces a malloc */
         int read = getline(&remaining_charge, &len, fptr);
         fclose(fptr);
-        if (read == -1)
+        if (!remaining_charge || (read == -1))
                 return NULL;
 
-        return remaining_charge;
+        return chomp(remaining_charge);
 }
 
 /** 
@@ -292,13 +292,13 @@ char *get_maximum_charge(char *args)
                 return NULL;
 
         char *maximum_charge = NULL;
-        int len = 0; /* forces a malloc */
+        size_t len = 0; /* forces a malloc */
         int read = getline(&maximum_charge, &len, fptr);
         fclose(fptr);
-        if (read == -1)
+        if (!maximum_charge || (read == -1))
                 return NULL;
 
-        return maximum_charge;
+        return chomp(maximum_charge);
 }
 
 /** 
