@@ -16,19 +16,13 @@
  */
 
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-//#include <sys/socket.h>
-//#include <sys/types.h>
-//#include <netinet/in.h>
-//#include <netdb.h>
-//#include <unistd.h>
-//#include <errno.h>
 #include <libmpd-1.0/libmpd/libmpd.h>
 #include <libmpd-1.0/libmpd/libmpdclient.h>
 #include <libmpd-1.0/libmpd/libmpd-playlist.h>
 #include <libmpd-1.0/libmpd/libmpd-status.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "develop.h"
 #include "../util.h"
@@ -56,9 +50,9 @@ int module_init(void)
         mpd_host = get_char_key("mpd", "host", "localhost");
         mpd_port = get_int_key("mpd", "port", 6600);
         mpd_pass = get_char_key("mpd", "password", NULL);
+        mpd_conn = mpd_new(mpd_host, mpd_port, mpd_pass);
 
-        if (!mpd_song) mpd_song = mpd_newSong();
-
+        module_var_add(module_name, "mpd_state", "get_state", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_file", "get_file", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_artist", "get_artist", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_title", "get_title", 10.0, VARIABLE_STR);
@@ -70,16 +64,17 @@ int module_init(void)
         module_var_add(module_name, "mpd_volume", "get_volume", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_repeat", "get_repeat", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_random", "get_random", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_playlist", "get_playlist", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_playlistlength", "get_playlistlength", 10.0, VARIABLE_STR);
+        //module_var_add(module_name, "mpd_playlist", "get_playlist", 10.0, VARIABLE_STR);
+        //module_var_add(module_name, "mpd_playlistlength", "get_playlistlength", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_xfade", "get_xfade", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_state", "get_state", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_song", "get_song", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_etime", "get_elapsed_time", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_ttime", "get_total_time", 10.0, VARIABLE_STR);
+        //module_var_add(module_name, "mpd_song", "get_song", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "mpd_etime", "get_etime", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "mpd_ttime", "get_ttime", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_bitrate", "get_bitrate", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_audio", "get_audio", 10.0, VARIABLE_STR);
+        //module_var_add(module_name, "mpd_audio", "get_audio", 10.0, VARIABLE_STR);
+        module_var_add(module_name, "mpd_etimep", "get_etimep", 10.0, VARIABLE_STR);
 
+        module_var_add(module_name, "mpd_etimeb", "get_etimeb", 10.0, VARIABLE_BAR);
         module_var_add(module_name, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
 
         /* Add cron job. */
@@ -94,10 +89,12 @@ void module_destroy(void)
         if (mpd_conn) {
                 if (mpd_check_connected(mpd_conn))
                         mpd_disconnect(mpd_conn);
-
                 mpd_free(mpd_conn);
                 mpd_conn = NULL;
         }
+
+        if (mpd_song)
+                mpd_song = NULL;
 
         if (mpd_host) {
                 free(mpd_host);
@@ -114,23 +111,18 @@ void module_destroy(void)
 }
 
 /** 
- * @brief Check if we're connected. If we aren't, try to connect.
- *        If we have a connection, point mpd_song to the current song.
+ * @brief Check if we're connected. If we aren't, try to connect. If we have a
+ *        connection, update mpd information if necessary and point mpd_song
+ *        to the current song.
  */
 void run_cron(void)
 {
-        if (!mpd_conn)
-                mpd_conn = mpd_new(mpd_host, mpd_port, mpd_pass);
-
-        if (mpd_conn && (!mpd_check_connected(mpd_conn))) {
-                if (mpd_connect(mpd_conn) != MPD_OK) {
-                        printf("Could not connect to MPD server.\n");
-                        mpd_free(mpd_conn);
-                        mpd_conn = NULL;
+        if (!mpd_check_connected(mpd_conn)) {
+                if (mpd_connect(mpd_conn) == MPD_OK)
+                        mpd_song = mpd_playlist_get_current_song(mpd_conn);
+                else
                         if (mpd_song)
                                 mpd_song = NULL;
-                        return;
-                }
         } else {
                 mpd_status_update(mpd_conn);
                 mpd_song = mpd_playlist_get_current_song(mpd_conn);
@@ -140,15 +132,14 @@ void run_cron(void)
 char *get_state(char *args) {
         if (mpd_conn) {
                 switch (mpd_player_get_state(mpd_conn)) {
-                case MPD_PLAYER_PAUSE:          return "Paused";
-	        case MPD_PLAYER_PLAY:           return "Playing";
-	        case MPD_PLAYER_STOP:           return "Stopped";
-                case MPD_PLAYER_UNKNOWN:        return "\0";
-                default:                        return "\0";
+                case MPD_PLAYER_PAUSE:   return "Paused";
+	        case MPD_PLAYER_PLAY:    return "Playing";
+	        case MPD_PLAYER_STOP:    return "Stopped";
+                default:                 break;
                 }
         }
 
-        return "\0";
+        return "MPD";
 }
 
 char *get_file(char *args) {
@@ -205,26 +196,67 @@ char *get_albumartist(char *args) {
 
 char *get_volume(char *args) {
         if (mpd_conn) {
-                char *volume = NULL;
-                asprintf(&volume, "%d", mpd_status_get_volume(mpd_conn));
-                return m_freelater(volume);
+                int volume = mpd_status_get_volume(mpd_conn);
+                if (volume >= 0) {
+                        char *ret = NULL;
+                        asprintf(&ret, "%d", volume);
+                        return m_freelater(ret);
+                }
         }
 
         return "0";
 }
 
-//char *get_repeat(char *args) { return (mpd_song->repeat) ? mpd_song->repeat : "\0"; }
-//char *get_random(char *args) { return (mpd_song->random) ? mpd_song->random : "\0"; }
+char *get_repeat(char *args) {
+        if (mpd_conn) {
+                switch (mpd_player_get_repeat(mpd_conn)) {
+                case 1:         return "On";
+                case 0:         return "Off";
+                default:        break;
+                }
+        }
+
+        return "n/a";
+}
+
+char *get_random(char *args) {
+        if (mpd_conn) {
+                switch (mpd_player_get_random(mpd_conn)) {
+                case 1:         return "On";
+                case 0:         return "Off";
+                default:        break;
+                }
+        }
+
+        return "n/a";
+}
+
 //char *get_playlist(char *args) { return (mpd_song->playlist) ? mpd_song->playlist : "\0"; }
 //char *get_playlistlength(char *args) { return (mpd_song->playlistlength) ? mpd_song->playlistlength : "\0"; }
-//char *get_xfade(char *args) { return (mpd_song->xfade) ? mpd_song->xfade : "\0"; }
+
+char *get_xfade(char *args) {
+        if (mpd_conn) {
+                int xfade = mpd_status_get_crossfade(mpd_conn);
+                if (xfade >= 0) {
+                        char *ret = NULL;
+                        asprintf(&ret, "%d", xfade);
+                        return m_freelater(ret);
+                }
+        }
+
+        return "n/a";
+}
+
 //char *get_song(char *args) { return (mpd_song->song) ? mpd_song->song : "\0"; }
 
 char *get_bitrate(char *args) {
-        if (mpd_conn) {
-                char *bitrate = NULL;
-                asprintf(&bitrate, "%d", mpd_status_get_bitrate(mpd_conn));
-                return m_freelater(bitrate);
+        if (mpd_conn && mpd_song) {
+                int bitrate = mpd_status_get_bitrate(mpd_conn);
+                if (bitrate >= 0) {
+                        char *ret = NULL;
+                        asprintf(&ret, "%d", bitrate);
+                        return m_freelater(ret);
+                }
         }
 
         return "0";
@@ -232,27 +264,59 @@ char *get_bitrate(char *args) {
 
 //char *get_audio(char *args) { return (mpd_song->audio) ? mpd_song->audio : "\0"; }
 
-char *get_elapsed_time(char *args) {
-        if (mpd_conn) {
+char *get_etime(char *args) {
+        if (mpd_conn && mpd_song) {
                 int elapsed = mpd_status_get_elapsed_song_time(mpd_conn);
-                char *ret = NULL;
-                asprintf(&ret, "%.2d:%.2d", elapsed / 60, elapsed % 60);
-                return m_freelater(ret);
+                if (elapsed >= 0) {
+                        char *ret = NULL;
+                        asprintf(&ret, "%.2d:%.2d", elapsed / 60, elapsed % 60);
+                        return m_freelater(ret);
+                }
         }
 
         return "00:00";
 }
 
-char *get_total_time(char *args) {
-        if (mpd_conn) {
+char *get_ttime(char *args) {
+        if (mpd_conn && mpd_song) {
                 int total = mpd_status_get_total_song_time(mpd_conn);
-                char *ret = NULL;
-                asprintf(&ret, "%.2d:%.2d", total / 60, total % 60);
-                return m_freelater(ret);
+                if (total >= 0) {
+                        char *ret = NULL;
+                        asprintf(&ret, "%.2d:%.2d", total / 60, total % 60);
+                        return m_freelater(ret);
+                }
         }
 
         return "00:00";
 } 
+
+char *get_etimep(char *args) {
+        if (mpd_conn && mpd_song) {
+                double elapsed = mpd_status_get_elapsed_song_time(mpd_conn);
+                double total = mpd_status_get_total_song_time(mpd_conn);
+                if ((elapsed > 0.0) && (total > 0.0)) {
+                        int percent = (elapsed / total) * 100;
+                        char *ret = NULL;
+                        asprintf(&ret, "%d", percent);
+                        return m_freelater(ret);
+                }
+        }
+
+        return "0";
+}
+
+int get_etimeb(char *args) {
+        if (mpd_conn && mpd_song) {
+                double elapsed = mpd_status_get_elapsed_song_time(mpd_conn);
+                double total = mpd_status_get_total_song_time(mpd_conn);
+                if ((elapsed > 0.0) && (total > 0.0)) {
+                        int percent = (elapsed / total) * 100;
+                        return percent;
+                }
+        }
+
+        return 0;
+}
 
 int get_volume_bar(char *args) {
         if (mpd_conn) {
