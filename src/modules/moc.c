@@ -35,7 +35,6 @@ void module_destroy(void);
 char *get_moc(char *args);
 
 /* Globals */
-char *ret_moc = NULL;
 char home[MAXPATHLEN + 1];
 
 /* These run on module startup */
@@ -65,22 +64,17 @@ char *get_moc(char *args)
                  "HOME=\"%s\" mocp -Q \"%s\"",
                  home, args);
 
-        ret_moc = NULL;
-
         mocp = popen(mocp_line, "r");
         if (mocp == NULL)
-                return m_strdup("Could not query moc.");
+                return "Could not query moc.";
 
         if (fgets(pipe, 160, mocp) == NULL) {
                 pclose(mocp);
-                return m_strdup("No music playing.");
+                return "No music playing.";
         }
-
-        /* Copy one char less to remove the \n */
-        ret_moc = m_strndup(pipe, (strlen(pipe) - sizeof(char)));
 
         pclose(mocp);
 
-        return ret_moc;
+        return m_strdup(chomp(pipe));
 }
 

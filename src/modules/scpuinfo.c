@@ -69,11 +69,11 @@ char *get_scpufreq(char *args)
 
         freq_file = fopen(path, "r");
         if (freq_file == NULL)
-                return m_strdup("n/a");
+                return "n/a";
 
         if (fgets(freq, 10, freq_file) == NULL) {
                 fclose(freq_file);
-                return m_strdup("n/a");
+                return "n/a";
         }
 
         ret_scpufreq = m_malloc(6 * sizeof(char));

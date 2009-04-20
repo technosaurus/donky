@@ -118,7 +118,7 @@ char *get_battp(char *args)
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) ||
             (batt->remaining_charge == NULL) || (batt->maximum_charge == NULL))
-                return m_strdup("n/a");
+                return "n/a";
 
         double rem = atof(batt->remaining_charge);
         double max = atof(batt->maximum_charge);
@@ -126,7 +126,7 @@ char *get_battp(char *args)
 
         char *battp = NULL;
         if (asprintf(&battp, "%d", percentage) == -1)
-                return m_strdup("n/a");
+                return "n/a";
 
         return m_freelater(battp);
 }
@@ -142,7 +142,7 @@ char *get_battr(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) || (batt->remaining_charge == NULL))
-                return m_strdup("n/a");
+                return "n/a";
 
         return m_strdup(chomp(batt->remaining_charge));
 }
@@ -158,7 +158,7 @@ char *get_battm(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) || (batt->maximum_charge == NULL))
-                return m_strdup("n/a");
+                return "n/a";
 
         return m_strdup(chomp(batt->maximum_charge));
 }

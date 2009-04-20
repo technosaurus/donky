@@ -68,7 +68,7 @@ char *get_volume(char *args)
         ret_volume = NULL;
 
 	if (prep_alsa_get_level(&level, args) < 0)
-                return m_strdup("n/a");
+                return "n/a";
 
         max = volume_alsaMax;
 	min = volume_alsaMin;

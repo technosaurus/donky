@@ -68,12 +68,12 @@ char *get_date(char *args)
         tmp = localtime(&t);
 
         if (tmp == NULL)
-                return m_strdup("n/a");
+                return "n/a";
 
         if (strftime(ret_value,
                      sizeof(ret_value) - sizeof(char),
                      args, tmp) == 0)
-                return m_strdup("n/a");
+                return "n/a";
 
         return m_strdup(ret_value);
 }

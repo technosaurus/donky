@@ -90,7 +90,7 @@ void eeebl_cron(void)
 char *get_eeeblp(char *args)
 {
         if ((cur_bl == NULL) || (max_bl == NULL))
-                return m_strdup("n/a");
+                return "n/a";
 
         int charge = (atof(cur_bl) / atof(max_bl)) * 100;
 
@@ -113,7 +113,7 @@ char *get_eeeblp(char *args)
 char *get_eeeblc(char *args)
 {
         if (cur_bl == NULL)
-                return m_strdup("n/a");
+                return "n/a";
         else
                 return m_strdup(cur_bl);
 }
@@ -128,7 +128,7 @@ char *get_eeeblc(char *args)
 char *get_eeeblm(char *args)
 {
         if (max_bl == NULL)
-                return m_strdup("n/a");
+                return "n/a";
         else
                 return m_strdup(max_bl);
 }

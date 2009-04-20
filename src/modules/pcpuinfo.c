@@ -60,7 +60,7 @@ char *get_pcpufreq(char *args)
         ret_pcpufreq = NULL;
 
         if (pcpuinfo == NULL)
-                return m_strdup("Can't open /proc/cpuinfo");
+                return "Can't open /proc/cpuinfo";
 
         char str[16];
 
@@ -90,7 +90,7 @@ char *get_pcpufreq(char *args)
         fclose(pcpuinfo);
 
         if (ret_pcpufreq == NULL)
-                ret_pcpufreq = m_strdup("CPU freq not found.");
+                return "CPU freq not found.";
 
         return ret_pcpufreq;
 }
@@ -102,7 +102,7 @@ char *get_pcpuname(char *args)
         ret_pcpuname = NULL;
 
         if (pcpuinfo == NULL)
-                return m_strdup("Can't open /proc/cpuinfo");
+                return "Can't open /proc/cpuinfo";
 
         char str[64];
 
@@ -127,7 +127,7 @@ char *get_pcpuname(char *args)
         fclose(pcpuinfo);
 
         if (ret_pcpuname == NULL)
-                ret_pcpuname = m_strdup("CPU name not found.");
+                return "CPU name not found.";
 
         return ret_pcpuname;
 }
@@ -139,7 +139,7 @@ char *get_pcpucache(char *args)
         ret_pcpucache = NULL;
 
         if (pcpuinfo == NULL)
-                return m_strdup("Can't open /proc/cpuinfo");
+                return "Can't open /proc/cpuinfo";
 
         char str[16];
 
@@ -164,7 +164,7 @@ char *get_pcpucache(char *args)
         fclose(pcpuinfo);
 
         if (ret_pcpucache == NULL)
-                return m_strdup("CPU not found.");
+                return "CPU not found.";
 
         return ret_pcpucache;
 }
