@@ -32,5 +32,6 @@ void freenullif(void **ptr);
 char *d_strcpy(const char *str);
 char *d_strncpy(const char *str, int n);
 char *bytes_to_bigger(unsigned long bytes);
+int csscanf(const char *str, const char *format, int n, ...);
 
 #endif /* UTIL_H */

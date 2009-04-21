@@ -42,7 +42,6 @@ void add_mod(char *mod);
 int find_mod(struct cfg *cur, char *mod);
 void add_key(char *mod, char *key, char *value);
 int find_key(struct setting *cur, char *key);
-int parse(char *scan_me, const char *format, char **key, char **value);
 void clear_settings(struct setting *cur_s);
 
 /* Globals */
@@ -254,7 +253,7 @@ void parse_cfg(void)
                 }
 
                 /* scan for [mods] - don't add_mod if [text] */
-                if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod) == 1) {
+                if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod)) {
                         if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
 
@@ -279,11 +278,11 @@ void parse_cfg(void)
                 }
 
                 /* scan lines for keys and their values */
-                else if (parse(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", &key, &value)) { }
-                else if (parse(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", &key, &value)) { }
-                else if (parse(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value))
+                else if (csscanf(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", 2, &key, &value)) { }
+                else if (csscanf(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", 2, &key, &value)) { }
+                else if (csscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", 2, &key, &value))
                         trim_t(value);
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
+                else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key))
                         value = d_strcpy("True");
  
                 /* if the value is "" or '', set it to False */
@@ -320,28 +319,6 @@ void parse_cfg(void)
                 del_list(cfg_fl, &clear_cfg);
                 exit(EXIT_FAILURE);
         }
-}
-
-/** 
- * @brief Parses a line and checks that both key and value were filled.
- * 
- * @param scan_me String to scan.
- * @param format Format to send to sscanf
- * @param key Pointer to key pointer
- * @param value Pointer to value pointer
- * 
- * @return 1 if parse was fully successfully, 0 if not
- */
-int parse(char *scan_me, const char *format, char **key, char **value)
-{
-        int filled = sscanf(scan_me, format, key, value);
-        if (filled != 2) {
-                freenullif((void **)key);
-                freenullif((void **)value);
-                return 0;
-        }
-
-        return 1;
 }
 
 /** 

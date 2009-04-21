@@ -17,6 +17,7 @@
 
 #define _GNU_SOURCE
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -266,5 +267,43 @@ char *bytes_to_bigger(unsigned long bytes)
                  "%.2f%s", recalc, label);
 
         return d_strcpy(str);
+}
+
+/** 
+ * @brief Conditional sscanf. If n number of matches and assignments were
+ *        not made, we make sure to check and free the matches and assignments
+ *        that *were* made, because we're uninterested in them and do not want
+ *        to leak memory.
+ * 
+ * @param str vsscanf str parameter
+ * @param format vsscanf format parameter
+ * @param n Number of arguments sent to be matched and assigned.
+ * @param ... Variable number of arguments to be matched and assigned
+ * 
+ * @return 1 on success, 0 on failure
+ */
+int csscanf(const char *str, const char *format, int n, ...)
+{
+        va_list ap, aq;
+        va_start(ap, n);
+        va_copy(aq, ap);
+
+        unsigned int success = 1;
+
+        if (vsscanf(str, format, aq) != n) {
+                int i;
+                char **p;
+                for (i = 0; i < n; i++) {
+                        p = va_arg(ap, char **);
+                        freenullif((void **)p);
+                }
+
+                success = 0;
+        }
+
+        va_end(ap);
+        va_end(aq);
+
+        return success;
 }
 
