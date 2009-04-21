@@ -281,7 +281,8 @@ void parse_cfg(void)
                 /* scan lines for keys and their values */
                 else if (parse(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", &key, &value)) { }
                 else if (parse(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", &key, &value)) { }
-                else if (parse(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value)) { }
+                else if (parse(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value))
+                        trim_t(value);
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
                         value = d_strcpy("True");
  
