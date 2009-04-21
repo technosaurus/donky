@@ -172,9 +172,25 @@ double get_time(void)
  */
 void freeif(void *ptr)
 {
-        if (ptr) {
+        if (ptr)
                 free(ptr);
-                ptr = NULL;
+}
+
+/** 
+ * @brief The bastard son of freeif()
+ * 
+ * @param ptr Pointer to the pointer you want to free and NULL.
+ *            You have to pass to this function like...
+ *
+ *            freenullif((void **)&pointer);
+ *
+ *            ...or gcc throws a warning (still works though).
+ */
+void freenullif(void **ptr)
+{
+        if (*ptr) {
+                free(*ptr);
+                *ptr = NULL;
         }
 }
 

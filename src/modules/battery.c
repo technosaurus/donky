@@ -56,7 +56,7 @@ char *get_maximum_charge(char *args);
 void clear_batt(struct batt *cur);
 
 /* Globals */
-struct first_last *fl = NULL;
+struct list *fl = NULL;
 
 /* These run on module startup */
 int module_init(void)
@@ -100,10 +100,7 @@ void batt_cron(void)
  */
 void clear_remaining_charge(struct batt *batt)
 {
-        if (batt->remaining_charge) {
-                free(batt->remaining_charge);
-                batt->remaining_charge = NULL;
-        }
+        freenullif((void **)&batt->remaining_charge);
 }
 
 /** 

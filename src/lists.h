@@ -15,36 +15,36 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-struct list {
+struct list_item {
         void *data;
-        struct list *next;
-        struct list *prev;
+        struct list_item *next;
+        struct list_item *prev;
 };
 
-struct first_last {
-        struct list *first;
-        struct list *last;
+struct list {
+        struct list_item *first;
+        struct list_item *last;
 };
 
-struct first_last *init_list(void);
-void *add_node(struct first_last *fl, void *data);
-void *get_node(struct first_last *fl,
+struct list *init_list(void);
+void *add_node(struct list *fl, void *data);
+void *get_node(struct list *fl,
                void *match_callback,
                void *match,
                void *fallback);
-void *find_node(struct first_last *fl, void *match_callback, void *match);
-void del_node(struct first_last *fl,
+void *find_node(struct list *fl, void *match_callback, void *match);
+void del_node(struct list *fl,
               void *match_callback,
               void *match,
               void *free_external);
-void del_nodes(struct first_last *fl,
+void del_nodes(struct list *fl,
                void *match_callback,
                void *match,
                void *free_external);
-void del_list(struct first_last *fl, void *free_external);
-void act_on_list(struct first_last *fl, void *execute);
-void act_on_list_raw(struct first_last *fl, void *execute);
-void act_on_list_if(struct first_last *fl, void *execute,
+void del_list(struct list *fl, void *free_external);
+void act_on_list(struct list *fl, void *execute);
+void act_on_list_raw(struct list *fl, void *execute);
+void act_on_list_if(struct list *fl, void *execute,
                     void *match_callback, void *match);
-void act_on_list_raw_if(struct first_last *fl, void *execute,
+void act_on_list_raw_if(struct list *fl, void *execute,
                         void *match_callback, void *match);

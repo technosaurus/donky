@@ -96,18 +96,12 @@ void module_destroy(void)
         if (mpd_song)
                 mpd_song = NULL;
 
-        if (mpd_host) {
-                free(mpd_host);
-                mpd_host = NULL;
-        }
+        freenullif((void **)&mpd_host);
 
         if (mpd_port)
                 mpd_port = 0;
 
-        if (mpd_pass) {
-                free(mpd_pass);
-                mpd_pass = NULL;
-        }
+        freenullif((void **)&mpd_pass);
 }
 
 /** 
@@ -132,10 +126,10 @@ void run_cron(void)
 char *get_state(char *args) {
         if (mpd_conn) {
                 switch (mpd_player_get_state(mpd_conn)) {
-                case MPD_PLAYER_PAUSE:   return "Paused";
-	        case MPD_PLAYER_PLAY:    return "Playing";
-	        case MPD_PLAYER_STOP:    return "Stopped";
-                default:                 break;
+                case MPD_PLAYER_PAUSE:  return "Paused";
+	        case MPD_PLAYER_PLAY:   return "Playing";
+	        case MPD_PLAYER_STOP:   return "Stopped";
+                default:                break;
                 }
         }
 

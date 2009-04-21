@@ -42,10 +42,11 @@ void add_mod(char *mod);
 int find_mod(struct cfg *cur, char *mod);
 void add_key(char *mod, char *key, char *value);
 int find_key(struct setting *cur, char *key);
+int parse(char *scan_me, const char *format, char **key, char **value);
 void clear_settings(struct setting *cur_s);
 
 /* Globals */
-struct first_last *cfg_fl = NULL;
+struct list *cfg_fl = NULL;
 
 /** 
  * @brief Add a mod to the configuration list
@@ -55,10 +56,8 @@ struct first_last *cfg_fl = NULL;
 void add_mod(char *mod)
 {
         struct cfg *new_mod = malloc(sizeof(struct cfg));
-
         new_mod->mod = mod;
         new_mod->setting_fl = NULL;
-
         new_mod->setting_fl = init_list();
 
         add_node(cfg_fl, new_mod);
@@ -76,8 +75,8 @@ int find_mod(struct cfg *cur, char *mod)
 {
         if (!strcasecmp(cur->mod, mod))
                 return 1;
-        else
-                return 0;
+
+        return 0;
 }
 
 /** 
@@ -90,16 +89,13 @@ int find_mod(struct cfg *cur, char *mod)
 void add_key(char *mod, char *key, char *value)
 {
         struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
-
         if (!cur)
                 return;
 
         struct setting *new_set = malloc(sizeof(struct setting));
-        
         new_set->key = NULL;
-        new_set->value = NULL;
-
         new_set->key = d_strcpy(key);
+        new_set->value = NULL;
         new_set->value = d_strcpy(value);
 
         add_node(cur->setting_fl, new_set);
@@ -117,8 +113,8 @@ int find_key(struct setting *cur, char *key)
 {
         if(!strcasecmp(cur->key, key))
                 return 1;
-        else
-                return 0;
+
+        return 0;
 }
 
 /** 
@@ -133,22 +129,20 @@ int find_key(struct setting *cur, char *key)
 char *get_char_key(char *mod, char *key, char *otherwise)
 {
         struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
-
         if (!cur) {
                 if (otherwise)
                         return d_strcpy(otherwise);
-                else
-                        return NULL;
+
+                return NULL;
         }
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
-
         if (cur_s && (cur_s->value))
                 return d_strcpy(cur_s->value);
         else if (otherwise)
                 return d_strcpy(otherwise);
-        else
-                return NULL;
+
+        return NULL;
 }
 
 /** 
@@ -163,16 +157,14 @@ char *get_char_key(char *mod, char *key, char *otherwise)
 int get_int_key(char *mod, char *key, int otherwise)
 {
         struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
-
         if (!cur)
                 return otherwise;
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
-
         if (cur_s && (cur_s->value))
                 return atoi(cur_s->value);
-        else
-                return otherwise;
+
+        return otherwise;
 }
 
 /** 
@@ -187,16 +179,14 @@ int get_int_key(char *mod, char *key, int otherwise)
 double get_double_key(char *mod, char *key, double otherwise)
 {
         struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
-
         if (!cur)
                 return otherwise;
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
-
         if (cur_s && (cur_s->value))
                 return atof(cur_s->value);
-        else
-                return otherwise;
+
+        return otherwise;
 }
 
 /** 
@@ -211,12 +201,10 @@ double get_double_key(char *mod, char *key, double otherwise)
 int get_bool_key(char *mod, char *key, int otherwise)
 {
         struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
-
         if (!cur)
                 return otherwise;
 
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
-
         if (cur_s && (cur_s->value)) {
                 if (IS_TRUE(cur_s->value[0]))
                         return 1;
@@ -233,14 +221,11 @@ int get_bool_key(char *mod, char *key, int otherwise)
 void parse_cfg(void)
 {
         char *cfg_file_path = NULL;
-
         asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), ".donkyrc");
 
         FILE *cfg_file = fopen(cfg_file_path, "r");
-
         free(cfg_file_path);
-
-        if (cfg_file == NULL) {
+        if (!cfg_file) {
                 printf("Error: ~/.donkyrc file not found.\n");
                 exit(EXIT_FAILURE);
         }
@@ -294,10 +279,9 @@ void parse_cfg(void)
                 }
 
                 /* scan lines for keys and their values */
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", &key, &value) == 2) { }
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", &key, &value) == 2) { }
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value) == 2)
-                        trim_t(value);
+                else if (parse(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", &key, &value)) { }
+                else if (parse(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", &key, &value)) { }
+                else if (parse(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", &key, &value)) { }
                 else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key) == 1)
                         value = d_strcpy("True");
  
@@ -310,12 +294,15 @@ void parse_cfg(void)
                 /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
                         add_key(mod, key, value);
-                        char *chrkey = get_char_key(mod, key, "ERROR");
-                        printf("added-> mod: %s || key: %s || value: %s ||\n", mod, key, value);
-                        printf("char: %s || int: %d || double: %f || bool: %d ||\n\n",
-                                chrkey, get_int_key(mod, key, -1),
-                                get_double_key(mod, key, -1), get_bool_key(mod, key, -1));
-                        free(chrkey);
+                        char *char_key = get_char_key(mod, key, "ERROR");
+                        printf("added-> mod [%s] key [%s] value [%s]\n",
+                               mod, key, value);
+                        printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
+                               char_key,
+                               get_int_key(mod, key, -1),
+                               get_double_key(mod, key, -1),
+                               get_bool_key(mod, key, -1));
+                        free(char_key);
                 }
 
                 /* free str & reset pointers */
@@ -332,6 +319,28 @@ void parse_cfg(void)
                 del_list(cfg_fl, &clear_cfg);
                 exit(EXIT_FAILURE);
         }
+}
+
+/** 
+ * @brief Parses a line and checks that both key and value were filled.
+ * 
+ * @param scan_me String to scan.
+ * @param format Format to send to sscanf
+ * @param key Pointer to key pointer
+ * @param value Pointer to value pointer
+ * 
+ * @return 1 if parse was fully successfully, 0 if not
+ */
+int parse(char *scan_me, const char *format, char **key, char **value)
+{
+        int filled = sscanf(scan_me, format, key, value);
+        if (filled != 2) {
+                freenullif((void **)key);
+                freenullif((void **)value);
+                return 0;
+        }
+
+        return 1;
 }
 
 /** 

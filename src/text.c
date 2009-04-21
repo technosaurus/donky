@@ -40,7 +40,7 @@ void text_section_split(char *text, unsigned int line);
 void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 
 /* Globals. */
-struct first_last *ts_fl;
+struct list *ts_fl;
 
 /**
  * @brief Start up the output text parsing.
@@ -249,7 +249,7 @@ void text_section_var_modvar(char *value,
                              struct module_var *mvar,
                              double timeout)
 {
-        struct list *cur = ts_fl->first;
+        struct list_item *cur = ts_fl->first;
         struct text_section *ts_cur;
 
         while (cur != NULL) {

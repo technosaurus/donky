@@ -37,7 +37,7 @@ void mem_list_add(void *ptr);
 void mem_list_clear(void);
 
 /* Globals. */
-struct first_last *mem_fl = NULL;
+struct list *mem_fl = NULL;
 
 /**
  * @brief Malloc wrapper.

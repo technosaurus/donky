@@ -21,7 +21,7 @@
 struct cfg {
         char *mod;
 
-        struct first_last *setting_fl;
+        struct list *setting_fl;
 };
 
 /* function prototypes */

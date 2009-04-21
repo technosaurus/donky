@@ -38,8 +38,8 @@ void module_unload(char *name);
 void *module_get_sym(void *handle, char *name);
 
 /* Globals. */
-struct first_last *module_fl = NULL;
-struct first_last *module_var_fl = NULL;
+struct list *module_fl = NULL;
+struct list *module_var_fl = NULL;
 int module_var_used = 0;
 
 /**

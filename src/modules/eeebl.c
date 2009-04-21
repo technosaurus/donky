@@ -64,8 +64,8 @@ int module_init(void)
 /* These run on module unload */
 void module_destroy(void)
 {
-        freeif(cur_bl);
-        freeif(max_bl);
+        freenullif((void **)&cur_bl);
+        freenullif((void **)&max_bl);
 }
 
 /** 
@@ -73,11 +73,7 @@ void module_destroy(void)
  */
 void eeebl_cron(void)
 {
-        if (cur_bl) {
-                free(cur_bl);
-                cur_bl = NULL;
-        }
-
+        freenullif((void **)&cur_bl);
         get_cur_bl();
 }
 

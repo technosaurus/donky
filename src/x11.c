@@ -322,8 +322,8 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
         extern int donky_reload;
         extern int donky_exit;
 
-        extern struct first_last *ts_fl;
-        struct list *cur = ts_fl->first;
+        extern struct list *ts_fl;
+        struct list_item *cur = ts_fl->first;
         struct text_section *ts_cur = NULL;
 
         struct draw_settings *ds = draw_settings_load(xc, ws);
