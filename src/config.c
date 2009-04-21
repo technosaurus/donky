@@ -42,6 +42,7 @@ void add_mod(char *mod);
 int find_mod(struct cfg *cur, char *mod);
 void add_key(char *mod, char *key, char *value);
 int find_key(struct setting *cur, char *key);
+
 void clear_settings(struct setting *cur_s);
 
 /* Globals */

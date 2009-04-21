@@ -270,17 +270,16 @@ char *bytes_to_bigger(unsigned long bytes)
 }
 
 /** 
- * @brief Conditional sscanf. If n number of matches and assignments were
- *        not made, we make sure to check and free the matches and assignments
- *        that *were* made, because we're uninterested in them and do not want
- *        to leak memory.
+ * @brief Conditional sscanf wrapper. If the amount of matches and assignments
+ *        do not equal parameter int n, free and NULL anything that *was*
+ *        matched and assigned. In other words, it's an all-or-nothing sscanf.
  * 
- * @param str vsscanf str parameter
- * @param format vsscanf format parameter
- * @param n Number of arguments sent to be matched and assigned.
- * @param ... Variable number of arguments to be matched and assigned
+ * @param str sscanf parameter
+ * @param format sscanf parameter
+ * @param n Number of arguments you're sending to be matched and assigned
+ * @param ... sscanf parameter
  * 
- * @return 1 on success, 0 on failure
+ * @return 1 if everything was matched and assigned successfully, else 0
  */
 int csscanf(const char *str, const char *format, int n, ...)
 {
@@ -292,10 +291,10 @@ int csscanf(const char *str, const char *format, int n, ...)
 
         if (vsscanf(str, format, aq) != n) {
                 int i;
-                char **p;
+                void **p;
                 for (i = 0; i < n; i++) {
-                        p = va_arg(ap, char **);
-                        freenullif((void **)p);
+                        p = va_arg(ap, void **);
+                        freenullif(p);
                 }
 
                 success = 0;
