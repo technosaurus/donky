@@ -18,6 +18,7 @@
 #define _GNU_SOURCE
 #include <math.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -168,33 +169,6 @@ double get_time(void)
         return (double) timev.tv_sec + (((double) timev.tv_usec) / 1000000);
 }
 
-/**
- * @brief Free a pointer if it is not NULL.
- */
-void freeif(void *ptr)
-{
-        if (ptr)
-                free(ptr);
-}
-
-/** 
- * @brief The bastard son of freeif()
- * 
- * @param ptr Pointer to the pointer you want to free and NULL.
- *            You have to pass to this function like...
- *
- *            freenullif((void **)&pointer);
- *
- *            ...or gcc throws a warning (still works though).
- */
-void freenullif(void **ptr)
-{
-        if (*ptr) {
-                free(*ptr);
-                *ptr = NULL;
-        }
-}
-
 /** 
  * @brief A quicker alternative to strdup
  * 
@@ -281,23 +255,23 @@ char *bytes_to_bigger(unsigned long bytes)
  * 
  * @return 1 if everything was matched and assigned successfully, else 0
  */
-int csscanf(const char *str, const char *format, int n, ...)
+bool csscanf(const char *str, const char *format, int n, ...)
 {
         va_list ap, aq;
         va_start(ap, n);
         va_copy(aq, ap);
 
-        unsigned int success = 1;
+        bool success = true;
 
         if (vsscanf(str, format, aq) != n) {
                 int i;
                 void **p;
                 for (i = 0; i < n; i++) {
                         p = va_arg(ap, void **);
-                        freenullif(p);
+                        freenullif(*p);
                 }
 
-                success = 0;
+                success = false;
         }
 
         va_end(ap);

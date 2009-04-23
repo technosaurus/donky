@@ -18,6 +18,35 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <stdbool.h>
+
+/**
+ * @brief Free a pointer if it isn't NULL.
+ */
+#define freeif(ptr) \
+        do { \
+                if (ptr) \
+                        free(ptr); \
+        } while (0)
+
+/** 
+ * @brief Free and NULL a pointer.
+ */
+#define freenull(ptr) \
+        do { \
+                free(ptr); \
+                (ptr) = NULL; \
+        } while (0)
+
+/** 
+ * @brief Free and NULL a pointer if it isn't NULL.
+ */
+#define freenullif(ptr) \
+        do { \
+                if (ptr) \
+                        freenull(ptr); \
+        } while (0)
+
 char *trim(char *);
 char *trim_l(char *);
 void trim_t(char *);
@@ -27,11 +56,9 @@ char *chop(char *);
 char *chomp(char *);
 char *substr(char *, int, int);
 double get_time(void);
-void freeif(void *ptr);
-void freenullif(void **ptr);
 char *d_strcpy(const char *str);
 char *d_strncpy(const char *str, int n);
 char *bytes_to_bigger(unsigned long bytes);
-int csscanf(const char *str, const char *format, int n, ...);
+bool csscanf(const char *str, const char *format, int n, ...);
 
 #endif /* UTIL_H */

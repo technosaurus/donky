@@ -18,6 +18,7 @@
 #ifndef X11_H
 #define X11_H
 
+#include <stdbool.h>
 #include <X11/Xlib.h>
 
 #include "text.h"
@@ -40,8 +41,8 @@ struct donky_color {
 };
 
 struct window_settings {
-        unsigned int own_window;
-        unsigned int override;
+        bool own_window;
+        bool override;
 
         uint16_t width;
         uint16_t height;

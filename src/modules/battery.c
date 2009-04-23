@@ -100,7 +100,7 @@ void batt_cron(void)
  */
 void clear_remaining_charge(struct batt *batt)
 {
-        freenullif((void **)&batt->remaining_charge);
+        freenullif(batt->remaining_charge);
 }
 
 /** 

@@ -96,12 +96,12 @@ void module_destroy(void)
         if (mpd_song)
                 mpd_song = NULL;
 
-        freenullif((void **)&mpd_host);
+        freenullif(mpd_host);
 
         if (mpd_port)
                 mpd_port = 0;
 
-        freenullif((void **)&mpd_pass);
+        freenullif(mpd_pass);
 }
 
 /** 

@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,7 +44,7 @@ struct render_queue {
         int16_t cl_ypos;
         uint16_t cl_width;
         uint16_t cl_height;
-        int is_last;
+        bool is_last;
 
         struct render_queue *next;
 };
@@ -178,7 +179,7 @@ void render_queue_add(char *value,
                       int16_t cl_ypos,
                       uint16_t cl_width,
                       uint16_t cl_height,
-                      unsigned int *is_last)
+                      bool *is_last)
 {
         struct render_queue *n = malloc(sizeof(struct render_queue));
 

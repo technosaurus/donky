@@ -18,6 +18,7 @@
 #ifndef RENDER_H
 #define RENDER_H
 
+#include <stdbool.h>
 #include "module.h"
 #include "x11.h"
 
@@ -39,7 +40,7 @@ void render_queue_add(char *value,
                       int16_t cl_ypos,
                       uint16_t cl_width,
                       uint16_t cl_height,
-                      unsigned int *is_last);
+                      bool *is_last);
 uint32_t get_color(xcb_connection_t *connection,
                    xcb_screen_t *screen,
                    char *name);

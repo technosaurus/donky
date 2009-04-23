@@ -18,6 +18,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include <stdbool.h>
+
 struct cfg {
         char *mod;
 
@@ -28,8 +30,8 @@ struct cfg {
 char *get_char_key(char *mod, char *key, char *otherwise);
 int get_int_key(char *mod, char *key, int otherwise);
 double get_double_key(char *mod, char *key, double otherwise);
-int get_bool_key(char *mod, char *key, int otherwise);
-void parse_cfg (void);
+bool get_bool_key(char *mod, char *key, bool otherwise);
+void parse_cfg(void);
 void clear_cfg(struct cfg *cur);
 
 /* holds [text] */

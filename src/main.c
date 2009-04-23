@@ -115,21 +115,27 @@ int main(int argc, char **argv)
 void initialize_stuff(void)
 {
         while (1) {
+                printf("Welcome to donky! Have a mint.\n");
+
+                xc = NULL;
+                ws = NULL;
+
+                printf("Making X connection...\n");
                 xc = init_x_connection();
-                printf("made X connection\n");
 
+                printf("Parsing .donkyrc...\n");
                 parse_cfg();
-                printf("parsed config\n");
 
+                printf("Parsing [text]...\n");
                 parse_text();
-                printf("parsed [text]\n");
 
+                printf("Loading modules...\n");
                 module_load_all();
-                printf("loaded modules\n");
 
+                printf("Drawing donky's window...\n");
                 ws = draw_window(xc);
-                printf("drew window\n");
 
+                printf("Starting the donky loop (TM)... >_<\n");
                 donky_loop(xc, ws);
 
                 clean_up_everything();
@@ -149,12 +155,22 @@ void initialize_stuff(void)
  */
 void clean_up_everything(void)
 {
-        extern struct first_last *cfg_fl;
-        extern struct first_last *ts_fl;
+        extern struct list *cfg_fl;
+        extern struct list *ts_fl;
 
+        printf("Clearing config list...");
         del_list(cfg_fl, &clear_cfg);
+        cfg_fl = NULL;
+        printf(" done.\n");
+
+        printf("Clearing text_section list...");
         del_list(ts_fl, &clear_text);
+        ts_fl = NULL;
+        printf(" done.\n");
+
+        printf("Clearing modules...");
         clear_module();
+        printf(" done.\n");
 }
 
 /**
@@ -162,6 +178,7 @@ void clean_up_everything(void)
  */
 void sigterm_handler(int signum)
 {
+        printf("donky is OUT like California lights. PEACE!\n");
         donky_exit = 1;
 }
 
@@ -170,6 +187,7 @@ void sigterm_handler(int signum)
  */
 void sighup_handler(int signum)
 {
+        printf("donky is reloading... brb...\n");
         donky_reload = 1;
 }
 
@@ -178,5 +196,6 @@ void sighup_handler(int signum)
  */
 void sigint_handler(int signum)
 {
+        printf("donky is exiting. Later d00d.\n");
         donky_exit = 1;
 }

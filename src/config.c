@@ -198,7 +198,7 @@ double get_double_key(char *mod, char *key, double otherwise)
  * 
  * @return The boolean value of key, or 'otherwise'
  */
-int get_bool_key(char *mod, char *key, int otherwise)
+bool get_bool_key(char *mod, char *key, bool otherwise)
 {
         struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
         if (!cur)
@@ -207,9 +207,9 @@ int get_bool_key(char *mod, char *key, int otherwise)
         struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
         if (cur_s && (cur_s->value)) {
                 if (IS_TRUE(cur_s->value[0]))
-                        return 1;
+                        return true;
                 else if (IS_FALSE(cur_s->value[0]))
-                        return 0;
+                        return false;
         }
 
         return otherwise;
@@ -233,41 +233,41 @@ void parse_cfg(void)
         /* initialize our cfg list */
         cfg_fl = init_list();
 
-        /* these will hold/point to lines in .donkyrc */
         char *str = NULL;
         size_t len = 0;
 
-        /* these will hold successfully parsed... stuff */
         char *mod = NULL;
         char *key = NULL;
         char *value = NULL;
+
+        /* the various sscanf formats we attempt to parse with, in order */
+        const char *format[5] = {
+                " [%a[a-zA-Z0-9_-]]",                   /* [mod]            */
+                " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ",      /* key = "value"    */
+                " %a[a-zA-Z0-9_-] = '%a[^\']' ",        /* key = 'value'    */
+                " %a[a-zA-Z0-9_-] = %a[^;\n] ",         /* key = value      */
+                " %a[a-zA-Z0-9_-] "                     /* key              */
+        };
 
         /* used by [text] */
         cfg_text = NULL;
 
         while ((getline(&str, &len, cfg_file)) != -1) {
-                /* Skip comments. */
                 if (is_comment(str)) {
-                        free(str);
-                        str = NULL;
+                        freenull(str);
                         continue;
                 }
 
-                /* scan for [mods] - don't add_mod if [text] */
-                if (sscanf(str, " [%a[a-zA-Z0-9_-]]", &mod)) {
-                        if (strcasecmp(mod, "text") != 0)
+                if (sscanf(str, format[0], &mod)) {
+                        if (strcasecmp(mod, "text"))
                                 add_mod(mod);
-
                         continue;
                 }
 
-                /* handle [text]: store all lines until the
-                 * next [mod] into cfg_text */
                 if (mod && !strcasecmp(mod, "text")) {
                         if (cfg_text == NULL) {
                                 cfg_text = d_strcpy(str);
                         } else {
-                                /* resize cfg_text so we can add more to it */
                                 cfg_text = realloc(cfg_text,
                                                    strlen(cfg_text) +
                                                         strlen(str) +
@@ -278,21 +278,18 @@ void parse_cfg(void)
                         continue;
                 }
 
-                /* scan lines for keys and their values */
-                else if (csscanf(str, " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ", 2, &key, &value)) { }
-                else if (csscanf(str, " %a[a-zA-Z0-9_-] = '%a[^\']' ", 2, &key, &value)) { }
-                else if (csscanf(str, " %a[a-zA-Z0-9_-] = %a[^;\n] ", 2, &key, &value))
+                else if (csscanf(str, format[1], 2, &key, &value)) { }
+                else if (csscanf(str, format[2], 2, &key, &value)) { }
+                else if (csscanf(str, format[3], 2, &key, &value))
                         trim_t(value);
-                else if (sscanf(str, " %a[a-zA-Z0-9_-] ", &key))
+                else if (sscanf(str, format[4], &key))
                         value = d_strcpy("True");
  
-                /* if the value is "" or '', set it to False */
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
                         free(value);
                         value = d_strcpy("False");
                 }
 
-                /* if we have all required ingredients, make an entry */
                 if (mod && key && value) {
                         add_key(mod, key, value);
                         char *char_key = get_char_key(mod, key, "ERROR");
@@ -306,11 +303,9 @@ void parse_cfg(void)
                         free(char_key);
                 }
 
-                /* free str & reset pointers */
-                free(str);
-                str = NULL;
-                value = NULL;
-                key = NULL;
+                freenull(str);
+                freenullif(key);
+                freenullif(value);
         }
 
         fclose(cfg_file);

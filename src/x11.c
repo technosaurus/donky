@@ -17,6 +17,7 @@
 
 #define _GNU_SOURCE
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,32 +64,32 @@ void handle_TEXT_STATIC(struct text_section *cur,
                         struct draw_settings *ds,
                         int16_t *new_xpos,
                         int16_t *new_ypos,
-                        unsigned int *force,
+                        bool *force,
                         int *line_heights,
                         int *calcd_line_heights,
-                        unsigned int *is_last);
+                        bool *is_last);
 void handle_TEXT_VARIABLE(struct text_section *cur,
                           struct draw_settings *ds,
                           int16_t *new_xpos,
                           int16_t *new_ypos,
-                          unsigned int *force,
+                          bool *force,
                           int *line_heights,
                           int *calcd_line_heights,
-                          unsigned int *is_last);
+                          bool *is_last);
 void handle_VARIABLE_STR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last,
-                         unsigned int *force,
-                         unsigned int *moved);
+                         bool *is_last,
+                         bool *force,
+                         bool *moved);
 void handle_VARIABLE_BAR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last,
-                         unsigned int *force,
-                         unsigned int *moved);
+                         bool *is_last,
+                         bool *force,
+                         bool *moved);
 void clean_x(struct x_connection *xc,
              struct window_settings *ws,
              struct draw_settings *ds,
@@ -187,7 +188,7 @@ struct window_settings *window_settings_load(struct x_connection *xc)
 
         /* draw donky in its own window? if not, draw to root */
         ws->own_window = get_bool_key("X11", "own_window", DEFAULT_OWN_WINDOW);
-        if (ws->own_window <= 0)
+        if (ws->own_window == true)
                 xc->window = xc->screen->root;
 
         /* check if donky's window should override wm control */
@@ -329,7 +330,7 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
         struct draw_settings *ds = draw_settings_load(xc, ws);
 
         xcb_generic_event_t *e = NULL;
-        unsigned int force = 0;
+        bool force = false;
 
         /* new_xpos and new_ypos hold the coords
          * of where we'll be drawing anything new */
@@ -343,20 +344,20 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
         int linediff;
         int i;
 
-        unsigned int is_last;
+        bool is_last;
 
         /* Infinite donky loop! (TM) :o */
         while (!donky_reload && !donky_exit) {
-                if (force)
-                        force = 0;
+                if (force == true)
+                        force = false;
 
                 /* Do a quick event poll. */
                 while (e = xcb_poll_for_event(xc->connection)) {
                         switch (e->response_type & ~0x80) {
                         case XCB_EXPOSE:
                                 /* force redraw everything */
-                                if (!force)
-                                        force = 1;
+                                if (force == false)
+                                        force = true;
                                 break;
                         default:
                                 break;
@@ -376,9 +377,9 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                         if ((cur->next == NULL) ||
                             (ts_cur->line !=
                              ((struct text_section *) cur->next->data)->line))
-                                is_last = 1;
+                                is_last = true;
                         else
-                                is_last = 0;
+                                is_last = false;
 
                         switch (ts_cur->type) {
                         case TEXT_FONT:
@@ -515,10 +516,10 @@ void handle_TEXT_STATIC(struct text_section *cur,
                         struct draw_settings *ds,
                         int16_t *new_xpos,
                         int16_t *new_ypos,
-                        unsigned int *force,
+                        bool *force,
                         int *line_heights,
                         int *calcd_line_heights,
-                        unsigned int *is_last)
+                        bool *is_last)
 {
         if (cur->xpos != -1 && (cur->xpos == *new_xpos) && !*force)
                 return;
@@ -590,10 +591,10 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
                           struct draw_settings *ds,
                           int16_t *new_xpos,
                           int16_t *new_ypos,
-                          unsigned int *force,
+                          bool *force,
                           int *line_heights,
                           int *calcd_line_heights,
-                          unsigned int *is_last)
+                          bool *is_last)
 {
         /* if force = 0 and our x position
          * hasn't changed, respect timeouts. */
@@ -616,13 +617,14 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
         if (cur->mod_var->sym == NULL)
                 return;
 
-        unsigned int moved = 0;
+        bool moved;
 
-        if ((cur->xpos != *new_xpos) ||
-            (cur->ypos != *new_ypos)) {
+        if ((cur->xpos != *new_xpos) || (cur->ypos != *new_ypos)) {
                 cur->xpos = *new_xpos;
                 cur->ypos = *new_ypos;
-                moved = 1;
+                moved = true;
+        } else {
+                moved = false;
         }
 
         switch (cur->mod_var->type) {
@@ -671,9 +673,9 @@ void handle_VARIABLE_STR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last,
-                         unsigned int *force,
-                         unsigned int *moved)
+                         bool *is_last,
+                         bool *force,
+                         bool *moved)
 {
         int changed = 0;
 
@@ -762,9 +764,9 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
-                         unsigned int *is_last,
-                         unsigned int *force,
-                         unsigned int *moved)
+                         bool *is_last,
+                         bool *force,
+                         bool *moved)
 {
         int changed = 0;
 
@@ -856,7 +858,7 @@ void clean_x(struct x_connection *xc,
              struct draw_settings *ds,
              int *line_heights)
 {
-        printf("Cleaning up... ");
+        printf("Cleaning up in x11 and closing X connection... ");
 
         freeif(line_heights);
         XFreeFontInfo(NULL, ds->font_struct, 0);
