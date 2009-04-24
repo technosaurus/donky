@@ -103,7 +103,10 @@ void clean_x(struct x_connection *xc,
 struct x_connection *init_x_connection(void)
 {
         struct x_connection *xc = malloc(sizeof(struct x_connection));
-        xcb_screen_iterator_t screen_iter;
+        xc->display = NULL;
+        xc->connection = NULL;
+        xc->screen = NULL;
+
         int screen_number;
 
         xc->display = XOpenDisplay(NULL);
@@ -113,8 +116,7 @@ struct x_connection *init_x_connection(void)
                 exit(EXIT_FAILURE);
         }
 
-        xc->screen = NULL;
-
+        xcb_screen_iterator_t screen_iter;
         screen_iter = xcb_setup_roots_iterator(xcb_get_setup(xc->connection));
 
         /* find our current screen */
@@ -147,30 +149,25 @@ struct x_connection *init_x_connection(void)
 struct window_settings *window_settings_load(struct x_connection *xc)
 {
         struct window_settings *ws = malloc(sizeof(struct window_settings));
-        char *bg_color_name = NULL;
-        char *fg_color_name = NULL;
-        uint16_t x_gap;
-        uint16_t y_gap;
-        char *alignment = NULL;
 
         /* Setup window bg and fg colors */
-        bg_color_name = get_char_key("X11",
-                                     "window_bgcolor",
-                                     DEFAULT_WINDOW_BGCOLOR);
-        fg_color_name = get_char_key("X11",
-                                     "window_fgcolor",
-                                     DEFAULT_WINDOW_FGCOLOR);
+        char *bg_color_name = get_char_key("X11",
+                                           "window_bgcolor",
+                                           DEFAULT_WINDOW_BGCOLOR);
+        char *fg_color_name = get_char_key("X11",
+                                           "window_fgcolor",
+                                           DEFAULT_WINDOW_FGCOLOR);
         ws->bg_color = get_color(xc->connection, xc->screen, bg_color_name);
         ws->fg_color = get_color(xc->connection, xc->screen, fg_color_name);
         free(bg_color_name);
         free(fg_color_name);
 
         /* get window dimensions, gaps, and calculate alignment */
+        char *alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
+        uint16_t x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
+        uint16_t y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
         ws->width = get_int_key("X11", "window_width", DEFAULT_WINDOW_WIDTH);
         ws->height = get_int_key("X11", "window_height", DEFAULT_WINDOW_HEIGHT);
-        x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
-        y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
-        alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
         if (strcasecmp(alignment, "bottom_left") == 0) {
                 ws->x_offset = 0 + x_gap;
                 ws->y_offset = xc->screen->height_in_pixels - ws->height - y_gap;
@@ -188,7 +185,7 @@ struct window_settings *window_settings_load(struct x_connection *xc)
 
         /* draw donky in its own window? if not, draw to root */
         ws->own_window = get_bool_key("X11", "own_window", DEFAULT_OWN_WINDOW);
-        if (ws->own_window == true)
+        if (ws->own_window == false)
                 xc->window = xc->screen->root;
 
         /* check if donky's window should override wm control */
@@ -257,10 +254,7 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
                                          struct window_settings *ws)
 {
         struct draw_settings *ds = malloc(sizeof(struct draw_settings));
-        double min_sleep;
-        int min_seconds;
-        long min_nanoseconds;
-
+        
         /* Set up user configured font or default font. */
         ds->font_name = get_char_key("X11", "default_font", DEFAULT_FONT);
         ds->font_struct = XLoadQueryFont(xc->display, ds->font_name);
@@ -303,9 +297,11 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
         }
 
         /* Setup minimum sleep time. */
-        min_sleep = get_double_key("X11", "global_sleep", DEFAULT_GLOBAL_SLEEP);
-        min_seconds = floor(min_sleep);
-        min_nanoseconds = (min_sleep - min_seconds) * pow(10, 9);
+        double min_sleep = get_double_key("X11",
+                                          "global_sleep",
+                                          DEFAULT_GLOBAL_SLEEP);
+        int min_seconds = floor(min_sleep);
+        long min_nanoseconds = (min_sleep - min_seconds) * pow(10, 9);
         ds->tspec.tv_sec = min_seconds;
         ds->tspec.tv_nsec = min_nanoseconds;
 
@@ -323,9 +319,10 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
         extern int donky_reload;
         extern int donky_exit;
 
-        extern struct list *ts_fl;
-        struct list_item *cur = ts_fl->first;
+        extern struct list *ts_ls;
+        struct list_item *cur = ts_ls->first;
         struct text_section *ts_cur = NULL;
+        struct text_section *ts_next = NULL;
 
         struct draw_settings *ds = draw_settings_load(xc, ws);
 
@@ -338,8 +335,8 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
         int16_t new_ypos = ds->font_y_offset;
 
         /* Line height pewp. */
-        int *line_heights = calloc(sizeof(int),
-                                   ((struct text_section *) ts_fl->last->data)->line + 1);
+        struct text_section *ts_last = ts_ls->last->data;
+        int *line_heights = calloc(sizeof(int), ts_last->line + 1);
         int calcd_line_heights = 0;
         int linediff;
         int i;
@@ -373,13 +370,17 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
 
                 while (cur) {
                         ts_cur = cur->data;
-                        
-                        if ((cur->next == NULL) ||
-                            (ts_cur->line !=
-                             ((struct text_section *) cur->next->data)->line))
+
+                        if (cur->next) {
+                                ts_next = cur->next->data;
+                                if (ts_cur->line == ts_next->line)
+                                        is_last = false;
+                                else
+                                        is_last = true;
+                        } else {
+                                ts_next = NULL;
                                 is_last = true;
-                        else
-                                is_last = false;
+                        }
 
                         switch (ts_cur->type) {
                         case TEXT_FONT:
@@ -414,34 +415,27 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
 
                         /* if we have a following node, we need
                            to know where to start drawing it */
-                        if (cur->next) {
+                        if (ts_next && (ts_cur->line == ts_next->line)) {
                                 new_xpos += ts_cur->pixel_width;
+                        } else if (ts_next && (ts_cur->line != ts_next->line)) {
+                                /* Set xpos to beginning of line! */
+                                new_xpos = ds->font_x_offset;
 
-                                if (ts_cur->line !=
-                                    ((struct text_section *) cur->next->data)->line) {
-                                        /* Set xpos to beginning of line! */
-                                        new_xpos = ds->font_x_offset;
+                                /* Calculate the difference in lines
+                                 * (Needed for multiple blank lines
+                                 *  between text.) */
+                                linediff = ts_next->line - ts_cur->line - 1;
 
-                                        /* Calculate the difference in lines
-                                         * (Needed for multiple blank lines
-                                         *  between text.) */
-                                        linediff = ((struct text_section *) cur->next->data)->line -
-                                                   ts_cur->line - 1;
+                                if (line_heights[ts_cur->line] >
+                                    ds->min_line_height)
+                                        new_ypos += line_heights[ts_cur->line];
+                                else
+                                        new_ypos += ds->min_line_height +
+                                                    ds->min_line_spacing;
 
-                                        if (line_heights[ts_cur->line] >
-                                            ds->min_line_height)
-                                                new_ypos +=
-                                                        line_heights[ts_cur->line];
-                                        else
-                                                new_ypos +=
-                                                        ds->min_line_height +
-                                                        ds->min_line_spacing;
-
-                                        for (i = 0; i < linediff; i++)
-                                                new_ypos +=
-                                                        ds->min_line_height +
-                                                        ds->min_line_spacing;
-                                }
+                                for (i = 0; i < linediff; i++)
+                                        new_ypos += ds->min_line_height +
+                                                    ds->min_line_spacing;
                         } else {
                                 new_xpos = ds->font_x_offset;
                                 new_ypos = ds->font_y_offset;
@@ -458,7 +452,7 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                 mem_list_clear();
 
                 /* Reset cur. */
-                cur = ts_fl->first;
+                cur = ts_ls->first;
 
                 /* Set a flag so we know we've
                  * already calc'd all line heights. */
@@ -618,7 +612,6 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
                 return;
 
         bool moved;
-
         if ((cur->xpos != *new_xpos) || (cur->ypos != *new_ypos)) {
                 cur->xpos = *new_xpos;
                 cur->ypos = *new_ypos;
@@ -805,7 +798,7 @@ void handle_VARIABLE_BAR(struct text_section *cur,
                         cur->int_result = new;
                         changed = 1;
                 }
-                        
+
                 cur->last_update = get_time();
         }
 

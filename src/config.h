@@ -23,7 +23,7 @@
 struct cfg {
         char *mod;
 
-        struct list *setting_fl;
+        struct list *setting_ls;
 };
 
 /* function prototypes */

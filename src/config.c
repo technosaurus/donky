@@ -46,7 +46,7 @@ int find_key(struct setting *cur, char *key);
 void clear_settings(struct setting *cur_s);
 
 /* Globals */
-struct list *cfg_fl = NULL;
+struct list *cfg_ls = NULL;
 
 /** 
  * @brief Add a mod to the configuration list
@@ -57,10 +57,10 @@ void add_mod(char *mod)
 {
         struct cfg *new_mod = malloc(sizeof(struct cfg));
         new_mod->mod = mod;
-        new_mod->setting_fl = NULL;
-        new_mod->setting_fl = init_list();
+        new_mod->setting_ls = NULL;
+        new_mod->setting_ls = init_list();
 
-        add_node(cfg_fl, new_mod);
+        add_node(cfg_ls, new_mod);
 }
 
 /** 
@@ -88,7 +88,7 @@ int find_mod(struct cfg *cur, char *mod)
  */
 void add_key(char *mod, char *key, char *value)
 {
-        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
+        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return;
 
@@ -98,7 +98,7 @@ void add_key(char *mod, char *key, char *value)
         new_set->value = NULL;
         new_set->value = d_strcpy(value);
 
-        add_node(cur->setting_fl, new_set);
+        add_node(cur->setting_ls, new_set);
 }
 
 /** 
@@ -128,7 +128,7 @@ int find_key(struct setting *cur, char *key)
  */
 char *get_char_key(char *mod, char *key, char *otherwise)
 {
-        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
+        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur) {
                 if (otherwise)
                         return d_strcpy(otherwise);
@@ -136,7 +136,7 @@ char *get_char_key(char *mod, char *key, char *otherwise)
                 return NULL;
         }
 
-        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
+        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
                 return d_strcpy(cur_s->value);
         else if (otherwise)
@@ -156,11 +156,11 @@ char *get_char_key(char *mod, char *key, char *otherwise)
  */
 int get_int_key(char *mod, char *key, int otherwise)
 {
-        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
+        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
+        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
                 return atoi(cur_s->value);
 
@@ -178,11 +178,11 @@ int get_int_key(char *mod, char *key, int otherwise)
  */
 double get_double_key(char *mod, char *key, double otherwise)
 {
-        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
+        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
+        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
                 return atof(cur_s->value);
 
@@ -200,11 +200,11 @@ double get_double_key(char *mod, char *key, double otherwise)
  */
 bool get_bool_key(char *mod, char *key, bool otherwise)
 {
-        struct cfg *cur = find_node(cfg_fl, &find_mod, mod);
+        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_s = find_node(cur->setting_fl, &find_key, key);
+        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value)) {
                 if (IS_TRUE(cur_s->value[0]))
                         return true;
@@ -231,7 +231,7 @@ void parse_cfg(void)
         }
 
         /* initialize our cfg list */
-        cfg_fl = init_list();
+        cfg_ls = init_list();
 
         char *str = NULL;
         size_t len = 0;
@@ -312,7 +312,7 @@ void parse_cfg(void)
 
         if (cfg_text == NULL) {
                 printf("Config error: missing [text] section.");
-                del_list(cfg_fl, &clear_cfg);
+                del_list(cfg_ls, &clear_cfg);
                 exit(EXIT_FAILURE);
         }
 }
@@ -325,7 +325,7 @@ void parse_cfg(void)
 void clear_cfg(struct cfg *cur)
 {
         freeif(cur->mod);
-        del_list(cur->setting_fl, &clear_settings);
+        del_list(cur->setting_ls, &clear_settings);
 }
 
 /** 

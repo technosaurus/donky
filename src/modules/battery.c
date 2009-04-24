@@ -56,12 +56,12 @@ char *get_maximum_charge(char *args);
 void clear_batt(struct batt *cur);
 
 /* Globals */
-struct list *fl = NULL;
+struct list *batt_ls = NULL;
 
 /* These run on module startup */
 int module_init(void)
 {
-        fl = init_list();
+        batt_ls = init_list();
 
         module_var_add(module_name, "battp", "get_battp", 30.0, VARIABLE_STR);
         module_var_add(module_name, "battr", "get_battr", 30.0, VARIABLE_STR);
@@ -79,7 +79,7 @@ int module_init(void)
 /* These run on module unload */
 void module_destroy(void)
 {
-        del_list(fl, &clear_batt);
+        del_list(batt_ls, &clear_batt);
 }
 
 /** 
@@ -89,7 +89,7 @@ void module_destroy(void)
  */
 void batt_cron(void)
 {
-        act_on_list(fl, &clear_remaining_charge);
+        act_on_list(batt_ls, &clear_remaining_charge);
 }
 
 /** 
@@ -193,7 +193,7 @@ int get_battb(char *args)
  */
 struct batt *prepare_batt(char *batt_number)
 {
-        struct batt *batt = get_node(fl, &find_batt, batt_number, &add_batt);
+        struct batt *batt = get_node(batt_ls, &find_batt, batt_number, &add_batt);
         if (batt->remaining_charge == NULL)
                 batt->remaining_charge = get_remaining_charge(batt->number);
 
@@ -217,7 +217,7 @@ struct batt *add_batt(char *batt_number)
         new->number = d_strcpy(batt_number);
         new->maximum_charge = get_maximum_charge(new->number);
 
-        return add_node(fl, new);
+        return add_node(batt_ls, new);
 }
 
 /** 

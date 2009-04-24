@@ -38,8 +38,8 @@ void module_unload(char *name);
 void *module_get_sym(void *handle, char *name);
 
 /* Globals. */
-struct list *module_fl = NULL;
-struct list *module_var_fl = NULL;
+struct list *module_ls = NULL;
+struct list *module_var_ls = NULL;
 int module_var_used = 0;
 
 /**
@@ -61,10 +61,10 @@ int module_add(char *name, void *handle, void *destroy)
         n->destroy = destroy;
 
         /* Add to linked list. */
-        if (module_fl == NULL)
-                module_fl = init_list();
+        if (module_ls == NULL)
+                module_ls = init_list();
 
-        add_node(module_fl, n);
+        add_node(module_ls, n);
 
         return 1;
 }
@@ -94,7 +94,7 @@ int module_find_cb(struct module *cur, char *match)
  */
 struct module *module_find(char *name)
 {
-        return find_node(module_fl, &module_find_cb, name);
+        return find_node(module_ls, &module_find_cb, name);
 }
 
 /**
@@ -143,10 +143,10 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
         text_section_var_modvar(name, n, user_timeout);
 
         /* Add to linked list. */
-        if (module_var_fl == NULL)
-                module_var_fl = init_list();
+        if (module_var_ls == NULL)
+                module_var_ls = init_list();
 
-        add_node(module_var_fl, n);
+        add_node(module_var_ls, n);
 
         return 1;
 }
@@ -176,7 +176,7 @@ int module_var_find_cb(struct module_var *cur, char *match)
  */
 struct module_var *module_var_find(char *name)
 {
-        return find_node(module_var_fl, &module_var_find_cb, name);
+        return find_node(module_var_ls, &module_var_find_cb, name);
 }
 
 /**
@@ -217,10 +217,10 @@ int module_var_cron_add(char *parent, char *name, char *method, double timeout)
         n->parent = mod;
 
         /* Add to linked list. */
-        if (module_var_fl == NULL)
-                module_var_fl = init_list();
+        if (module_var_ls == NULL)
+                module_var_ls = init_list();
 
-        add_node(module_var_fl, n);
+        add_node(module_var_ls, n);
 
         return 1;
 }
@@ -248,7 +248,7 @@ int module_var_cron_clear_cb(struct module_var *cur, struct module *parent)
  */
 void module_var_cron_clear(struct module *parent)
 {
-        del_nodes(module_var_fl, &module_var_cron_clear_cb, parent, NULL);
+        del_nodes(module_var_ls, &module_var_cron_clear_cb, parent, NULL);
 }
 
 /**
@@ -274,7 +274,7 @@ void module_var_cron_exec_cb(struct module_var *cur)
  */
 void module_var_cron_exec(void)
 {
-        act_on_list(module_var_fl, &module_var_cron_exec_cb);
+        act_on_list(module_var_ls, &module_var_cron_exec_cb);
 }
 
 /**
@@ -358,7 +358,7 @@ void module_unload_free(struct module *cur)
  */
 void module_unload(char *name)
 {
-        del_node(module_fl, &module_unload_find, name, &module_unload_free);
+        del_node(module_ls, &module_unload_find, name, &module_unload_free);
 }
 
 /**
@@ -428,9 +428,9 @@ void *module_get_sym(void *handle, char *name)
  */
 void clear_module(void)
 {
-        del_list(module_var_fl, NULL);
-        module_var_fl = NULL;
+        del_list(module_var_ls, NULL);
+        module_var_ls = NULL;
         
-        del_list(module_fl, &module_unload_free);
-        module_fl = NULL;
+        del_list(module_ls, &module_unload_free);
+        module_ls = NULL;
 }

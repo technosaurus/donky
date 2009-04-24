@@ -40,14 +40,14 @@ void text_section_split(char *text, unsigned int line);
 void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
 
 /* Globals. */
-struct list *ts_fl;
+struct list *ts_ls;
 
 /**
  * @brief Start up the output text parsing.
  */
 void parse_text(void)
 {
-        ts_fl = init_list();
+        ts_ls = init_list();
         text_section_split(cfg_text, 0);
 
         /* We don't need this anymore! */
@@ -204,7 +204,7 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
                         n->type = type;
 
                 /* Add node to linked list. */
-                add_node(ts_fl, n);
+                add_node(ts_ls, n);
         }
 }
 
@@ -234,7 +234,7 @@ int text_section_var_find_cb(struct text_section *cur,
  */
 struct text_section *text_section_var_find(char *value)
 {
-        return find_node(ts_fl,
+        return find_node(ts_ls,
                          &text_section_var_find_cb,
                          value);
 }
@@ -249,7 +249,7 @@ void text_section_var_modvar(char *value,
                              struct module_var *mvar,
                              double timeout)
 {
-        struct list_item *cur = ts_fl->first;
+        struct list_item *cur = ts_ls->first;
         struct text_section *ts_cur;
 
         while (cur != NULL) {

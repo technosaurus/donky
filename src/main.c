@@ -155,17 +155,17 @@ void initialize_stuff(void)
  */
 void clean_up_everything(void)
 {
-        extern struct list *cfg_fl;
-        extern struct list *ts_fl;
+        extern struct list *cfg_ls;
+        extern struct list *ts_ls;
 
         printf("Clearing config list...");
-        del_list(cfg_fl, &clear_cfg);
-        cfg_fl = NULL;
+        del_list(cfg_ls, &clear_cfg);
+        cfg_ls = NULL;
         printf(" done.\n");
 
         printf("Clearing text_section list...");
-        del_list(ts_fl, &clear_text);
-        ts_fl = NULL;
+        del_list(ts_ls, &clear_text);
+        ts_ls = NULL;
         printf(" done.\n");
 
         printf("Clearing modules...");
