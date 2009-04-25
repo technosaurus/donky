@@ -325,6 +325,99 @@ uint32_t get_color(xcb_connection_t *connection,
 }
 
 /** 
+ * @brief Open and return a font
+ * 
+ * @param font_name Name of font to open
+ * 
+ * @return Opened font
+ */
+xcb_font_t get_font(xcb_connection_t *connection, char *font_name)
+{
+        xcb_font_t font;
+        xcb_void_cookie_t cookie_font;
+        xcb_generic_error_t *error;
+ 
+        font = xcb_generate_id(connection);
+        cookie_font = xcb_open_font_checked(connection,
+                                            font,
+                                            strlen(font_name),
+                                            font_name);
+
+        error = xcb_request_check(connection, cookie_font);
+        if (error) {
+                printf("get_font: Can't open font [%s]. Error: %d\n",
+                       font_name,
+                       error->error_code);
+                exit(EXIT_FAILURE);
+                //return font_orig;
+        }
+ 
+        return font;
+}
+
+/** 
+ * @brief Uh... what lobo said...
+ * 
+ * @param str String to convert
+ * @param length Length of string
+ * 
+ * @return Insanity
+ */
+xcb_char2b_t *build_chars(char *str, int length)
+{
+        xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
+        int i;
+        
+        for (i = 0; i < length; i++) {
+                if (str[i] < length) {
+                        ret[i].byte1 = str[i];
+                        ret[i].byte2 = '\0';
+                }
+        }
+ 
+        return ret;
+}
+ 
+/**
+ * @brief Get the text extents of a given string and font.
+ *
+ * @param str String...
+ * @param font Font structure
+ *
+ * @return The text extents reply structure.
+ */
+xcb_query_text_extents_reply_t *get_extents(xcb_connection_t *connection,
+                                            char *str,
+                                            xcb_font_t font)
+{
+        int length;
+        xcb_char2b_t *chars;
+        xcb_query_text_extents_cookie_t cookie_extents;
+        xcb_query_text_extents_reply_t *extents_reply;
+        xcb_generic_error_t *error = NULL;
+ 
+        length = strlen(str);
+        chars = build_chars(str, length);
+
+        cookie_extents = xcb_query_text_extents(connection,
+                                                font,
+                                                length,
+                                                chars);
+ 
+        extents_reply = xcb_query_text_extents_reply(connection,
+                                                     cookie_extents,
+                                                     &error);
+ 
+        if (error)
+                printf("render_text: Can't get extents reply. Error: %d\n",
+                       error->error_code);
+ 
+        freeif(chars);
+ 
+        return extents_reply;
+}
+
+/** 
  * @brief Create a font graphic context
  * 
  * @param font Font to use in creation

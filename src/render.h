@@ -44,6 +44,10 @@ void render_queue_add(char *value,
 uint32_t get_color(xcb_connection_t *connection,
                    xcb_screen_t *screen,
                    char *name);
+xcb_font_t get_font(xcb_connection_t *connection, char *font_name);
+xcb_query_text_extents_reply_t *get_extents(xcb_connection_t *connection,
+                                            char *str,
+                                            xcb_font_t font);
 
 #endif /* RENDER_H */
 

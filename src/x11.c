@@ -23,8 +23,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <X11/Xlib.h>
-#include <X11/Xlib-xcb.h>
 #include <xcb/xcb.h>
 
 #include "config.h"
@@ -38,9 +36,8 @@
 #include "x11.h"
 
 struct draw_settings {
-        xcb_font_t font;
-        XFontStruct *font_struct;
         char *font_name;
+        xcb_font_t font;
 
         int16_t font_x_offset;
         int16_t font_y_offset;
@@ -60,7 +57,8 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
 void handle_TEXT_COLOR(struct x_connection *xc,
                        struct text_section *cur,
                        struct draw_settings *ds);
-void handle_TEXT_STATIC(struct text_section *cur,
+void handle_TEXT_STATIC(struct x_connection *xc,
+                        struct text_section *cur,
                         struct draw_settings *ds,
                         int16_t *new_xpos,
                         int16_t *new_ypos,
@@ -68,7 +66,8 @@ void handle_TEXT_STATIC(struct text_section *cur,
                         int *line_heights,
                         int *calcd_line_heights,
                         bool *is_last);
-void handle_TEXT_VARIABLE(struct text_section *cur,
+void handle_TEXT_VARIABLE(struct x_connection *xc,
+                          struct text_section *cur,
                           struct draw_settings *ds,
                           int16_t *new_xpos,
                           int16_t *new_ypos,
@@ -76,7 +75,8 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
                           int *line_heights,
                           int *calcd_line_heights,
                           bool *is_last);
-void handle_VARIABLE_STR(struct text_section *cur,
+void handle_VARIABLE_STR(struct x_connection *xc,
+                         struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
@@ -95,10 +95,8 @@ void clean_x(struct x_connection *xc,
              struct draw_settings *ds,
              int *line_heights);
 
-
 /**
  * @brief Connects to the X server and stores all relevant information.
- *        Most things set in here are declared in the header.
  */
 struct x_connection *init_x_connection(void)
 {
@@ -108,8 +106,7 @@ struct x_connection *init_x_connection(void)
 
         xc = malloc(sizeof(struct x_connection));
         xc->screen = NULL;
-        xc->display = XOpenDisplay(NULL);
-        xc->connection = XGetXCBConnection(xc->display);
+        xc->connection = xcb_connect(NULL, &screen_number);
         if (!xc->connection) {
                 printf("Can't connect to X server.\n");
                 exit(EXIT_FAILURE);
@@ -135,8 +132,7 @@ struct x_connection *init_x_connection(void)
 }
 
 /**
- * @brief Gather and store necessary information for donky's
- *        to-be-drawn window.
+ * @brief Gather and store necessary information for donky's window.
  *
  * @param xc donky's open X connection.
  *
@@ -168,6 +164,7 @@ struct window_settings *window_settings_load(struct x_connection *xc)
         /* get window dimensions, gaps, and calculate alignment */
         ws->width = get_int_key("X11", "window_width", DEFAULT_WINDOW_WIDTH);
         ws->height = get_int_key("X11", "window_height", DEFAULT_WINDOW_HEIGHT);
+
         x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
         y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
 
@@ -268,8 +265,8 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
         
         /* Set up default font and colors. */
         ds->font_name = get_char_key("X11", "default_font", DEFAULT_FONT);
-        ds->font_struct = XLoadQueryFont(xc->display, ds->font_name);
-        ds->font = ds->font_struct->fid;
+        ds->font = get_font(xc->connection, ds->font_name);
+
         ds->color.bg_name = get_char_key("X11",
                                          "font_bgcolor",
                                          DEFAULT_FONT_BGCOLOR);
@@ -396,7 +393,8 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                                 handle_TEXT_COLOR(xc, ts_cur, ds);
                                 break;
                         case TEXT_STATIC:
-                                handle_TEXT_STATIC(ts_cur,
+                                handle_TEXT_STATIC(xc,
+                                                   ts_cur,
                                                    ds,
                                                    &new_xpos,
                                                    &new_ypos,
@@ -406,7 +404,8 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                                                    &is_last);
                                 break;
                         case TEXT_VARIABLE:
-                                handle_TEXT_VARIABLE(ts_cur,
+                                handle_TEXT_VARIABLE(xc,
+                                                     ts_cur,
                                                      ds,
                                                      &new_xpos,
                                                      &new_ypos,
@@ -428,13 +427,11 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                                 /* Set xpos to beginning of line! */
                                 new_xpos = ds->font_x_offset;
 
-                                /* Calculate the difference in lines
-                                 * (Needed for multiple blank lines
-                                 *  between text.) */
+                                /* Calculate the difference in lines. Needed for
+                                 * multiple blank lines between text. */
                                 linediff = ts_next->line - ts_cur->line - 1;
 
-                                if (line_heights[ts_cur->line] >
-                                    ds->min_line_height)
+                                if (line_heights[ts_cur->line] > ds->min_line_height)
                                         new_ypos += line_heights[ts_cur->line];
                                 else
                                         new_ypos += ds->min_line_height +
@@ -461,8 +458,7 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                 /* Reset cur. */
                 cur = ts_ls->first;
 
-                /* Set a flag so we know we've
-                 * already calc'd all line heights. */
+                /* We've now calculated all line heights. Set a flag. */
                 if (!calcd_line_heights)
                         calcd_line_heights = 1;
 
@@ -513,7 +509,8 @@ void handle_TEXT_COLOR(struct x_connection *xc,
  * @param calcd_line_heights 
  * @param is_last Is this it the last text_section node in the list?
  */
-void handle_TEXT_STATIC(struct text_section *cur,
+void handle_TEXT_STATIC(struct x_connection *xc,
+                        struct text_section *cur,
                         struct draw_settings *ds,
                         int16_t *new_xpos,
                         int16_t *new_ypos,
@@ -530,25 +527,37 @@ void handle_TEXT_STATIC(struct text_section *cur,
 
         //printf("REDRAWING STATIC TEXT [%s]\n", cur->value);
         if (!cur->pixel_width) {
-                int direction_return;
-                int font_ascent_return;
-                int font_descent_return;
-                XCharStruct overall_return;
+                xcb_query_text_extents_reply_t *extents;
 
-                XTextExtents(ds->font_struct,
-                             cur->value,
-                             strlen(cur->value),
-                             &direction_return,
-                             &font_ascent_return,
-                             &font_descent_return,
-                             &overall_return);
+                extents = get_extents(xc->connection, cur->value, ds->font);
 
-                cur->pixel_width = overall_return.width;
+                printf("string [%s]\n"
+                       "sequence [%d]\n"
+                       "length   [%d]\n"
+                       "font_ascent [%d]\n"
+                       "font_descent [%d]\n"
+                       "overall_ascent [%d]\n"
+                       "overall_descent [%d]\n"
+                       "overall_width [%d]\n"
+                       "overall_left [%d]\n"
+                       "overall_right [%d]\n\n",
+                       cur->value,
+                       extents->sequence,
+                       extents->length,
+                       extents->font_ascent,
+                       extents->font_descent,
+                       extents->overall_ascent,
+                       extents->overall_descent,
+                       extents->overall_width,
+                       extents->overall_left,
+                       extents->overall_right);
+
+                cur->pixel_width = extents->overall_width;
 
                 /* Calculate line height. */
                 if (!*calcd_line_heights) {
-                        int height = overall_return.ascent +
-                                     overall_return.descent;
+                        int height = extents->font_ascent +
+                                     extents->font_descent;
 
                         if (!line_heights[cur->line])
                                 line_heights[cur->line] =
@@ -558,6 +567,8 @@ void handle_TEXT_STATIC(struct text_section *cur,
                                 line_heights[cur->line] =
                                         height + ds->min_line_spacing;
                 }
+
+                freeif(extents);
         }
 
         render_queue_add(cur->value,
@@ -588,7 +599,8 @@ void handle_TEXT_STATIC(struct text_section *cur,
  * @param calcd_line_heights 
  * @param is_last Is this it the last text_section node in the list?
  */
-void handle_TEXT_VARIABLE(struct text_section *cur,
+void handle_TEXT_VARIABLE(struct x_connection *xc,
+                          struct text_section *cur,
                           struct draw_settings *ds,
                           int16_t *new_xpos,
                           int16_t *new_ypos,
@@ -611,8 +623,6 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
                         return;
         }
 
-        /* Crash proofing (TM)!
-         *  -brought to you by lobo! (d-bag) */
         if (cur->mod_var == NULL)
                 return;
         if (cur->mod_var->sym == NULL)
@@ -629,7 +639,8 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
 
         switch (cur->mod_var->type) {
         case VARIABLE_STR:
-                handle_VARIABLE_STR(cur,
+                handle_VARIABLE_STR(xc,
+                                    cur,
                                     ds,
                                     line_heights,
                                     calcd_line_heights,
@@ -669,7 +680,8 @@ void handle_TEXT_VARIABLE(struct text_section *cur,
  *                in the text_section list.
  * @param moved Has our position moved since last update?
  */
-void handle_VARIABLE_STR(struct text_section *cur,
+void handle_VARIABLE_STR(struct x_connection *xc,
+                         struct text_section *cur,
                          struct draw_settings *ds,
                          int *line_heights,
                          int *calcd_line_heights,
@@ -692,7 +704,7 @@ void handle_VARIABLE_STR(struct text_section *cur,
                         memset(cur->str_result, 0, sizeof(cur->str_result));
                         strncpy(cur->str_result,
                                 new,
-                                sizeof(cur->str_result) - 1);
+                                sizeof(cur->str_result) - sizeof(char));
                 }
 
                 cur->last_update = get_time();
@@ -703,25 +715,37 @@ void handle_VARIABLE_STR(struct text_section *cur,
         if ((!changed) && (!*moved) && (!*force))
                 return;
 
-        int direction_return;
-        int font_ascent_return;
-        int font_descent_return;
-        XCharStruct overall_return;
+        xcb_query_text_extents_reply_t *extents;
 
-        XTextExtents(ds->font_struct,
-                     cur->str_result,
-                     strlen(cur->str_result),
-                     &direction_return,
-                     &font_ascent_return,
-                     &font_descent_return,
-                     &overall_return);
+        extents = get_extents(xc->connection, cur->str_result, ds->font);
 
-        cur->pixel_width = overall_return.width;
+        printf("string [%s]\n"
+               "sequence [%d]\n"
+               "length   [%d]\n"
+               "font_ascent [%d]\n"
+               "font_descent [%d]\n"
+               "overall_ascent [%d]\n"
+               "overall_descent [%d]\n"
+               "overall_width [%d]\n"
+               "overall_left [%d]\n"
+               "overall_right [%d]\n\n",
+               cur->str_result,
+               extents->sequence,
+               extents->length,
+               extents->font_ascent,
+               extents->font_descent,
+               extents->overall_ascent,
+               extents->overall_descent,
+               extents->overall_width,
+               extents->overall_left,
+               extents->overall_right);
+
+        cur->pixel_width = extents->overall_width;
 
         /* Calculate line height. */
         if (!*calcd_line_heights) {
-                int height = overall_return.ascent +
-                             overall_return.descent;
+                int height = extents->font_ascent +
+                             extents->font_descent;
 
                 if (!line_heights[cur->line])
                         line_heights[cur->line] =
@@ -731,6 +755,8 @@ void handle_VARIABLE_STR(struct text_section *cur,
                         line_heights[cur->line] =
                                 height + ds->min_line_spacing;
         }
+
+        freeif(extents);
 
         render_queue_add(cur->str_result,
                          NULL,
@@ -860,20 +886,18 @@ void clean_x(struct x_connection *xc,
 {
         printf("Cleaning up in x11 and closing X connection... ");
 
-        freeif(line_heights);
-        XFreeFontInfo(NULL, ds->font_struct, 0);
         xcb_close_font(xc->connection, ds->font);
+        xcb_destroy_window(xc->connection, xc->window);
+        xcb_flush(xc->connection);
+        xcb_disconnect(xc->connection);
+
+        freeif(xc);
+        freeif(ws);
         freeif(ds->font_name);
         freeif(ds->color.bg_name);
         freeif(ds->color.fg_name);
         freeif(ds);
-        freeif(ws);
-
-        xcb_destroy_window(xc->connection, xc->window);
-        xcb_flush(xc->connection);
-        XCloseDisplay(xc->display);
-        xcb_disconnect(xc->connection);
-        freeif(xc);
+        freeif(line_heights);
 
         printf("done.\n");
 }

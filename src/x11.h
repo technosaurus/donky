@@ -19,12 +19,10 @@
 #define X11_H
 
 #include <stdbool.h>
-#include <X11/Xlib.h>
 
 #include "text.h"
 
 struct x_connection {
-        Display *display;
         xcb_connection_t *connection;
         xcb_screen_t *screen;
         xcb_window_t window;
@@ -57,8 +55,7 @@ struct window_settings {
 /* function prototypes */
 struct x_connection *init_x_connection(void);
 struct window_settings *draw_window(struct x_connection *xc);
-void donky_loop(struct x_connection *xc,
-                struct window_settings *ws);
+void donky_loop(struct x_connection *xc, struct window_settings *ws);
 
 #endif /* X11_H */
 
