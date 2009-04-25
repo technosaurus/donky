@@ -28,9 +28,12 @@
  */
 struct list *init_list(void)
 {
-        struct list *ls = malloc(sizeof(struct list));
+        struct list *ls;
+
+        ls = malloc(sizeof(struct list));
         ls->first = NULL;
         ls->last = NULL;
+
         return ls;
 }
 
@@ -47,7 +50,9 @@ void *add_node(struct list *ls, void *data)
         if (!ls)
                 return;
 
-        struct list_item *new = malloc(sizeof(struct list_item));
+        struct list_item *new;
+
+        new = malloc(sizeof(struct list_item));
         new->data = data;
         new->next = NULL;
         new->prev = NULL;
@@ -80,26 +85,29 @@ void *add_node(struct list *ls, void *data)
 void *get_node(struct list *ls,
                void *match_callback,
                void *match,
-               void *otherwise)
+               void *add_callback)
 {
         if (!ls)
                 return NULL;
 
-        int (*call)(void *data, void *match) = match_callback;
-        void *(*fallback)(void *match) = otherwise;
+        struct list_item *cur;
+        int (*m)(void *data, void *match);
+        void *(*a)(void *match);
 
-        struct list_item *cur = ls->first;
+        cur = ls->first;
+        m = match_callback;
+        a = add_callback;
 
         while (cur) {
-                if (call && cur->data)
-                        if (call(cur->data, match))
+                if (m && cur->data)
+                        if (m(cur->data, match))
                                 return cur->data;
 
                 cur = cur->next;
         }
 
-        if (fallback && match)
-                return fallback(match);
+        if (a && match)
+                return a(match);
         else
                 return NULL;
 }
@@ -134,17 +142,18 @@ void del_node(struct list *ls,
               void *match,
               void *free_external)
 {
-        if (!ls)
-                return;
+        void *result;
 
-        void (*free_ext)(void *data) = free_external;
-
-        void *result = find_node(ls, match_callback, match);
-        struct list_item *cur = ls->first;
-
+        result = find_node(ls, match_callback, match);
         if (!result)
                 return;
 
+        struct list_item *cur;
+        void (*f)(void *data);
+
+        f = free_external;
+
+        cur = ls->first;
         while (cur) {
                 if (cur->data == result) {
                         if (cur->prev)
@@ -156,8 +165,8 @@ void del_node(struct list *ls,
                         if (cur == ls->last)
                                 ls->last = cur->prev;
 
-                        if (free_ext && cur->data)
-                                free_ext(cur->data);
+                        if (f && cur->data)
+                                f(cur->data);
 
                         freeif(cur->data);
                         free(cur);
@@ -185,12 +194,14 @@ void del_nodes(struct list *ls,
         if (!ls)
                 return;
 
-        void (*free_ext)(void *data) = free_external;
-
-        void *result;
-        struct list_item *cur = ls->first;
+        struct list_item *cur;
         struct list_item *next;
+        void *result;
+        void (*f)(void *data);
 
+        f = free_external;
+
+        cur = ls->first;
         while (cur) {
                 result = find_node(ls, match_callback, match);
                 if (!result)
@@ -208,8 +219,8 @@ void del_nodes(struct list *ls,
                         if (cur == ls->last)
                                 ls->last = cur->prev;
 
-                        if (free_ext && cur->data)
-                                free_ext(cur->data);
+                        if (f && cur->data)
+                                f(cur->data);
 
                         freeif(cur->data);
                         free(cur);
@@ -230,16 +241,18 @@ void del_list(struct list *ls, void *free_external)
         if (!ls)
                 return;
         
-        void (*free_ext)(void *data) = free_external;
-
-        struct list_item *cur = ls->first;
+        struct list_item *cur;
         struct list_item *next;
+        void (*f)(void *data);
 
+        f = free_external;
+
+        cur = ls->first;
         while (cur) {
                 next = cur->next;
 
-                if (free_ext && cur->data)
-                        free_ext(cur->data);
+                if (f && cur->data)
+                        f(cur->data);
 
                 freeif(cur->data);
                 free(cur);
@@ -254,18 +267,20 @@ void del_list(struct list *ls, void *free_external)
  * @brief Run a function on the contents of a list.
  * 
  * @param ls The list struct of the list you wish to act upon.
- * @param execute Pointer to a function you wish to run on the contents
+ * @param execute_callback Pointer to a function you wish to run on the contents
  *                of all nodes in a list.
  */
-void act_on_list(struct list *ls, void *execute)
+void act_on_list(struct list *ls, void *execute_callback)
 {
-        void (*exec)(void *data) = execute;
+        struct list_item *cur;
+        void (*e)(void *data);
 
-        struct list_item *cur = ls->first;
+        e = execute_callback;
 
+        cur = ls->first;
         while (cur) {
-                if (exec)
-                        exec(cur->data);
+                if (e)
+                        e(cur->data);
 
                 cur = cur->next;
         }
@@ -276,17 +291,19 @@ void act_on_list(struct list *ls, void *execute)
  *        structure.
  *
  * @param ls First last struct...
- * @param execute Callback! Ex. void meth(struct list_item *cur);
+ * @param execute_callback Callback! Ex. void meth(struct list_item *cur);
  */
-void act_on_list_raw(struct list *ls, void *execute)
+void act_on_list_raw(struct list *ls, void *execute_callback)
 {
-        void (*exec)(struct list_item *cur) = execute;
+        struct list_item *cur;
+        void (*e)(struct list_item *cur);
 
-        struct list_item *cur = ls->first;
+        e = execute_callback;
 
+        cur = ls->first;
         while (cur) {
-                if (exec)
-                        exec(cur);
+                if (e)
+                        e(cur);
 
                 cur = cur->next;
         }
@@ -296,22 +313,29 @@ void act_on_list_raw(struct list *ls, void *execute)
  * @brief Act on the list if the condition is met by the match_callback.
  *
  * @param ls
- * @param execute
+ * @param execute_callback
  * @param match_callback
  * @param match
  */
-void act_on_list_if(struct list *ls, void *execute,
-                    void *match_callback, void *match)
+void act_on_list_if(struct list *ls,
+                    void *execute_callback,
+                    void *match_callback,
+                    void *match)
 {
-        int (*call)(void *data, void *match) = match_callback;
-        void (*exec)(void *data) = execute;
+        int (*m)(void *data, void *match);
+        void (*e)(void *data);
 
-        struct list_item *cur = ls->first;
+        m = match_callback;
+        e = execute_callback;
+        if (!m || !e)
+                return;
 
+        struct list_item *cur;
+
+        cur = ls->first;
         while (cur) {
-                if (call && call(cur->data, match))
-                        if (exec)
-                                exec(cur->data);
+                if (m(cur->data, match))
+                        e(cur->data);
 
                 cur = cur->next;
         }
@@ -321,22 +345,29 @@ void act_on_list_if(struct list *ls, void *execute,
  * @brief Act on the list if the condition is met by the match_callback.
  *
  * @param ls
- * @param execute
+ * @param execute_callback
  * @param match_callback
  * @param match
  */
-void act_on_list_raw_if(struct list *ls, void *execute,
-                        void *match_callback, void *match)
+void act_on_list_raw_if(struct list *ls,
+                        void *execute_callback,
+                        void *match_callback,
+                        void *match)
 {
-        int (*call)(struct list_item *cur, void *match) = match_callback;
-        void (*exec)(struct list_item *cur) = execute;
+        int (*m)(struct list_item *cur, void *match);
+        void (*e)(struct list_item *cur);
 
-        struct list_item *cur = ls->first;
+        m = match_callback;
+        e = execute_callback;
+        if (!m || !e)
+                return;
 
+        struct list_item *cur;
+
+        cur = ls->first;
         while (cur) {
-                if (call && call(cur, match))
-                        if (exec)
-                                exec(cur);
+                if (m(cur, match))
+                        e(cur);
 
                 cur = cur->next;
         }

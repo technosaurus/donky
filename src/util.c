@@ -180,8 +180,8 @@ double get_time(void)
 char *d_strcpy(const char *str)
 {
         int n = strlen(str);
-        char *newstr = malloc((n + 1) * sizeof(char));
-        strncpy(newstr, str, (n * sizeof(char)));
+        char *newstr = malloc(n + sizeof(char));
+        strncpy(newstr, str, n);
         newstr[n] = '\0';
         return newstr;
 }
@@ -194,10 +194,10 @@ char *d_strcpy(const char *str)
  * 
  * @return Duplicated string
  */
-char *d_strncpy(const char *str, int n)
+char *d_strncpy(const char *str, size_t n)
 {
-        char *newstr = malloc((n + 1) * sizeof(char));
-        strncpy(newstr, str, (n * sizeof(char)));
+        char *newstr = malloc(n + sizeof(char));
+        strncpy(newstr, str, n);
         newstr[n] = '\0';
         return newstr;
 }

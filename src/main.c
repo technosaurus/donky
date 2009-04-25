@@ -66,15 +66,18 @@ int main(int argc, char **argv)
                 { "help",    no_argument,       0, 'h' },
                 { "config",  required_argument, 0, 'c' },
                 { "debug",   no_argument,       0, 'd' },
-                { 0, 0, 0, 0 }
+                { 0,         0,                 0,  0  }
         };
 
         int option_index = 0;
         int c = 0;
 
         while (1) {
-                c = getopt_long(argc, argv, "vhc:d",
-                                long_options, &option_index);
+                c = getopt_long(argc,
+                                argv,
+                                "vhc:d",
+                                long_options,
+                                &option_index);
 
                 if (c == -1)
                         break;
@@ -117,9 +120,6 @@ void initialize_stuff(void)
         while (1) {
                 printf("Welcome to donky! Have a mint.\n");
 
-                xc = NULL;
-                ws = NULL;
-
                 printf("Making X connection...\n");
                 xc = init_x_connection();
 
@@ -160,12 +160,10 @@ void clean_up_everything(void)
 
         printf("Clearing config list...");
         del_list(cfg_ls, &clear_cfg);
-        cfg_ls = NULL;
         printf(" done.\n");
 
         printf("Clearing text_section list...");
         del_list(ts_ls, &clear_text);
-        ts_ls = NULL;
         printf(" done.\n");
 
         printf("Clearing modules...");
