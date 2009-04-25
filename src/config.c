@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "default_settings.h"
 #include "lists.h"
 #include "util.h"
 
@@ -221,13 +222,26 @@ bool get_bool_key(char *mod, char *key, bool otherwise)
 void parse_cfg(void)
 {
         char *cfg_file_path = NULL;
-        asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), ".donkyrc");
+        asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), DEFAULT_CONF);
 
+        /* Load configuration.  We start with the local configuration, usually
+         * ~/.donkyrc, then if not found, we try to open the system wide
+         * configuration.  If none are found, we blow this joint. */
         FILE *cfg_file = fopen(cfg_file_path, "r");
         free(cfg_file_path);
+        
         if (!cfg_file) {
-                printf("Error: ~/.donkyrc file not found.\n");
-                exit(EXIT_FAILURE);
+                printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
+                
+                asprintf(&cfg_file_path, "%s/%s", SYSCONFDIR, DEFAULT_CONF_GLOBAL);
+                cfg_file = fopen(cfg_file_path, "r");
+
+                if (!cfg_file) {
+                        fprintf(stderr, "Error: %s/%s file not found.\n",
+                                        SYSCONFDIR,
+                                        DEFAULT_CONF_GLOBAL);
+                        exit(EXIT_FAILURE);
+                }
         }
 
         /* initialize our cfg list */
@@ -252,18 +266,21 @@ void parse_cfg(void)
         /* used by [text] */
         cfg_text = NULL;
 
+        int t = 0;
+
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {
                         freenull(str);
                         continue;
                 }
-
-                if (sscanf(str, format[0], &mod)) {
+                
+                if (sscanf(str, format[0], &mod) == 1) {
                         if (strcasecmp(mod, "text"))
                                 add_mod(mod);
+                                
                         continue;
                 }
-
+                
                 if (mod && !strcasecmp(mod, "text")) {
                         if (cfg_text == NULL) {
                                 cfg_text = d_strcpy(str);
@@ -282,14 +299,14 @@ void parse_cfg(void)
                 else if (csscanf(str, format[2], 2, &key, &value)) { }
                 else if (csscanf(str, format[3], 2, &key, &value))
                         trim_t(value);
-                else if (sscanf(str, format[4], &key))
+                else if (sscanf(str, format[4], &key) == 1)
                         value = d_strcpy("True");
- 
+                
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
                         free(value);
                         value = d_strcpy("False");
                 }
-
+                
                 if (mod && key && value) {
                         add_key(mod, key, value);
                         char *char_key = get_char_key(mod, key, "ERROR");
@@ -302,14 +319,14 @@ void parse_cfg(void)
                                get_bool_key(mod, key, -1));
                         free(char_key);
                 }
-
+                
                 freenull(str);
                 freenullif(key);
                 freenullif(value);
         }
-
+        
         fclose(cfg_file);
-
+        
         if (cfg_text == NULL) {
                 printf("Config error: missing [text] section.");
                 del_list(cfg_ls, &clear_cfg);

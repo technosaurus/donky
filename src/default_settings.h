@@ -40,3 +40,6 @@
 
 #define DEFAULT_BAR_WIDTH 40
 #define DEFAULT_BAR_HEIGHT 10
+
+#define DEFAULT_CONF ".donkyrc"
+#define DEFAULT_CONF_GLOBAL "donky.conf"
