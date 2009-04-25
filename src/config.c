@@ -266,8 +266,6 @@ void parse_cfg(void)
         /* used by [text] */
         cfg_text = NULL;
 
-        int t = 0;
-
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {
                         freenull(str);
