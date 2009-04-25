@@ -34,8 +34,5 @@ bool get_bool_key(char *mod, char *key, bool otherwise);
 void parse_cfg(void);
 void clear_cfg(struct cfg *cur);
 
-/* holds [text] */
-char *cfg_text;
-
 #endif /* CONFIG_H */
 

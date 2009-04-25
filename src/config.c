@@ -43,11 +43,12 @@ void add_mod(char *mod);
 int find_mod(struct cfg *cur, char *mod);
 void add_key(char *mod, char *key, char *value);
 int find_key(struct setting *cur, char *key);
-
+FILE *get_cfg_file(void);
 void clear_settings(struct setting *cur_s);
 
 /* Globals */
-struct list *cfg_ls = NULL;
+struct list *cfg_ls;
+char *cfg_text;
 
 /** 
  * @brief Add a mod to the configuration list
@@ -56,9 +57,10 @@ struct list *cfg_ls = NULL;
  */
 void add_mod(char *mod)
 {
-        struct cfg *new_mod = malloc(sizeof(struct cfg));
+        struct cfg *new_mod;
+
+        new_mod = malloc(sizeof(struct cfg));
         new_mod->mod = mod;
-        new_mod->setting_ls = NULL;
         new_mod->setting_ls = init_list();
 
         add_node(cfg_ls, new_mod);
@@ -89,17 +91,18 @@ int find_mod(struct cfg *cur, char *mod)
  */
 void add_key(char *mod, char *key, char *value)
 {
-        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
+        struct cfg *cur;
+        struct setting *new_setting;
+
+        cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return;
 
-        struct setting *new_set = malloc(sizeof(struct setting));
-        new_set->key = NULL;
-        new_set->key = d_strcpy(key);
-        new_set->value = NULL;
-        new_set->value = d_strcpy(value);
+        new_setting = malloc(sizeof(struct setting));
+        new_setting->key = d_strcpy(key);
+        new_setting->value = d_strcpy(value);
 
-        add_node(cur->setting_ls, new_set);
+        add_node(cur->setting_ls, new_setting);
 }
 
 /** 
@@ -129,7 +132,10 @@ int find_key(struct setting *cur, char *key)
  */
 char *get_char_key(char *mod, char *key, char *otherwise)
 {
-        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
+        struct cfg *cur;
+        struct setting *cur_s;
+
+        cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur) {
                 if (otherwise)
                         return d_strcpy(otherwise);
@@ -137,7 +143,7 @@ char *get_char_key(char *mod, char *key, char *otherwise)
                 return NULL;
         }
 
-        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
+        cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
                 return d_strcpy(cur_s->value);
         else if (otherwise)
@@ -157,11 +163,14 @@ char *get_char_key(char *mod, char *key, char *otherwise)
  */
 int get_int_key(char *mod, char *key, int otherwise)
 {
-        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
+        struct cfg *cur;
+        struct setting *cur_s;
+
+        cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
+        cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
                 return atoi(cur_s->value);
 
@@ -179,11 +188,14 @@ int get_int_key(char *mod, char *key, int otherwise)
  */
 double get_double_key(char *mod, char *key, double otherwise)
 {
-        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
+        struct cfg *cur;
+        struct setting *cur_s;
+
+        cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
+        cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
                 return atof(cur_s->value);
 
@@ -201,11 +213,14 @@ double get_double_key(char *mod, char *key, double otherwise)
  */
 bool get_bool_key(char *mod, char *key, bool otherwise)
 {
-        struct cfg *cur = find_node(cfg_ls, &find_mod, mod);
+        struct cfg *cur;
+        struct setting *cur_s;
+        
+        cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur)
                 return otherwise;
 
-        struct setting *cur_s = find_node(cur->setting_ls, &find_key, key);
+        cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value)) {
                 if (IS_TRUE(cur_s->value[0]))
                         return true;
@@ -221,38 +236,16 @@ bool get_bool_key(char *mod, char *key, bool otherwise)
  */
 void parse_cfg(void)
 {
-        char *cfg_file_path = NULL;
-        asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), DEFAULT_CONF);
-
-        /* Load configuration.  We start with the local configuration, usually
-         * ~/.donkyrc, then if not found, we try to open the system wide
-         * configuration.  If none are found, we blow this joint. */
-        FILE *cfg_file = fopen(cfg_file_path, "r");
-        free(cfg_file_path);
-        
-        if (!cfg_file) {
-                printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
-                
-                asprintf(&cfg_file_path, "%s/%s", SYSCONFDIR, DEFAULT_CONF_GLOBAL);
-                cfg_file = fopen(cfg_file_path, "r");
-
-                if (!cfg_file) {
-                        fprintf(stderr, "Error: %s/%s file not found.\n",
-                                        SYSCONFDIR,
-                                        DEFAULT_CONF_GLOBAL);
-                        exit(EXIT_FAILURE);
-                }
-        }
-
-        /* initialize our cfg list */
-        cfg_ls = init_list();
-
+        FILE *cfg_file;
         char *str = NULL;
         size_t len = 0;
-
         char *mod = NULL;
         char *key = NULL;
         char *value = NULL;
+
+        cfg_file = get_cfg_file();
+        cfg_ls = init_list();           /* initialize our cfg list */
+        cfg_text = NULL;                /* used in handling [text] */
 
         /* the various sscanf formats we attempt to parse with, in order */
         const char *format[5] = {
@@ -263,24 +256,23 @@ void parse_cfg(void)
                 " %a[a-zA-Z0-9_-] "                     /* key              */
         };
 
-        /* used by [text] */
-        cfg_text = NULL;
-
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {
                         freenull(str);
                         continue;
                 }
-                
+
                 if (sscanf(str, format[0], &mod) == 1) {
-                        if (strcasecmp(mod, "text"))
+                        /* we don't add [text] to the cfg list */
+                        if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
                                 
                         continue;
                 }
-                
+
+                /* handle [text] here instead */
                 if (mod && !strcasecmp(mod, "text")) {
-                        if (cfg_text == NULL) {
+                        if (!cfg_text) {
                                 cfg_text = d_strcpy(str);
                         } else {
                                 cfg_text = realloc(cfg_text,
@@ -299,12 +291,13 @@ void parse_cfg(void)
                         trim_t(value);
                 else if (sscanf(str, format[4], &key) == 1)
                         value = d_strcpy("True");
-                
+
+                /* values of "" or '' are interpreted as False */
                 if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
                         free(value);
                         value = d_strcpy("False");
                 }
-                
+
                 if (mod && key && value) {
                         add_key(mod, key, value);
                         char *char_key = get_char_key(mod, key, "ERROR");
@@ -317,19 +310,57 @@ void parse_cfg(void)
                                get_bool_key(mod, key, -1));
                         free(char_key);
                 }
-                
+
                 freenull(str);
                 freenullif(key);
                 freenullif(value);
         }
-        
+
         fclose(cfg_file);
-        
+
         if (cfg_text == NULL) {
-                printf("Config error: missing [text] section.");
+                fprintf(stderr, "Config error: missing [text] section.");
                 del_list(cfg_ls, &clear_cfg);
                 exit(EXIT_FAILURE);
         }
+}
+
+/** 
+ * @brief Load configuration. We check for the local configuration, usually
+ *        ~/.donkyrc, then if not found, we try to open the system wide
+ *        configuration. If none are found, we blow this joint.
+ *
+ * @return Pointer to an open .donkyrc file, if successful.
+ */
+FILE *get_cfg_file(void)
+{
+        char *cfg_file_path;
+        FILE *cfg_file;
+
+        asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), DEFAULT_CONF);
+
+        cfg_file = fopen(cfg_file_path, "r");
+        free(cfg_file_path);
+        if (!cfg_file) {
+                printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
+
+                asprintf(&cfg_file_path,
+                         "%s/%s", 
+                         SYSCONFDIR,
+                         DEFAULT_CONF_GLOBAL);
+
+                cfg_file = fopen(cfg_file_path, "r");
+                free(cfg_file_path);
+                if (!cfg_file) {
+                        fprintf(stderr,
+                                "Error: %s/%s file not found.\n",
+                                SYSCONFDIR,
+                                DEFAULT_CONF_GLOBAL);
+                        exit(EXIT_FAILURE);
+                }
+        }
+
+        return cfg_file;
 }
 
 /** 

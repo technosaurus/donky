@@ -20,32 +20,36 @@
 
 #include <stdbool.h>
 
-/**
- * @brief Free a pointer if it isn't NULL.
- */
-#define freeif(ptr) \
-        do { \
-                if (ptr) \
-                        free(ptr); \
-        } while (0)
+/* these are for certain macros to look less ugly */
+#define start do {
+#define end        } while (0)
 
 /** 
- * @brief Free and NULL a pointer.
+ * @brief Free a pointer if it exists.
  */
-#define freenull(ptr) \
-        do { \
-                free(ptr); \
-                (ptr) = NULL; \
-        } while (0)
+#define freeif(ptr)             \
+start                           \
+        if (ptr)                \
+                free(ptr);      \
+end
 
 /** 
- * @brief Free and NULL a pointer if it isn't NULL.
+ * @brief Free and null a pointer.
  */
-#define freenullif(ptr) \
-        do { \
-                if (ptr) \
-                        freenull(ptr); \
-        } while (0)
+#define freenull(ptr)           \
+start                           \
+        free(ptr);              \
+        (ptr) = NULL;           \
+end
+
+/** 
+ * @brief Free and null a pointer if it exists.
+ */
+#define freenullif(ptr)         \
+start                           \
+        if (ptr)                \
+                freenull(ptr);  \
+end
 
 char *trim(char *);
 char *trim_l(char *);
@@ -57,7 +61,7 @@ char *chomp(char *);
 char *substr(char *, int, int);
 double get_time(void);
 char *d_strcpy(const char *str);
-char *d_strncpy(const char *str, int n);
+char *d_strncpy(const char *str, size_t n);
 char *bytes_to_bigger(unsigned long bytes);
 bool csscanf(const char *str, const char *format, int n, ...);
 

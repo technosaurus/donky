@@ -102,13 +102,12 @@ void clean_x(struct x_connection *xc,
  */
 struct x_connection *init_x_connection(void)
 {
-        struct x_connection *xc = malloc(sizeof(struct x_connection));
-        xc->display = NULL;
-        xc->connection = NULL;
-        xc->screen = NULL;
-
+        struct x_connection *xc;
+        xcb_screen_iterator_t screen_iter;
         int screen_number;
 
+        xc = malloc(sizeof(struct x_connection));
+        xc->screen = NULL;
         xc->display = XOpenDisplay(NULL);
         xc->connection = XGetXCBConnection(xc->display);
         if (!xc->connection) {
@@ -116,10 +115,8 @@ struct x_connection *init_x_connection(void)
                 exit(EXIT_FAILURE);
         }
 
-        xcb_screen_iterator_t screen_iter;
-        screen_iter = xcb_setup_roots_iterator(xcb_get_setup(xc->connection));
-
         /* find our current screen */
+        screen_iter = xcb_setup_roots_iterator(xcb_get_setup(xc->connection));
         for (; screen_iter.rem != 0; screen_number--,
                                      xcb_screen_next(&screen_iter)) {
                 if (screen_number == 0) {
@@ -128,7 +125,6 @@ struct x_connection *init_x_connection(void)
                 }
         }
 
-        /* exit if we can't find it */
         if (!xc->screen) {
                 printf("Can't find the current screen.\n");
                 xcb_disconnect(xc->connection);
@@ -148,26 +144,34 @@ struct x_connection *init_x_connection(void)
  */
 struct window_settings *window_settings_load(struct x_connection *xc)
 {
-        struct window_settings *ws = malloc(sizeof(struct window_settings));
+        struct window_settings *ws;
+        char *bg_color_name;
+        char *fg_color_name;
+        uint16_t x_gap;
+        uint16_t y_gap;
+        char *alignment;
+
+        ws = malloc(sizeof(struct window_settings));
 
         /* Setup window bg and fg colors */
-        char *bg_color_name = get_char_key("X11",
-                                           "window_bgcolor",
-                                           DEFAULT_WINDOW_BGCOLOR);
-        char *fg_color_name = get_char_key("X11",
-                                           "window_fgcolor",
-                                           DEFAULT_WINDOW_FGCOLOR);
+        bg_color_name = get_char_key("X11",
+                                     "window_bgcolor",
+                                     DEFAULT_WINDOW_BGCOLOR);
+        fg_color_name = get_char_key("X11",
+                                     "window_fgcolor",
+                                     DEFAULT_WINDOW_FGCOLOR);
         ws->bg_color = get_color(xc->connection, xc->screen, bg_color_name);
         ws->fg_color = get_color(xc->connection, xc->screen, fg_color_name);
         free(bg_color_name);
         free(fg_color_name);
 
         /* get window dimensions, gaps, and calculate alignment */
-        char *alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
-        uint16_t x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
-        uint16_t y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
         ws->width = get_int_key("X11", "window_width", DEFAULT_WINDOW_WIDTH);
         ws->height = get_int_key("X11", "window_height", DEFAULT_WINDOW_HEIGHT);
+        x_gap = get_int_key("X11", "x_gap", DEFAULT_X_GAP);
+        y_gap = get_int_key("X11", "y_gap", DEFAULT_Y_GAP);
+
+        alignment = get_char_key("X11", "alignment", DEFAULT_ALIGNMENT);
         if (strcasecmp(alignment, "bottom_left") == 0) {
                 ws->x_offset = 0 + x_gap;
                 ws->y_offset = xc->screen->height_in_pixels - ws->height - y_gap;
@@ -181,6 +185,7 @@ struct window_settings *window_settings_load(struct x_connection *xc)
                 ws->x_offset = xc->screen->width_in_pixels - ws->width - x_gap;
                 ws->y_offset = 0 + y_gap;
         }
+
         free(alignment);
 
         /* draw donky in its own window? if not, draw to root */
@@ -204,13 +209,14 @@ struct window_settings *window_settings_load(struct x_connection *xc)
  */
 struct window_settings *draw_window(struct x_connection *xc)
 {
-        struct window_settings *ws = window_settings_load(xc);
+        struct window_settings *ws;
         xcb_void_cookie_t window_cookie;
         uint32_t mask;
         uint32_t values[3];
         xcb_void_cookie_t map_cookie;
         xcb_generic_error_t *error;
 
+        ws = window_settings_load(xc);
         xc->window = xcb_generate_id(xc->connection);
         mask = XCB_CW_BACK_PIXEL | XCB_CW_OVERRIDE_REDIRECT | XCB_CW_EVENT_MASK;
         values[0] = ws->bg_color;
@@ -253,14 +259,17 @@ struct window_settings *draw_window(struct x_connection *xc)
 struct draw_settings *draw_settings_load(struct x_connection *xc,
                                          struct window_settings *ws)
 {
-        struct draw_settings *ds = malloc(sizeof(struct draw_settings));
+        struct draw_settings *ds;
+        double min_sleep; 
+        int min_seconds;
+        long min_nanoseconds;
+       
+        ds = malloc(sizeof(struct draw_settings));
         
-        /* Set up user configured font or default font. */
+        /* Set up default font and colors. */
         ds->font_name = get_char_key("X11", "default_font", DEFAULT_FONT);
         ds->font_struct = XLoadQueryFont(xc->display, ds->font_name);
         ds->font = ds->font_struct->fid;
-
-        /* Set up user configured or default font colors. */
         ds->color.bg_name = get_char_key("X11",
                                          "font_bgcolor",
                                          DEFAULT_FONT_BGCOLOR);
@@ -297,11 +306,9 @@ struct draw_settings *draw_settings_load(struct x_connection *xc,
         }
 
         /* Setup minimum sleep time. */
-        double min_sleep = get_double_key("X11",
-                                          "global_sleep",
-                                          DEFAULT_GLOBAL_SLEEP);
-        int min_seconds = floor(min_sleep);
-        long min_nanoseconds = (min_sleep - min_seconds) * pow(10, 9);
+        min_sleep = get_double_key("X11", "global_sleep", DEFAULT_GLOBAL_SLEEP);
+        min_seconds = floor(min_sleep);
+        min_nanoseconds = (min_sleep - min_seconds) * pow(10, 9);
         ds->tspec.tv_sec = min_seconds;
         ds->tspec.tv_nsec = min_nanoseconds;
 
@@ -318,15 +325,15 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
 {
         extern int donky_reload;
         extern int donky_exit;
-
         extern struct list *ts_ls;
+
         struct list_item *cur = ts_ls->first;
         struct text_section *ts_cur = NULL;
         struct text_section *ts_next = NULL;
 
         struct draw_settings *ds = draw_settings_load(xc, ws);
 
-        xcb_generic_event_t *e = NULL;
+        xcb_generic_event_t *e;
         bool force = false;
 
         /* new_xpos and new_ypos hold the coords

@@ -47,6 +47,8 @@ struct list *ts_ls;
  */
 void parse_text(void)
 {
+        extern char *cfg_text;
+
         ts_ls = init_list();
         text_section_split(cfg_text, 0);
 
