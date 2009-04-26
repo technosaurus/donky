@@ -319,11 +319,11 @@ void parse_cfg(void)
 
         fclose(cfg_file);
 
-        if (cfg_text == NULL) {
-                fprintf(stderr, "Config error: missing [text] section.");
-                del_list(cfg_ls, &clear_cfg);
-                exit(EXIT_FAILURE);
-        }
+        /* Set the default text section if none existed. */
+        if (cfg_text == NULL)
+                cfg_text = d_strcpy("${color red}Hey turd.$color Please edit " \
+                                    "your donky configuration file and add a " \
+                                    "${color green}[text]$color section. Duh!");
 }
 
 /** 
