@@ -531,7 +531,7 @@ void handle_TEXT_STATIC(struct x_connection *xc,
 
                 extents = get_extents(xc->connection, cur->value, ds->font);
 
-                printf("string [%s]\n"
+                /*printf("string [%s]\n"
                        "sequence [%d]\n"
                        "length   [%d]\n"
                        "font_ascent [%d]\n"
@@ -550,7 +550,7 @@ void handle_TEXT_STATIC(struct x_connection *xc,
                        extents->overall_descent,
                        extents->overall_width,
                        extents->overall_left,
-                       extents->overall_right);
+                       extents->overall_right);*/
 
                 cur->pixel_width = extents->overall_width;
 
@@ -719,7 +719,7 @@ void handle_VARIABLE_STR(struct x_connection *xc,
 
         extents = get_extents(xc->connection, cur->str_result, ds->font);
 
-        printf("string [%s]\n"
+        /*printf("string [%s]\n"
                "sequence [%d]\n"
                "length   [%d]\n"
                "font_ascent [%d]\n"
@@ -738,7 +738,7 @@ void handle_VARIABLE_STR(struct x_connection *xc,
                extents->overall_descent,
                extents->overall_width,
                extents->overall_left,
-               extents->overall_right);
+               extents->overall_right);*/
 
         cur->pixel_width = extents->overall_width;
 

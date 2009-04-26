@@ -258,6 +258,7 @@ void parse_cfg(void)
 
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {
+                        printf("Skipping comment [%s]\n\n", chomp(str));
                         freenull(str);
                         continue;
                 }
