@@ -231,22 +231,13 @@ void render_text(xcb_connection_t *connection,
                  int16_t x,
                  int16_t y)
 {
+        uint8_t length;
         xcb_gcontext_t gc;
         
-        uint8_t length;
         length = strlen(str);
+        gc = get_font_gc(connection, window, font, color.bg, color.fg);
 
-        gc = get_font_gc(connection,
-                         window,
-                         font,
-                         color.bg, color.fg);
-
-        xcb_image_text_8(connection,
-                         length,
-                         *window,
-                         gc,
-                         x, y,
-                         str);
+        xcb_image_text_8(connection, length, *window, gc, x, y, str);
 
         xcb_free_gc(connection, gc);
 }
@@ -274,15 +265,15 @@ void render_bar(xcb_connection_t *connection,
                 uint16_t w,
                 uint16_t h)
 {
-        xcb_gcontext_t gc = get_font_gc(connection,
-                                        window,
-                                        font,
-                                        color.bg, color.fg);
+        int fill_width;
+        xcb_gcontext_t gc;
 
-        int fill_width = (int)((double)w * ((double) *value / (double) 100));
+        fill_width = (int)((double)w * ((double) *value / (double) 100));
 
         xcb_rectangle_t rect_outline[] = { x, y, w, h };
         xcb_rectangle_t rect_fill[] = { x, y, fill_width, h };
+
+        gc = get_font_gc(connection, window, font, color.bg, color.fg);
 
         xcb_poly_rectangle(connection, *window, gc, 1, rect_outline);
         xcb_poly_fill_rectangle(connection, *window, gc, 1, rect_fill);
@@ -301,16 +292,17 @@ uint32_t get_color(xcb_connection_t *connection,
                    xcb_screen_t *screen,
                    char *name)
 {
+        xcb_alloc_named_color_reply_t *reply;
+        uint32_t my_pixel;
         xcb_generic_error_t *error;
 
-        xcb_alloc_named_color_reply_t *reply;
         reply = xcb_alloc_named_color_reply(connection,
                                             xcb_alloc_named_color(connection,
                                             screen->default_colormap,
                                             strlen(name),
                                             name),
                                             &error);
-        
+
         if (error) {
                 printf("get_color: Can't allocate color. Error: %d\n",
                        error->error_code);
@@ -318,7 +310,7 @@ uint32_t get_color(xcb_connection_t *connection,
                 exit(EXIT_FAILURE);
         }
 
-        uint32_t my_pixel = reply->pixel;
+        my_pixel = reply->pixel;
         freeif(reply);
 
         return my_pixel;
@@ -363,7 +355,7 @@ xcb_font_t get_font(xcb_connection_t *connection, char *font_name)
  * 
  * @return Insanity
  */
-xcb_char2b_t *build_chars(char *str, int length)
+xcb_char2b_t *build_chars(char *str, uint32_t length)
 {
         xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
         int i;
@@ -390,7 +382,7 @@ xcb_query_text_extents_reply_t *get_extents(xcb_connection_t *connection,
                                             char *str,
                                             xcb_font_t font)
 {
-        int length;
+        uint32_t length;
         xcb_char2b_t *chars;
         xcb_query_text_extents_cookie_t cookie_extents;
         xcb_query_text_extents_reply_t *extents_reply;
@@ -403,7 +395,7 @@ xcb_query_text_extents_reply_t *get_extents(xcb_connection_t *connection,
                                                 font,
                                                 length,
                                                 chars);
- 
+
         extents_reply = xcb_query_text_extents_reply(connection,
                                                      cookie_extents,
                                                      &error);
@@ -429,24 +421,22 @@ xcb_gc_t get_font_gc(xcb_connection_t *connection,
                      xcb_font_t font,
                      uint32_t bg, uint32_t fg)
 {
-        xcb_generic_error_t *error;
         xcb_gcontext_t gc;
         xcb_void_cookie_t cookie_gc;
-
         uint32_t mask;
         uint32_t value_list[3];
+        xcb_generic_error_t *error;
 
         gc = xcb_generate_id(connection);
-        
         mask = XCB_GC_FOREGROUND | XCB_GC_BACKGROUND | XCB_GC_FONT;
         value_list[0] = fg;
         value_list[1] = bg;
         value_list[2] = font;
-
         cookie_gc = xcb_create_gc_checked(connection,
                                           gc,
                                           *window,
                                           mask, value_list);
+
         error = xcb_request_check(connection, cookie_gc);
         if (error)
                 printf("get_font: Can't create graphic context. Error: %d\n", error->error_code);

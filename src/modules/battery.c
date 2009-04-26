@@ -39,10 +39,10 @@ struct batt {
         char *maximum_charge;   /* maximum charge capacity in mAh */
 };
 
-char *get_battp(char *args);
-char *get_battr(char *args);
-char *get_battm(char *args);
-int get_battb(char *args);
+char *get_battper(char *args);
+char *get_battrem(char *args);
+char *get_battmax(char *args);
+int get_battbar(char *args);
 
 void batt_cron(void);
 void clear_remaining_charge(struct batt *batt);
@@ -63,11 +63,11 @@ int module_init(void)
 {
         batt_ls = init_list();
 
-        module_var_add(module_name, "battp", "get_battp", 30.0, VARIABLE_STR);
-        module_var_add(module_name, "battr", "get_battr", 30.0, VARIABLE_STR);
-        module_var_add(module_name, "battm", "get_battm", 30.0, VARIABLE_STR);
+        module_var_add(module_name, "battper", "get_battper", 30.0, VARIABLE_STR);
+        module_var_add(module_name, "battrem", "get_battrem", 30.0, VARIABLE_STR);
+        module_var_add(module_name, "battmax", "get_battmax", 30.0, VARIABLE_STR);
 
-        module_var_add(module_name, "battb", "get_battb", 30.0, VARIABLE_BAR);
+        module_var_add(module_name, "battbar", "get_battbar", 30.0, VARIABLE_BAR);
 
         module_var_cron_add(module_name,
                             "batt_cron",
@@ -106,11 +106,11 @@ void clear_remaining_charge(struct batt *batt)
 /** 
  * @brief Returns the remaining battery charge in percentage format.
  * 
- * @param args Module arguments from .donkyrc (e.g. ${battp 0} for BATT0)
+ * @param args Module arguments from .donkyrc (e.g. ${battper 0} for BATT0)
  * 
  * @return Result as a string
  */
-char *get_battp(char *args)
+char *get_battper(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) ||
@@ -121,21 +121,21 @@ char *get_battp(char *args)
         double max = atof(batt->maximum_charge);
         int percentage = (rem / max) * 100;
 
-        char *battp = NULL;
-        if (asprintf(&battp, "%d", percentage) == -1)
+        char *battper = NULL;
+        if (asprintf(&battper, "%d", percentage) == -1)
                 return "n/a";
 
-        return m_freelater(battp);
+        return m_freelater(battper);
 }
 
 /** 
  * @brief Returns the remaining battery charge in raw mAh format.
  * 
- * @param args Module arguments from .donkyrc (e.g. ${battr 0} for BATT0)
+ * @param args Module arguments from .donkyrc (e.g. ${battrem 0} for BATT0)
  * 
  * @return Result as a string
  */
-char *get_battr(char *args)
+char *get_battrem(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) || (batt->remaining_charge == NULL))
@@ -147,11 +147,11 @@ char *get_battr(char *args)
 /** 
  * @brief Returns the maximum battery charge in raw mAh format.
  * 
- * @param args Module arguments from .donkyrc (e.g. ${battm 0} for BATT0)
+ * @param args Module arguments from .donkyrc (e.g. ${battmax 0} for BATT0)
  * 
  * @return Result as a string
  */
-char *get_battm(char *args)
+char *get_battmax(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) || (batt->maximum_charge == NULL))
@@ -164,12 +164,12 @@ char *get_battm(char *args)
  * @brief Returns the percentage of battery charge left as an int for use
  *        in drawing a bar.
  * 
- * @param args Module arguments from .donkyrc (e.g. ${battb 50 5 0} for
+ * @param args Module arguments from .donkyrc (e.g. ${battbar 50 5 0} for
  *             a 50 pixel wide, 5 pixel high bar for BATT0)
  * 
  * @return Percentage of remaining battery charge as int
  */
-int get_battb(char *args)
+int get_battbar(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) ||
