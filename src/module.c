@@ -31,7 +31,6 @@
 /* internal prototypes */
 static int module_add(char *name, void *handle, void *destroy);
 static struct module *module_find(char *name);
-static struct module_var *module_var_find(char *name);
 static int module_load(char *path);
 static void module_unload(char *name);
 static void *module_get_sym(void *handle, char *name);
@@ -152,34 +151,6 @@ int module_var_add(char *parent,
         add_node(module_var_ls, n);
 
         return 1;
-}
-
-/**
- * @brief Callback for find_node in module_var_find.
- *
- * @param cur
- * @param match
- *
- * @return 1 = match, 0 = not match
- */
-static int module_var_find_cb(struct module_var *cur, char *match)
-{
-        if (!strcasecmp(cur->name, match))
-                return 1;
-
-        return 0;
-}
-
-/**
- * @brief Find a module var link.
- *
- * @param name Unique name of module var
- *
- * @return The module var link matching the given name, or NULL if not found
- */
-static struct module_var *module_var_find(char *name)
-{
-        return find_node(module_var_ls, &module_var_find_cb, name);
 }
 
 /**
