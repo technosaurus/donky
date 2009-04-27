@@ -25,10 +25,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "develop.h"
-#include "../util.h"
 #include "../config.h"
 #include "../mem.h"
+#include "../module.h"
+#include "../util.h"
 
 char module_name[] = "mpd";
 
@@ -114,7 +114,7 @@ int module_init(void)
 
         module_var_add(module_name, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
 
-        module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);        
+        module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0);
 }
 
 /**

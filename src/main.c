@@ -37,19 +37,16 @@
         "  -d, --debug          Show debugging messages\n"
 
 /* Function prototypes. */
-void initialize_stuff(void);
-void clean_up_everything(void);
 int main(int argc, char **argv);
-void sigterm_handler(int signum);
-void sighup_handler(int signum);
-void sigint_handler(int signum);
+static void initialize_stuff(void);
+static void clean_up_everything(void);
+static void sigterm_handler(int signum);
+static void sighup_handler(int signum);
+static void sigint_handler(int signum);
 
 /* Globals. */
 int donky_reload = 0;
 int donky_exit = 0;
-
-struct x_connection *xc;
-struct window_settings *ws;
 
 /**
  * @brief Program entry point.
@@ -95,7 +92,6 @@ int main(int argc, char **argv)
                 case 'd':
                         printf("Debug mode enabled.");
                         break;
-
                 default:
                         printf("\n" HELP);
                         exit(EXIT_FAILURE);
@@ -112,11 +108,15 @@ int main(int argc, char **argv)
 
         exit(EXIT_SUCCESS);
 }
+
 /**
  * @brief Initialize everything donky needs to next begin drawing.
  */
-void initialize_stuff(void)
+static void initialize_stuff(void)
 {
+        struct x_connection *xc;
+        struct window_settings *ws;
+
         while (1) {
                 printf("Welcome to donky! Have a mint.\n");
 
@@ -153,7 +153,7 @@ void initialize_stuff(void)
 /**
  * @brief Run all cleanup methods for (each) source file.
  */
-void clean_up_everything(void)
+static void clean_up_everything(void)
 {
         extern struct list *cfg_ls;
         extern struct list *ts_ls;
@@ -174,7 +174,7 @@ void clean_up_everything(void)
 /**
  * @brief Handles SIGTERM signal.
  */
-void sigterm_handler(int signum)
+static void sigterm_handler(int signum)
 {
         printf("donky is OUT like California lights. PEACE!\n");
         donky_exit = 1;
@@ -183,7 +183,7 @@ void sigterm_handler(int signum)
 /**
  * @brief Handles SIGHUP signal.
  */
-void sighup_handler(int signum)
+static void sighup_handler(int signum)
 {
         printf("donky is reloading... brb...\n");
         donky_reload = 1;
@@ -192,8 +192,9 @@ void sighup_handler(int signum)
 /**
  * @brief Handles SIGINT signal.
  */
-void sigint_handler(int signum)
+static void sigint_handler(int signum)
 {
         printf("donky is exiting. Later d00d.\n");
         donky_exit = 1;
 }
+

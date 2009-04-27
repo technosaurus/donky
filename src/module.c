@@ -29,18 +29,17 @@
 #include "lists.h"
 
 /* internal prototypes */
-int module_add(char *name, void *handle, void *destroy);
-struct module *module_find(char *name);
-int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type);
-struct module_var *module_var_find(char *name);
-int module_load(char *path);
-void module_unload(char *name);
-void *module_get_sym(void *handle, char *name);
+static int module_add(char *name, void *handle, void *destroy);
+static struct module *module_find(char *name);
+static struct module_var *module_var_find(char *name);
+static int module_load(char *path);
+static void module_unload(char *name);
+static void *module_get_sym(void *handle, char *name);
 
 /* Globals. */
-struct list *module_ls = NULL;
-struct list *module_var_ls = NULL;
-int module_var_used = 0;
+static struct list *module_ls = NULL;
+static struct list *module_var_ls = NULL;
+static int module_var_used = 0;
 
 /**
  * @brief Add a new link to the "module" linked list.
@@ -50,7 +49,7 @@ int module_var_used = 0;
  *
  * @return 1 for success, 0 for failure
  */
-int module_add(char *name, void *handle, void *destroy)
+static int module_add(char *name, void *handle, void *destroy)
 {
         struct module *n = malloc(sizeof(struct module));
 
@@ -77,7 +76,7 @@ int module_add(char *name, void *handle, void *destroy)
  *
  * @return 1 = match, 0 = not match
  */
-int module_find_cb(struct module *cur, char *match)
+static int module_find_cb(struct module *cur, char *match)
 {
         if (!strcasecmp(cur->name, match))
                 return 1;
@@ -92,7 +91,7 @@ int module_find_cb(struct module *cur, char *match)
  *
  * @return The module link matching the given name, or NULL if not found
  */
-struct module *module_find(char *name)
+static struct module *module_find(char *name)
 {
         return find_node(module_ls, &module_find_cb, name);
 }
@@ -107,7 +106,11 @@ struct module *module_find(char *name)
  *
  * @return 0 for utter phail, 1 for success
  */
-int module_var_add(char *parent, char *name, char *method, double timeout, enum variable_type type)
+int module_var_add(char *parent,
+                   char *name,
+                   char *method,
+                   double timeout,
+                   enum variable_type type)
 {
         struct module *mod = module_find(parent);
 
@@ -159,7 +162,7 @@ int module_var_add(char *parent, char *name, char *method, double timeout, enum 
  *
  * @return 1 = match, 0 = not match
  */
-int module_var_find_cb(struct module_var *cur, char *match)
+static int module_var_find_cb(struct module_var *cur, char *match)
 {
         if (!strcasecmp(cur->name, match))
                 return 1;
@@ -174,7 +177,7 @@ int module_var_find_cb(struct module_var *cur, char *match)
  *
  * @return The module var link matching the given name, or NULL if not found
  */
-struct module_var *module_var_find(char *name)
+static struct module_var *module_var_find(char *name)
 {
         return find_node(module_var_ls, &module_var_find_cb, name);
 }
@@ -189,7 +192,10 @@ struct module_var *module_var_find(char *name)
  *
  * @return 1 success, 0 fail
  */
-int module_var_cron_add(char *parent, char *name, char *method, double timeout)
+int module_var_cron_add(char *parent,
+                        char *name,
+                        char *method,
+                        double timeout)
 {
         struct module *mod = module_find(parent);
 
@@ -233,7 +239,8 @@ int module_var_cron_add(char *parent, char *name, char *method, double timeout)
  *
  * @return 1 = match, 0 = not match
  */
-int module_var_cron_clear_cb(struct module_var *cur, struct module *parent)
+static int module_var_cron_clear_cb(struct module_var *cur,
+                                    struct module *parent)
 {
         if (cur->parent == parent)
                 return 1;
@@ -246,7 +253,7 @@ int module_var_cron_clear_cb(struct module_var *cur, struct module *parent)
  *
  * @param parent Pointer to parent module
  */
-void module_var_cron_clear(struct module *parent)
+static void module_var_cron_clear(struct module *parent)
 {
         del_nodes(module_var_ls, &module_var_cron_clear_cb, parent, NULL);
 }
@@ -256,7 +263,7 @@ void module_var_cron_clear(struct module *parent)
  *
  * @param cur
  */
-void module_var_cron_exec_cb(struct module_var *cur)
+static void module_var_cron_exec_cb(struct module_var *cur)
 {
         void *(*sym)(void);
 
@@ -284,7 +291,7 @@ void module_var_cron_exec(void)
  *
  * @return 0 for failure, 1 for success
  */
-int module_load(char *path)
+static int module_load(char *path)
 {
         void *handle;
         char *module_name;
@@ -327,7 +334,7 @@ int module_load(char *path)
  *
  * @return 1 = match, 0 = not match
  */
-int module_unload_find(struct module *cur, char *match)
+static int module_unload_find(struct module *cur, char *match)
 {
         if (!strcasecmp(cur->name, match))
                 return 1;
@@ -340,7 +347,7 @@ int module_unload_find(struct module *cur, char *match)
  *
  * @param cur
  */
-void module_unload_free(struct module *cur)
+static void module_unload_free(struct module *cur)
 {
         void (*module_destroy)(void);
 
@@ -356,7 +363,7 @@ void module_unload_free(struct module *cur)
  *
  * @param name Unique name of the module
  */
-void module_unload(char *name)
+static void module_unload(char *name)
 {
         del_node(module_ls, &module_unload_find, name, &module_unload_free);
 }
@@ -407,7 +414,7 @@ void module_load_all(void)
  *
  * @return Address of symbol
  */
-void *module_get_sym(void *handle, char *name)
+static void *module_get_sym(void *handle, char *name)
 {
         /* Clear any existing errors. */
         dlerror();

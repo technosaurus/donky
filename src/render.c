@@ -50,30 +50,30 @@ struct render_queue {
 };
 
 /* Function prototypes. */
-void render_text(xcb_connection_t *connection,
-                 xcb_window_t *window,
-                 char *str,
-                 xcb_font_t font,
-                 struct donky_color color,
-                 int16_t x,
-                 int16_t y);
-void render_bar(xcb_connection_t *connection,
-                xcb_window_t *window,
-                int *value,
-                xcb_font_t font,
-                struct donky_color color,
-                int16_t x,
-                int16_t y,
-                uint16_t w,
-                uint16_t h);
-xcb_gc_t get_font_gc(xcb_connection_t *connection,
-                     xcb_window_t *window,
-                     xcb_font_t font,
-                     uint32_t bg, uint32_t fg);
+static void render_text(xcb_connection_t *connection,
+                        xcb_window_t *window,
+                        char *str,
+                        xcb_font_t font,
+                        struct donky_color color,
+                        int16_t x,
+                        int16_t y);
+static void render_bar(xcb_connection_t *connection,
+                       xcb_window_t *window,
+                       int *value,
+                       xcb_font_t font,
+                       struct donky_color color,
+                       int16_t x,
+                       int16_t y,
+                       uint16_t w,
+                       uint16_t h);
+static xcb_gc_t get_font_gc(xcb_connection_t *connection,
+                            xcb_window_t *window,
+                            xcb_font_t font,
+                            uint32_t bg, uint32_t fg);
 
 /* Globals. */
-struct render_queue *rq_start = NULL;
-struct render_queue *rq_end = NULL;
+static struct render_queue *rq_start = NULL;
+static struct render_queue *rq_end = NULL;
 
 /**
  * @brief Render everything in the render queue.

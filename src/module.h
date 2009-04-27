@@ -45,6 +45,15 @@ struct module_var {
 };
 
 /* Function prototypes. */
+int module_var_add(char *parent,
+                   char *name,
+                   char *method,
+                   double timeout,
+                   enum variable_type type);
+int module_var_cron_add(char *parent,
+                        char *name,
+                        char *method,
+                        double timeout);
 void module_load_all(void);
 void clear_module(void);
 void module_var_cron_exec(void);

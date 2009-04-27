@@ -33,11 +33,10 @@ struct mem_data {
 };
 
 /* internal prototypes */
-void mem_list_add(void *ptr);
-void mem_list_clear(void);
+static void mem_list_add(void *ptr);
 
 /* Globals. */
-struct list *mem_fl = NULL;
+static struct list *mem_fl = NULL;
 
 /**
  * @brief Malloc wrapper.
@@ -123,7 +122,7 @@ void *m_freelater(void *ptr)
  *
  * @param ptr Pointer to add
  */
-void mem_list_add(void *ptr)
+static void mem_list_add(void *ptr)
 {
         struct mem_data *n = malloc(sizeof(struct mem_data));
 
@@ -139,7 +138,7 @@ void mem_list_add(void *ptr)
 /**
  * @brief Callback for the del_list thinger!
  */
-void mem_list_clear_cb(struct mem_data *cur)
+static void mem_list_clear_cb(struct mem_data *cur)
 {
         freeif(cur->ptr);
 }

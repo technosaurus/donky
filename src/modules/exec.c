@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "develop.h"
 #include "../mem.h"
+#include "../module.h"
 #include "../util.h"
 
 /* Module name */
@@ -48,37 +48,45 @@ void module_destroy(void)
 
 char *get_exec(char *args)
 {
-        FILE *execp = popen(args, "r");
-        if (execp == NULL)
+        FILE *execp;
+        char *pipe;
+        size_t len;
+
+        execp = popen(args, "r");
+        if (!execp)
                 return "n/a";
 
-        char *pipe = NULL;
-        size_t len = 0;
-        int read = getline(&pipe, &len, execp);
+        pipe = NULL;
+        len = 0;
+        getline(&pipe, &len, execp);
         pclose(execp);
-        if (!pipe || (read == -1))
-                return "n/a";
-        
-        return m_freelater(chomp(pipe));
+        if (len && pipe)
+                return m_freelater(chomp(pipe));
+
+        return "n/a";
 }
 
 int get_execbar(char *args)
 {
-        FILE *execp = popen(args, "r");
-        if (execp == NULL)
+        FILE *execp;
+        char *pipe;
+        size_t len;
+        int value;
+
+        execp = popen(args, "r");
+        if (!execp)
                 return 0;
 
-        char *pipe = NULL;
-        size_t len = 0;
-        int read = getline(&pipe, &len, execp);
+        pipe = NULL;
+        len = 0;
+        getline(&pipe, &len, execp);
         pclose(execp);
-        if (!pipe || (read == -1))
-                return 0;
+        if (len && pipe) {
+                value = atoi(pipe);
+                free(pipe);
+                return value;
+        }
 
-        int value = atoi(pipe);
-        free(pipe);
-        
-        return value;
-
+        return 0;
 }
 

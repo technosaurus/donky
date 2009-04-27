@@ -81,7 +81,7 @@ void update_diskio(void);
 int module_init(void)
 {
         module_var_add(module_name, "diskio", "get_diskio", 1.0, VARIABLE_STR);
-        module_var_cron_add(module_name, "diskio_cron", "update_diskio", 1.0, VARIABLE_CRON);
+        module_var_cron_add(module_name, "diskio_cron", "update_diskio", 1.0);
 }
 
 char *get_diskio(char *args)

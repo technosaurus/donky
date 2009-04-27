@@ -21,8 +21,8 @@
 #include <string.h>
 #include <sys/param.h>
 
-#include "develop.h"
 #include "../mem.h"
+#include "../module.h"
 #include "../util.h"
 
 /* Module name */

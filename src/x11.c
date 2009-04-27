@@ -50,50 +50,49 @@ struct draw_settings {
         struct timespec tspec;
 };
 
-/* Function prototypes. */
-struct window_settings *window_settings_load(struct x_connection *xc);
-struct draw_settings *draw_settings_load(struct x_connection *xc,
-                                         struct window_settings *ws);
-void handle_TEXT_COLOR(struct x_connection *xc,
-                       struct text_section *cur,
-                       struct draw_settings *ds);
-void handle_TEXT_STATIC(struct x_connection *xc,
-                        struct text_section *cur,
-                        struct draw_settings *ds,
-                        int16_t *new_xpos,
-                        int16_t *new_ypos,
-                        bool *force,
-                        int *line_heights,
-                        int *calcd_line_heights,
-                        bool *is_last);
-void handle_TEXT_VARIABLE(struct x_connection *xc,
-                          struct text_section *cur,
-                          struct draw_settings *ds,
-                          int16_t *new_xpos,
-                          int16_t *new_ypos,
-                          bool *force,
-                          int *line_heights,
-                          int *calcd_line_heights,
-                          bool *is_last);
-void handle_VARIABLE_STR(struct x_connection *xc,
-                         struct text_section *cur,
-                         struct draw_settings *ds,
-                         int *line_heights,
-                         int *calcd_line_heights,
-                         bool *is_last,
-                         bool *force,
-                         bool *moved);
-void handle_VARIABLE_BAR(struct text_section *cur,
-                         struct draw_settings *ds,
-                         int *line_heights,
-                         int *calcd_line_heights,
-                         bool *is_last,
-                         bool *force,
-                         bool *moved);
-void clean_x(struct x_connection *xc,
-             struct window_settings *ws,
-             struct draw_settings *ds,
-             int *line_heights);
+static struct window_settings *window_settings_load(struct x_connection *xc);
+static struct draw_settings *draw_settings_load(struct x_connection *xc,
+                                                struct window_settings *ws);
+static void handle_TEXT_COLOR(struct x_connection *xc,
+                              struct text_section *cur,
+                              struct draw_settings *ds);
+static void handle_TEXT_STATIC(struct x_connection *xc,
+                               struct text_section *cur,
+                               struct draw_settings *ds,
+                               int16_t *new_xpos,
+                               int16_t *new_ypos,
+                               bool *force,
+                               int *line_heights,
+                               int *calcd_line_heights,
+                               bool *is_last);
+static void handle_TEXT_VARIABLE(struct x_connection *xc,
+                                 struct text_section *cur,
+                                 struct draw_settings *ds,
+                                 int16_t *new_xpos,
+                                 int16_t *new_ypos,
+                                 bool *force,
+                                 int *line_heights,
+                                 int *calcd_line_heights,
+                                 bool *is_last);
+static void handle_VARIABLE_STR(struct x_connection *xc,
+                                struct text_section *cur,
+                                struct draw_settings *ds,
+                                int *line_heights,
+                                int *calcd_line_heights,
+                                bool *is_last,
+                                bool *force,
+                                bool *moved);
+static void handle_VARIABLE_BAR(struct text_section *cur,
+                                struct draw_settings *ds,
+                                int *line_heights,
+                                int *calcd_line_heights,
+                                bool *is_last,
+                                bool *force,
+                                bool *moved);
+static void clean_x(struct x_connection *xc,
+                    struct window_settings *ws,
+                    struct draw_settings *ds,
+                    int *line_heights);
 
 /**
  * @brief Connects to the X server and stores all relevant information.
@@ -138,7 +137,7 @@ struct x_connection *init_x_connection(void)
  *
  * @return malloc'd & filled windows_settings struct
  */
-struct window_settings *window_settings_load(struct x_connection *xc)
+static struct window_settings *window_settings_load(struct x_connection *xc)
 {
         struct window_settings *ws;
         char *bg_color_name;
@@ -253,8 +252,8 @@ struct window_settings *draw_window(struct x_connection *xc)
  *
  * @return Malloc'd draw_settings structure
  */
-struct draw_settings *draw_settings_load(struct x_connection *xc,
-                                         struct window_settings *ws)
+static struct draw_settings *draw_settings_load(struct x_connection *xc,
+                                                struct window_settings *ws)
 {
         struct draw_settings *ds;
         double min_sleep; 
@@ -482,9 +481,9 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
  * @param cur Current text_section node
  * @param ds donky's draw settings
  */
-void handle_TEXT_COLOR(struct x_connection *xc,
-                       struct text_section *cur,
-                       struct draw_settings *ds)
+static void handle_TEXT_COLOR(struct x_connection *xc,
+                              struct text_section *cur,
+                              struct draw_settings *ds)
 {
         if (cur->args == NULL)
                 ds->color.fg = get_color(xc->connection,
@@ -509,15 +508,15 @@ void handle_TEXT_COLOR(struct x_connection *xc,
  * @param calcd_line_heights 
  * @param is_last Is this it the last text_section node in the list?
  */
-void handle_TEXT_STATIC(struct x_connection *xc,
-                        struct text_section *cur,
-                        struct draw_settings *ds,
-                        int16_t *new_xpos,
-                        int16_t *new_ypos,
-                        bool *force,
-                        int *line_heights,
-                        int *calcd_line_heights,
-                        bool *is_last)
+static void handle_TEXT_STATIC(struct x_connection *xc,
+                               struct text_section *cur,
+                               struct draw_settings *ds,
+                               int16_t *new_xpos,
+                               int16_t *new_ypos,
+                               bool *force,
+                               int *line_heights,
+                               int *calcd_line_heights,
+                               bool *is_last)
 {
         if (cur->xpos != -1 && (cur->xpos == *new_xpos) && !*force)
                 return;
@@ -599,15 +598,15 @@ void handle_TEXT_STATIC(struct x_connection *xc,
  * @param calcd_line_heights 
  * @param is_last Is this it the last text_section node in the list?
  */
-void handle_TEXT_VARIABLE(struct x_connection *xc,
-                          struct text_section *cur,
-                          struct draw_settings *ds,
-                          int16_t *new_xpos,
-                          int16_t *new_ypos,
-                          bool *force,
-                          int *line_heights,
-                          int *calcd_line_heights,
-                          bool *is_last)
+static void handle_TEXT_VARIABLE(struct x_connection *xc,
+                                 struct text_section *cur,
+                                 struct draw_settings *ds,
+                                 int16_t *new_xpos,
+                                 int16_t *new_ypos,
+                                 bool *force,
+                                 int *line_heights,
+                                 int *calcd_line_heights,
+                                 bool *is_last)
 {
         /* if force = 0 and our x position
          * hasn't changed, respect timeouts. */
@@ -680,14 +679,14 @@ void handle_TEXT_VARIABLE(struct x_connection *xc,
  *                in the text_section list.
  * @param moved Has our position moved since last update?
  */
-void handle_VARIABLE_STR(struct x_connection *xc,
-                         struct text_section *cur,
-                         struct draw_settings *ds,
-                         int *line_heights,
-                         int *calcd_line_heights,
-                         bool *is_last,
-                         bool *force,
-                         bool *moved)
+static void handle_VARIABLE_STR(struct x_connection *xc,
+                                struct text_section *cur,
+                                struct draw_settings *ds,
+                                int *line_heights,
+                                int *calcd_line_heights,
+                                bool *is_last,
+                                bool *force,
+                                bool *moved)
 {
         int changed = 0;
 
@@ -786,13 +785,13 @@ void handle_VARIABLE_STR(struct x_connection *xc,
  *                in the text_section list.
  * @param moved Have we moved position since last update?
  */
-void handle_VARIABLE_BAR(struct text_section *cur,
-                         struct draw_settings *ds,
-                         int *line_heights,
-                         int *calcd_line_heights,
-                         bool *is_last,
-                         bool *force,
-                         bool *moved)
+static void handle_VARIABLE_BAR(struct text_section *cur,
+                                struct draw_settings *ds,
+                                int *line_heights,
+                                int *calcd_line_heights,
+                                bool *is_last,
+                                bool *force,
+                                bool *moved)
 {
         int changed = 0;
 
@@ -879,10 +878,10 @@ void handle_VARIABLE_BAR(struct text_section *cur,
  * @param ds donky's draw_settings
  * @param line_heights 
  */
-void clean_x(struct x_connection *xc,
-             struct window_settings *ws,
-             struct draw_settings *ds,
-             int *line_heights)
+static void clean_x(struct x_connection *xc,
+                    struct window_settings *ws,
+                    struct draw_settings *ds,
+                    int *line_heights)
 {
         printf("Cleaning up in x11 and closing X connection... ");
 

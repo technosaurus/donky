@@ -15,6 +15,9 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LISTS_H
+#define LISTS_H
+
 struct list_item {
         void *data;
         struct list_item *next;
@@ -48,3 +51,6 @@ void act_on_list_if(struct list *fl, void *execute,
                     void *match_callback, void *match);
 void act_on_list_raw_if(struct list *fl, void *execute,
                         void *match_callback, void *match);
+
+#endif /* LISTS_H */
+

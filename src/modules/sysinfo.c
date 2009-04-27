@@ -20,8 +20,8 @@
 #include <string.h>
 #include <sys/sysinfo.h>
 
-#include "develop.h"
 #include "../mem.h"
+#include "../module.h"
 #include "../util.h"
 
 char module_name[] = "sysinfo"; /* Up to 63 characters, any more and it will

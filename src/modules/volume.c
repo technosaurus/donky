@@ -21,8 +21,8 @@
 #include <string.h>
 #include <alsa/asoundlib.h>
 
-#include "develop.h"
 #include "../mem.h"
+#include "../module.h"
 
 /* Module name */
 char module_name[] = "volume";

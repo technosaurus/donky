@@ -211,8 +211,9 @@ char *d_strncpy(const char *str, size_t n)
  */
 char *bytes_to_bigger(unsigned long bytes)
 {
-        char str[32];
+        char *str;
         char label[4];
+        int read;
         double tera = pow(1024, 4);
         double giga = pow(1024, 3);
         double mega = pow(1024, 2);
@@ -237,10 +238,9 @@ char *bytes_to_bigger(unsigned long bytes)
         }
 
         label[3] = '\0';
-        snprintf(str, sizeof(str),
-                 "%.2f%s", recalc, label);
+        read = asprintf(&str, "%.2f%s", recalc, label);
 
-        return d_strcpy(str);
+        return (read != -1) ? str : NULL;
 }
 
 /** 

@@ -36,10 +36,12 @@
 )
 
 /* Function prototypes. */
-void text_section_split(char *text, unsigned int line);
-void text_section_add(char *value, int len, unsigned int line, enum text_section_type type);
+static void text_section_split(char *text, unsigned int line);
+static void text_section_add(char *value,
+                             int len,
+                             unsigned int line,
+                             enum text_section_type type);
 
-/* Globals. */
 struct list *ts_ls;
 
 /**
@@ -61,7 +63,7 @@ void parse_text(void)
  *
  * @param text Character array pointer of text to parse.
  */
-void text_section_split(char *text, unsigned int line)
+static void text_section_split(char *text, unsigned int line)
 {
         char *dup;
         char *s;
@@ -156,12 +158,15 @@ void text_section_split(char *text, unsigned int line)
  * @param line Current line number
  * @param type Section type (TEXT_VARIABLE, TEXT_STATIC)
  */
-void text_section_add(char *value, int len, unsigned int line, enum text_section_type type)
-{        
+static void text_section_add(char *value,
+                             int len,
+                             unsigned int line,
+                             enum text_section_type type)
+{
         char *copy_val = strndup(value, len);
         char *alias_contents = get_char_key("alias", copy_val, NULL);
         char *args = NULL;
-        
+
         if (type == TEXT_VARIABLE && alias_contents) {
                 text_section_split(alias_contents, line);
                 freeif(copy_val);
@@ -218,7 +223,7 @@ void text_section_add(char *value, int len, unsigned int line, enum text_section
  *
  * @return 1 if this node is what we want, 0 if its not.
  */
-int text_section_var_find_cb(struct text_section *cur,
+static int text_section_var_find_cb(struct text_section *cur,
                              char *match)
 {
         if (cur->type == TEXT_VARIABLE && !strcasecmp(cur->value, match))

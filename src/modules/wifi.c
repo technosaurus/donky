@@ -20,10 +20,10 @@
 #include <string.h>
 #include <iwlib.h>
 
-#include "develop.h"
-#include "../util.h"
 #include "../config.h"
 #include "../mem.h"
+#include "../module.h"
+#include "../util.h"
 
 char module_name[] = "wifi_pwn_edition";
 
@@ -60,7 +60,7 @@ int module_init(void)
         module_var_add(module_name, "wifi_link_bar", "get_link_bar", 5.0, VARIABLE_BAR);
 
         /* Add cron job. */
-        module_var_cron_add(module_name, "wifi_cron", "run_cron", 5.0, VARIABLE_CRON);
+        module_var_cron_add(module_name, "wifi_cron", "run_cron", 5.0);
 
         interface = get_char_key("wifi", "interface", "wlan0");
 }

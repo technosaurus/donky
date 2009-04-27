@@ -19,9 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "develop.h"
 #include "../lists.h"
 #include "../mem.h"
+#include "../module.h"
 #include "../util.h"
 
 /* Module name */
@@ -62,18 +62,11 @@ struct list *batt_ls = NULL;
 int module_init(void)
 {
         batt_ls = init_list();
-
         module_var_add(module_name, "battper", "get_battper", 30.0, VARIABLE_STR);
         module_var_add(module_name, "battrem", "get_battrem", 30.0, VARIABLE_STR);
         module_var_add(module_name, "battmax", "get_battmax", 30.0, VARIABLE_STR);
-
         module_var_add(module_name, "battbar", "get_battbar", 30.0, VARIABLE_BAR);
-
-        module_var_cron_add(module_name,
-                            "batt_cron",
-                            "batt_cron",
-                            30.0,
-                            VARIABLE_CRON);
+        module_var_cron_add(module_name, "batt_cron", "batt_cron", 30.0);
 }
 
 /* These run on module unload */

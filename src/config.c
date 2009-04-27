@@ -25,6 +25,21 @@
 #include "lists.h"
 #include "util.h"
 
+struct setting {
+        char *key;
+        char *value;
+};
+
+static void add_mod(char *mod);
+static int find_mod(struct cfg *cur, char *mod);
+static void add_key(char *mod, char *key, char *value);
+static int find_key(struct setting *cur, char *key);
+static FILE *get_cfg_file(void);
+static void clear_settings(struct setting *cur_s);
+
+char *cfg_text;
+struct list *cfg_ls;
+
 #define IS_TRUE(c) ( ((c) == 'y') || ((c) == 'Y') || \
                      ((c) == 't') || ((c) == 'T') || \
                      ((c) == '1') )
@@ -32,23 +47,6 @@
 #define IS_FALSE(c) ( ((c) == 'n') || ((c) == 'N') || \
                       ((c) == 'f') || ((c) == 'F') || \
                       ((c) == '0') )
-
-/* internal structs/prototypes */
-struct setting {
-        char *key;
-        char *value;
-};
-
-void add_mod(char *mod);
-int find_mod(struct cfg *cur, char *mod);
-void add_key(char *mod, char *key, char *value);
-int find_key(struct setting *cur, char *key);
-FILE *get_cfg_file(void);
-void clear_settings(struct setting *cur_s);
-
-/* Globals */
-struct list *cfg_ls;
-char *cfg_text;
 
 /** 
  * @brief Add a mod to the configuration list
@@ -74,7 +72,7 @@ void add_mod(char *mod)
  * 
  * @return 1 if this is the node we want, 0 if not
  */
-int find_mod(struct cfg *cur, char *mod)
+static int find_mod(struct cfg *cur, char *mod)
 {
         if (!strcasecmp(cur->mod, mod))
                 return 1;
@@ -113,7 +111,7 @@ void add_key(char *mod, char *key, char *value)
  * 
  * @return 1 if this is the node we want, 0 if not
  */
-int find_key(struct setting *cur, char *key)
+static int find_key(struct setting *cur, char *key)
 {
         if(!strcasecmp(cur->key, key))
                 return 1;
@@ -237,24 +235,29 @@ bool get_bool_key(char *mod, char *key, bool otherwise)
 void parse_cfg(void)
 {
         FILE *cfg_file;
-        char *str = NULL;
-        size_t len = 0;
-        char *mod = NULL;
-        char *key = NULL;
-        char *value = NULL;
+        char *str;
+        size_t len;
+        char *mod;
+        char *key;
+        char *value;
+        const char *format[5];     /* sscanf formats */
 
         cfg_file = get_cfg_file();
-        cfg_ls = init_list();           /* initialize our cfg list */
-        cfg_text = NULL;                /* used in handling [text] */
+        cfg_ls = init_list();      /* initialize our cfg list */
+        cfg_text = NULL;           /* used in handling [text] */
 
-        /* the various sscanf formats we attempt to parse with, in order */
-        const char *format[5] = {
-                " [%a[a-zA-Z0-9_-]]",                   /* [mod]            */
-                " %a[a-zA-Z0-9_-] = \"%a[^\"]\" ",      /* key = "value"    */
-                " %a[a-zA-Z0-9_-] = '%a[^\']' ",        /* key = 'value'    */
-                " %a[a-zA-Z0-9_-] = %a[^;\n] ",         /* key = value      */
-                " %a[a-zA-Z0-9_-] "                     /* key              */
-        };
+        str = NULL;
+        len = 0;
+
+        mod = NULL;
+        key = NULL;
+        value = NULL;
+
+        format[0] = " [%a[a-zA-Z0-9_-]]";              /* [mod]            */
+        format[1] = " %a[a-zA-Z0-9_-] = \"%a[^\"]\" "; /* key = "value"    */
+        format[2] = " %a[a-zA-Z0-9_-] = '%a[^\']' ";   /* key = 'value'    */
+        format[3] = " %a[a-zA-Z0-9_-] = %a[^;\n] ";    /* key = value      */
+        format[4] = " %a[a-zA-Z0-9_-] ";               /* key              */
 
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {
@@ -267,7 +270,7 @@ void parse_cfg(void)
                         /* we don't add [text] to the cfg list */
                         if (strcasecmp(mod, "text") != 0)
                                 add_mod(mod);
-                                
+ 
                         continue;
                 }
 

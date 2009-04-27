@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "develop.h"
 #include "../mem.h"
+#include "../module.h"
 #include "../util.h"
 
 /* Module name */
@@ -31,10 +31,10 @@ int module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
-char *get_eeeblp(char *args);
-char *get_eeeblc(char *args);
-char *get_eeeblm(char *args);
-int get_eeeblb(char *args);
+char *get_eeeblper(char *args);
+char *get_eeeblcur(char *args);
+char *get_eeeblmax(char *args);
+int get_eeeblbar(char *args);
 
 void get_cur_bl(void);
 void get_max_bl(void);
@@ -46,18 +46,11 @@ char *max_bl = NULL;
 /* These run on module startup */
 int module_init(void)
 {
-        module_var_add(module_name, "eeeblp", "get_eeeblp", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "eeeblc", "get_eeeblc", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "eeeblm", "get_eeeblm", 5.0, VARIABLE_STR);
-
-        module_var_add(module_name, "eeeblb", "get_eeeblb", 5.0, VARIABLE_BAR);
-
-        module_var_cron_add(module_name,
-                            "eeebl_cron",
-                            "eeebl_cron",
-                            5.0,
-                            VARIABLE_CRON);
-
+        module_var_add(module_name, "eeeblper", "get_eeeblper", 5.0, VARIABLE_STR);
+        module_var_add(module_name, "eeeblcur", "get_eeeblcur", 5.0, VARIABLE_STR);
+        module_var_add(module_name, "eeeblmax", "get_eeeblmax", 5.0, VARIABLE_STR);
+        module_var_add(module_name, "eeeblbar", "get_eeeblbar", 5.0, VARIABLE_BAR);
+        module_var_cron_add(module_name, "eeebl_cron", "eeebl_cron", 5.0);
         get_max_bl();
 }
 
@@ -84,17 +77,18 @@ void eeebl_cron(void)
  * 
  * @return String of current backlight level percentage.
  */
-char *get_eeeblp(char *args)
+char *get_eeeblper(char *args)
 {
-        if ((cur_bl == NULL) || (max_bl == NULL))
-                return "n/a";
+        int charge;
+        char *ret_eeeblper;
 
-        int charge = (atof(cur_bl) / atof(max_bl)) * 100;
+        if (cur_bl && max_bl) {
+                charge = (atof(cur_bl) / atof(max_bl)) * 100;
+                asprintf(&ret_eeeblper, "%d", charge);
+                return m_freelater(ret_eeeblper);
+        }
 
-        char *ret_eeeblp = NULL;
-        asprintf(&ret_eeeblp, "%d", charge);
-
-        return m_freelater(ret_eeeblp);
+        return "n/a";
 }
 
 /** 
@@ -104,12 +98,9 @@ char *get_eeeblp(char *args)
  * 
  * @return String of current backlight level.
  */
-char *get_eeeblc(char *args)
+char *get_eeeblcur(char *args)
 {
-        if (cur_bl == NULL)
-                return "n/a";
-
-        return cur_bl;
+        return (cur_bl) ? cur_bl : "n/a";
 }
 
 /** 
@@ -119,12 +110,9 @@ char *get_eeeblc(char *args)
  * 
  * @return String of maximum backlight level.
  */
-char *get_eeeblm(char *args)
+char *get_eeeblmax(char *args)
 {
-        if (max_bl == NULL)
-                return "n/a";
-
-        return max_bl;
+        return (max_bl) ? max_bl : "n/a";
 }
 
 /** 
@@ -134,14 +122,12 @@ char *get_eeeblm(char *args)
  * 
  * @return Integer representing current backlight level percentage.
  */
-int get_eeeblb(char *args)
+int get_eeeblbar(char *args)
 {
-        if ((cur_bl == NULL) || (max_bl == NULL))
-                return 0;
+        if (cur_bl && max_bl)
+                return (int)((atof(cur_bl) / atof(max_bl)) * 100);
 
-        int charge = (atof(cur_bl) / atof(max_bl)) * 100;
-
-        return charge;
+        return 0;
 }
 
 /** 
@@ -149,15 +135,19 @@ int get_eeeblb(char *args)
  */
 void get_cur_bl(void)
 {
-        char *path = "/sys/devices/virtual/backlight/eeepc/brightness";
-        FILE *cur_bl_file = fopen(path, "r");
-        if (cur_bl_file == NULL)
+        char *path;
+        FILE *cur_bl_file;
+        size_t len;
+
+        path = "/sys/devices/virtual/backlight/eeepc/brightness";
+        cur_bl_file = fopen(path, "r");
+        if (!cur_bl_file)
                 return;
 
-        size_t len = 0;
-        int read = getline(&cur_bl, &len, cur_bl_file);
+        len = 0;
+        getline(&cur_bl, &len, cur_bl_file);
         fclose(cur_bl_file);
-        if (cur_bl && (read != -1))
+        if (len && cur_bl)
                 chomp(cur_bl);
 }
 
@@ -167,15 +157,19 @@ void get_cur_bl(void)
  */
 void get_max_bl(void)
 {
-        char *path = "/sys/devices/virtual/backlight/eeepc/max_brightness";
-        FILE *max_bl_file = fopen(path, "r");
-        if (max_bl_file == NULL)
+        char *path;
+        FILE *max_bl_file;
+        size_t len;
+
+        path = "/sys/devices/virtual/backlight/eeepc/max_brightness";
+        max_bl_file = fopen(path, "r");
+        if (!max_bl_file)
                 return;
 
-        size_t len = 0;
-        int read = getline(&max_bl, &len, max_bl_file);
+        len = 0;
+        getline(&max_bl, &len, max_bl_file);
         fclose(max_bl_file);
-        if (max_bl && (read != -1))
+        if (len && max_bl)
                 chomp(max_bl);
 }
 

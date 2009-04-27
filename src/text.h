@@ -20,6 +20,8 @@
 
 #include <stdint.h>
 
+#include "lists.h"
+
 enum text_section_type {
         TEXT_STATIC,    /* This is static text.  It does not need to be evaluated. */
         TEXT_VARIABLE,  /* Needs further evaluation before drawing! */
@@ -56,6 +58,8 @@ void text_section_var_modvar(char *value,
                              struct module_var *mvar,
                              double timeout);
 void parse_text(void);
+
+extern struct list *ts_ls;
 
 #endif /* TEXT_H */
 

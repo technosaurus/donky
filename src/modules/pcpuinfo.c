@@ -19,8 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "develop.h"
 #include "../mem.h"
+#include "../module.h"
 
 /* Module name */
 char module_name[] = "pcpuinfo";

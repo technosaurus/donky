@@ -20,19 +20,23 @@
 
 #include <stdbool.h>
 
+#include "lists.h"
+
 struct cfg {
         char *mod;
 
         struct list *setting_ls;
 };
 
-/* function prototypes */
 char *get_char_key(char *mod, char *key, char *otherwise);
 int get_int_key(char *mod, char *key, int otherwise);
 double get_double_key(char *mod, char *key, double otherwise);
 bool get_bool_key(char *mod, char *key, bool otherwise);
 void parse_cfg(void);
 void clear_cfg(struct cfg *cur);
+
+extern char *cfg_text;
+extern struct list *cfg_ls;
 
 #endif /* CONFIG_H */
 

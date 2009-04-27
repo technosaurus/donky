@@ -20,9 +20,9 @@
 #include <string.h>
 #include <time.h>
 
-#include "develop.h"
 #include "../util.h"
 #include "../mem.h"
+#include "../module.h"
 
 char module_name[] = "date_shet"; /* Up to 63 characters, any more and it will
                                      be truncated!  Doesn't matter though, just
