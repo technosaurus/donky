@@ -309,7 +309,9 @@ static int module_load(char *path)
 
         /* Check for required symbols. */
         if (!(module_name || module_init || module_destroy)) {
-                fprintf(stderr, "%s: Did not have required symbols, skipping!\n");
+                fprintf(stderr,
+                        "%s: Did not have required symbols, skipping!\n",
+                        path);
                 return 0;
         }
 
@@ -385,7 +387,7 @@ void module_load_all(void)
                 return;
         }
 
-        while (dir = readdir(d)) {
+        while ((dir = readdir(d))) {
                 if (!strcmp(dir->d_name, ".") ||
                     !strcmp(dir->d_name, "..") ||
                     dir->d_type == DT_DIR)
@@ -422,7 +424,7 @@ static void *module_get_sym(void *handle, char *name)
         void *location = dlsym(handle, name);
         char *error;
 
-        if (error = dlerror()) {
+        if ((error = dlerror())) {
                 fprintf(stderr, "module_get_sym: problem finding %s: %s\n", name, error);
                 return NULL;
         }

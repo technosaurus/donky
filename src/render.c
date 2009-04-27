@@ -81,7 +81,7 @@ static struct render_queue *rq_end = NULL;
  */
 void render_queue_exec(xcb_connection_t *connection,
                        xcb_window_t *window,
-                       int16_t *window_width)
+                       uint16_t *window_width)
 {
         struct render_queue *cur = rq_start, *next;
 

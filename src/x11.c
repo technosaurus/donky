@@ -353,7 +353,7 @@ void donky_loop(struct x_connection *xc, struct window_settings *ws)
                         force = false;
 
                 /* Do a quick event poll. */
-                while (e = xcb_poll_for_event(xc->connection)) {
+                while ((e = xcb_poll_for_event(xc->connection))) {
                         switch (e->response_type & ~0x80) {
                         case XCB_EXPOSE:
                                 /* force redraw everything */
