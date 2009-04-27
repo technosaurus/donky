@@ -21,6 +21,7 @@
 
 #include "../mem.h"
 #include "../module.h"
+#include "../util.h"
 
 /* Module name */
 char module_name[] = "pcpuinfo";
@@ -152,7 +153,7 @@ char *get_pcpucache(char *args)
                 core = args[0];
         
         while (fgets(str, 16, pcpuinfo) != NULL) {
-                if (strchr((str + 12), core) == 0)
+                if (strchr((str + 12), core) == NULL)
                         found = 1;
                 if (found && (strncmp(str, "cache size", 10) == 0)) {
                         ret_pcpucache = m_strndup((str + 13), 4);

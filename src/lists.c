@@ -47,10 +47,10 @@ struct list *init_list(void)
  */
 void *add_node(struct list *ls, void *data)
 {
-        if (!ls)
-                return;
-
         struct list_item *new;
+
+        if (!ls)
+                return NULL;
 
         new = malloc(sizeof(struct list_item));
         new->data = data;
@@ -87,12 +87,12 @@ void *get_node(struct list *ls,
                void *match,
                void *add_callback)
 {
-        if (!ls)
-                return NULL;
-
         struct list_item *cur;
         int (*m)(void *data, void *match);
         void *(*a)(void *match);
+
+        if (!ls)
+                return NULL;
 
         cur = ls->first;
         m = match_callback;
@@ -143,13 +143,12 @@ void del_node(struct list *ls,
               void *free_external)
 {
         void *result;
+        struct list_item *cur;
+        void (*f)(void *data);
 
         result = find_node(ls, match_callback, match);
         if (!result)
                 return;
-
-        struct list_item *cur;
-        void (*f)(void *data);
 
         f = free_external;
 
@@ -191,13 +190,13 @@ void del_nodes(struct list *ls,
                void *match,
                void *free_external)
 {
-        if (!ls)
-                return;
-
         struct list_item *cur;
         struct list_item *next;
         void *result;
         void (*f)(void *data);
+
+        if (!ls)
+                return;
 
         f = free_external;
 
@@ -238,13 +237,13 @@ void del_nodes(struct list *ls,
  */
 void del_list(struct list *ls, void *free_external)
 {
-        if (!ls)
-                return;
-        
         struct list_item *cur;
         struct list_item *next;
         void (*f)(void *data);
 
+        if (!ls)
+                return;
+        
         f = free_external;
 
         cur = ls->first;
@@ -274,6 +273,9 @@ void act_on_list(struct list *ls, void *execute_callback)
 {
         struct list_item *cur;
         void (*e)(void *data);
+
+        if (!ls)
+                return;
 
         e = execute_callback;
 
@@ -324,13 +326,12 @@ void act_on_list_if(struct list *ls,
 {
         int (*m)(void *data, void *match);
         void (*e)(void *data);
+        struct list_item *cur;
 
         m = match_callback;
         e = execute_callback;
         if (!m || !e)
                 return;
-
-        struct list_item *cur;
 
         cur = ls->first;
         while (cur) {
@@ -356,13 +357,12 @@ void act_on_list_raw_if(struct list *ls,
 {
         int (*m)(struct list_item *cur, void *match);
         void (*e)(struct list_item *cur);
+        struct list_item *cur;
 
         m = match_callback;
         e = execute_callback;
         if (!m || !e)
                 return;
-
-        struct list_item *cur;
 
         cur = ls->first;
         while (cur) {

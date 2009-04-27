@@ -384,7 +384,7 @@ void module_load_all(void)
                         LIBDIR);
                 return;
         }
-                
+
         while (dir = readdir(d)) {
                 if (!strcmp(dir->d_name, ".") ||
                     !strcmp(dir->d_name, "..") ||
@@ -394,10 +394,10 @@ void module_load_all(void)
                 sptr = strrchr(dir->d_name, '.');
                 if (sptr && !strcasecmp(sptr, ".so")) {
                         snprintf(full_path,
-                                 sizeof(full_path),
+                                 sizeof(full_path) - sizeof(char),
                                  "%s/%s",
                                  LIBDIR, dir->d_name);
-                                 
+
                         printf("Attempting to load: %s\n", full_path);
                         module_load(full_path);
                 }

@@ -70,6 +70,7 @@ static xcb_gc_t get_font_gc(xcb_connection_t *connection,
                             xcb_window_t *window,
                             xcb_font_t font,
                             uint32_t bg, uint32_t fg);
+static xcb_char2b_t *build_chars(char *str, uint32_t length);
 
 /* Globals. */
 static struct render_queue *rq_start = NULL;
@@ -223,13 +224,13 @@ void render_queue_add(char *value,
  * 
  * @return Pixel length of printed string
  */
-void render_text(xcb_connection_t *connection,
-                 xcb_window_t *window,
-                 char *str,
-                 xcb_font_t font,
-                 struct donky_color color,
-                 int16_t x,
-                 int16_t y)
+static void render_text(xcb_connection_t *connection,
+                        xcb_window_t *window,
+                        char *str,
+                        xcb_font_t font,
+                        struct donky_color color,
+                        int16_t x,
+                        int16_t y)
 {
         uint8_t length;
         xcb_gcontext_t gc;
@@ -255,23 +256,28 @@ void render_text(xcb_connection_t *connection,
  * @param w Width
  * @param h Height
  */
-void render_bar(xcb_connection_t *connection,
-                xcb_window_t *window,
-                int *value,
-                xcb_font_t font,
-                struct donky_color color,
-                int16_t x,
-                int16_t y,
-                uint16_t w,
-                uint16_t h)
+static void render_bar(xcb_connection_t *connection,
+                       xcb_window_t *window,
+                       int *value,
+                       xcb_font_t font,
+                       struct donky_color color,
+                       int16_t x,
+                       int16_t y,
+                       uint16_t w,
+                       uint16_t h)
 {
         int fill_width;
         xcb_gcontext_t gc;
 
         fill_width = (int)((double)w * ((double) *value / (double) 100));
 
-        xcb_rectangle_t rect_outline[] = { x, y, w, h };
-        xcb_rectangle_t rect_fill[] = { x, y, fill_width, h };
+        xcb_rectangle_t rect_outline[] = {
+                { x, y, w, h }
+        };
+
+        xcb_rectangle_t rect_fill[] = {
+                { x, y, fill_width, h }
+        };
 
         gc = get_font_gc(connection, window, font, color.bg, color.fg);
 
@@ -355,7 +361,7 @@ xcb_font_t get_font(xcb_connection_t *connection, char *font_name)
  * 
  * @return Insanity
  */
-xcb_char2b_t *build_chars(char *str, uint32_t length)
+static xcb_char2b_t *build_chars(char *str, uint32_t length)
 {
         xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
         int i;
@@ -416,10 +422,10 @@ xcb_query_text_extents_reply_t *get_extents(xcb_connection_t *connection,
  * 
  * @return Font graphic context
  */
-xcb_gc_t get_font_gc(xcb_connection_t *connection,
-                     xcb_window_t *window,
-                     xcb_font_t font,
-                     uint32_t bg, uint32_t fg)
+static xcb_gc_t get_font_gc(xcb_connection_t *connection,
+                            xcb_window_t *window,
+                            xcb_font_t font,
+                            uint32_t bg, uint32_t fg)
 {
         xcb_gcontext_t gc;
         xcb_void_cookie_t cookie_gc;

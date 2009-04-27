@@ -23,6 +23,7 @@
 
 #include "../config.h"
 #include "config.h"
+#include "main.h"
 #include "module.h"
 #include "render.h"
 #include "text.h"
@@ -45,8 +46,8 @@ static void sighup_handler(int signum);
 static void sigint_handler(int signum);
 
 /* Globals. */
-int donky_reload = 0;
-int donky_exit = 0;
+int donky_reload;
+int donky_exit;
 
 /**
  * @brief Program entry point.
@@ -59,15 +60,18 @@ int donky_exit = 0;
 int main(int argc, char **argv)
 {
         static struct option long_options[] = {
-                { "version", no_argument,       0, 'v' },
-                { "help",    no_argument,       0, 'h' },
-                { "config",  required_argument, 0, 'c' },
-                { "debug",   no_argument,       0, 'd' },
-                { 0,         0,                 0,  0  }
+                { "version", no_argument,       NULL, 'v' },
+                { "help",    no_argument,       NULL, 'h' },
+                { "config",  required_argument, NULL, 'c' },
+                { "debug",   no_argument,       NULL, 'd' },
+                { NULL,         0,              NULL,  0  }
         };
 
         int option_index = 0;
         int c = 0;
+
+        donky_reload = 0;
+        donky_exit = 0;
 
         while (1) {
                 c = getopt_long(argc,
@@ -106,7 +110,8 @@ int main(int argc, char **argv)
         /* Initialize, then start donky. */
         initialize_stuff();
 
-        exit(EXIT_SUCCESS);
+        return 0;
+        //exit(EXIT_SUCCESS);
 }
 
 /**

@@ -28,6 +28,7 @@
 #include "config.h"
 #include "default_settings.h"
 #include "lists.h"
+#include "main.h"
 #include "mem.h"
 #include "module.h"
 #include "render.h"
