@@ -266,10 +266,8 @@ static void render_bar(xcb_connection_t *connection,
                        uint16_t w,
                        uint16_t h)
 {
-        int fill_width;
         xcb_gcontext_t gc;
-
-        fill_width = (int)((double)w * ((double) *value / (double) 100));
+        int fill_width = fill_width = ((double)w * ((double) *value)) / 100;
 
         xcb_rectangle_t rect_outline[] = {
                 { x, y, w, h }
@@ -363,14 +361,15 @@ xcb_font_t get_font(xcb_connection_t *connection, char *font_name)
  */
 static xcb_char2b_t *build_chars(char *str, uint32_t length)
 {
-        xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
         int i;
+        xcb_char2b_t *ret = malloc(length * sizeof(xcb_char2b_t));
+
+        if (!ret)
+                return NULL;
         
         for (i = 0; i < length; i++) {
-                if (str[i] < length) {
-                        ret[i].byte1 = str[i];
-                        ret[i].byte2 = '\0';
-                }
+                ret[i].byte2 = '\0';
+                ret[i].byte1 = str[i];
         }
  
         return ret;

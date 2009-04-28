@@ -130,7 +130,7 @@ int get_eeeblbar(char *args)
         return 0;
 }
 
-/** 
+/**
  * @brief Updates cur_bl with the current backlight level from /sys.
  */
 void get_cur_bl(void)
