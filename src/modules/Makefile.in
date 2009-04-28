@@ -262,7 +262,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 moduledir = $(libdir)/donky
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -std=gnu99
 date_la_LDFLAGS = -module -avoid-version
 sysinfo_la_LDFLAGS = -module -avoid-version
 pcpuinfo_la_LDFLAGS = -module -avoid-version

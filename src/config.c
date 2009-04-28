@@ -253,11 +253,11 @@ void parse_cfg(void)
         key = NULL;
         value = NULL;
 
-        format[0] = " [%a[a-zA-Z0-9_-]]";              /* [mod]            */
-        format[1] = " %a[a-zA-Z0-9_-] = \"%a[^\"]\" "; /* key = "value"    */
-        format[2] = " %a[a-zA-Z0-9_-] = '%a[^\']' ";   /* key = 'value'    */
-        format[3] = " %a[a-zA-Z0-9_-] = %a[^;\n] ";    /* key = value      */
-        format[4] = " %a[a-zA-Z0-9_-] ";               /* key              */
+        format[0] = " [%m[a-zA-Z0-9_-]]";              /* [mod]            */
+        format[1] = " %m[a-zA-Z0-9_-] = \"%m[^\"]\" "; /* key = "value"    */
+        format[2] = " %m[a-zA-Z0-9_-] = '%m[^\']' ";   /* key = 'value'    */
+        format[3] = " %m[a-zA-Z0-9_-] = %m[^;\n] ";    /* key = value      */
+        format[4] = " %m[a-zA-Z0-9_-] ";               /* key              */
 
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {

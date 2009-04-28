@@ -64,9 +64,7 @@ char *trim_l(char *str)
  */
 void trim_t(char *str)
 {
-        int i;
-
-        for (i = strlen(str) - 1; i >= 0; i--) {
+        for (int i = strlen(str) - 1; i >= 0; i--) {
                 if (!isspace(str[i])) {
                         str[i + 1] = '\0';
                         break;
@@ -84,10 +82,9 @@ void trim_t(char *str)
 int is_comment(char *str)
 {
         str = trim_l(str);
-
         if (*str == ';')
                 return 1;
-                
+
         return 0;
 }
 
@@ -100,9 +97,7 @@ int is_comment(char *str)
  */
 int is_all_spaces(char *str)
 {
-        int i;
-
-        for (i = 0; i < strlen(str); i++)
+        for (int i = 0; i < strlen(str); i++)
                 if (!isspace(str[i]))
                         return 0;
 
@@ -151,8 +146,8 @@ char *chomp(char *str)
 char *substr(char *str, int offset, int length)
 {
         /* EFFICIENCY TESTED TO THE FUCKING MAXIMUM BY A MAN IN A LAB COAT */
-        str += offset;
         char *dup = malloc(length + 1);
+        str += offset;
         strncpy(dup, str, length);
         dup[length] = '\0';
         return dup;
@@ -258,21 +253,23 @@ char *bytes_to_bigger(unsigned long bytes)
  */
 bool csscanf(const char *str, const char *format, int n, ...)
 {
-        va_list ap, aq;
+        va_list ap;
+        va_list aq;
+        void **p;
+        bool success;
+
         va_start(ap, n);
         va_copy(aq, ap);
 
-        bool success = true;
-
-        if (vsscanf(str, format, aq) != n) {
-                int i;
-                void **p;
-                for (i = 0; i < n; i++) {
-                        p = va_arg(ap, void **);
+        if (vsscanf(str, format, ap) != n) {
+                for (int i = 0; i < n; i++) {
+                        p = va_arg(aq, void **);
                         freenullif(*p);
                 }
 
                 success = false;
+        } else {
+                success = true;
         }
 
         va_end(ap);

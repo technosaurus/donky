@@ -819,7 +819,7 @@ static void handle_VARIABLE_BAR(struct text_section *cur,
  
                 /* TODO - getting rem_args should only ever be done once too.
                  *        also, this might be a flaky method of doing it. */
-                if (sscanf(cur->args, " %*d %*d %a[^\n]", &rem_args)) {
+                if (sscanf(cur->args, " %*d %*d %m[^\n]", &rem_args)) {
                         new = sym(m_strdup(rem_args));
                         free(rem_args);
                 } else {

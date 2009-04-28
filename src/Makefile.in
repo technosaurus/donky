@@ -195,7 +195,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -DLIBDIR=\"$(libdir)/donky\" \
             -DSYSCONFDIR=\"$(sysconfdir)/donky\" \
-            -ldl -lm -Wall
+            -ldl -lm -Wall -std=gnu99
 
 SUBDIRS = modules
 donky_LDFLAGS = -export-dynamic

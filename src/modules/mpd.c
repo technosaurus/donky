@@ -205,17 +205,17 @@ void pop_status(void)
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (sscanf(buffer, "volume: %a[^\n]", &mpdinfo.volume) == 1) { }
-                else if (sscanf(buffer, "repeat: %a[^\n]", &mpdinfo.repeat) == 1) { }
-                else if (sscanf(buffer, "random: %a[^\n]", &mpdinfo.random) == 1) { }
-                else if (sscanf(buffer, "playlist: %a[^\n]", &mpdinfo.playlist) == 1) { }
-                else if (sscanf(buffer, "playlistlength: %a[^\n]", &mpdinfo.playlistlength) == 1) { }
-                else if (sscanf(buffer, "xfade: %a[^\n]", &mpdinfo.xfade) == 1) { }
-                else if (sscanf(buffer, "state: %a[^\n]", &mpdinfo.state) == 1) { }
-                else if (sscanf(buffer, "song: %a[^\n]", &mpdinfo.song) == 1) { }
+                else if (sscanf(buffer, "volume: %m[^\n]", &mpdinfo.volume) == 1) { }
+                else if (sscanf(buffer, "repeat: %m[^\n]", &mpdinfo.repeat) == 1) { }
+                else if (sscanf(buffer, "random: %m[^\n]", &mpdinfo.random) == 1) { }
+                else if (sscanf(buffer, "playlist: %m[^\n]", &mpdinfo.playlist) == 1) { }
+                else if (sscanf(buffer, "playlistlength: %m[^\n]", &mpdinfo.playlistlength) == 1) { }
+                else if (sscanf(buffer, "xfade: %m[^\n]", &mpdinfo.xfade) == 1) { }
+                else if (sscanf(buffer, "state: %m[^\n]", &mpdinfo.state) == 1) { }
+                else if (sscanf(buffer, "song: %m[^\n]", &mpdinfo.song) == 1) { }
                 else if (sscanf(buffer, "time: %d:%d", &mpdinfo.etime, &mpdinfo.ttime) == 2) { }
-                else if (sscanf(buffer, "bitrate: %a[^\n]", &mpdinfo.bitrate) == 1) { }
-                else if (sscanf(buffer, "audio: %a[^\n]", &mpdinfo.audio) == 1) { }
+                else if (sscanf(buffer, "bitrate: %m[^\n]", &mpdinfo.bitrate) == 1) { }
+                else if (sscanf(buffer, "audio: %m[^\n]", &mpdinfo.audio) == 1) { }
         }
 }
 
@@ -240,13 +240,13 @@ void pop_currentsong(void)
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (sscanf(buffer, "file: %a[^\n]", &mpdinfo.file) == 1) { }
-                else if (sscanf(buffer, "Artist: %a[^\n]", &mpdinfo.artist) == 1) { }
-                else if (sscanf(buffer, "Title: %a[^\n]", &mpdinfo.title) == 1) { }
-                else if (sscanf(buffer, "Album: %a[^\n]", &mpdinfo.album) == 1) { }
-                else if (sscanf(buffer, "Track: %a[^\n]", &mpdinfo.track) == 1) { }
-                else if (sscanf(buffer, "Date: %a[^\n]", &mpdinfo.date) == 1) { }
-                else if (sscanf(buffer, "Genre: %a[^\n]", &mpdinfo.genre) == 1) { }
+                else if (sscanf(buffer, "file: %m[^\n]", &mpdinfo.file) == 1) { }
+                else if (sscanf(buffer, "Artist: %m[^\n]", &mpdinfo.artist) == 1) { }
+                else if (sscanf(buffer, "Title: %m[^\n]", &mpdinfo.title) == 1) { }
+                else if (sscanf(buffer, "Album: %m[^\n]", &mpdinfo.album) == 1) { }
+                else if (sscanf(buffer, "Track: %m[^\n]", &mpdinfo.track) == 1) { }
+                else if (sscanf(buffer, "Date: %m[^\n]", &mpdinfo.date) == 1) { }
+                else if (sscanf(buffer, "Genre: %m[^\n]", &mpdinfo.genre) == 1) { }
         }
 }
 
