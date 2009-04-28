@@ -27,7 +27,7 @@
 char module_name[] = "exec";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
@@ -35,7 +35,7 @@ char *get_exec(char *args);
 int get_execbar(char *args);
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "exec", "get_exec", 10.0, VARIABLE_STR);
         module_var_add(module_name, "execbar", "get_execbar", 10.0, VARIABLE_BAR);

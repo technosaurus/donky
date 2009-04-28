@@ -28,7 +28,7 @@
 char module_name[] = "volume";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
@@ -45,7 +45,7 @@ long volume_alsaMin;
 long volume_alsaMax;
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "volume", "get_volume", 5.0, VARIABLE_STR);
 }

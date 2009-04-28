@@ -29,7 +29,7 @@
 char module_name[] = "moc";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
@@ -39,7 +39,7 @@ char *get_moc(char *args);
 char home[MAXPATHLEN + 1];
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "moc", "get_moc", 10.0, VARIABLE_STR);
         snprintf(home, MAXPATHLEN, "%s", getenv("HOME"));

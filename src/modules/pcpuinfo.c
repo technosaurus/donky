@@ -27,7 +27,7 @@
 char module_name[] = "pcpuinfo";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
@@ -41,7 +41,7 @@ char *ret_pcpuname = NULL;
 char *ret_pcpucache = NULL;
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "pcpufreq", "get_pcpufreq", 1.0, VARIABLE_STR);
         module_var_add(module_name, "pcpuname", "get_pcpuname", 0.0, VARIABLE_STR);
@@ -81,7 +81,7 @@ char *get_pcpufreq(char *args)
                         ret_pcpufreq = m_strndup((str + 11), 4);
 
                         /* Null the decimal point if it's there. */
-                        if (p = strchr((ret_pcpufreq + 3), '.'))
+                        if ((p = strchr((ret_pcpufreq + 3), '.')))
                                 *p = '\0';
                         
                         break;

@@ -28,7 +28,7 @@
 char module_name[] = "wifi_pwn_edition";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* Globals */
@@ -47,7 +47,7 @@ struct wifi_info {
 /**
  * @brief This is run on module initialization.
  */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "wifi_essid", "get_essid", 5.0, VARIABLE_STR);
         module_var_add(module_name, "wifi_mode", "get_mode", 5.0, VARIABLE_STR);

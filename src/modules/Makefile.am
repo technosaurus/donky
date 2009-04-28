@@ -1,5 +1,7 @@
 moduledir = $(libdir)/donky
 
+AM_CFLAGS = -Wall
+
 date_la_LDFLAGS     = -module -avoid-version
 sysinfo_la_LDFLAGS  = -module -avoid-version
 pcpuinfo_la_LDFLAGS = -module -avoid-version

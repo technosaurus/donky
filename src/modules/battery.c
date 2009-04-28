@@ -29,7 +29,7 @@
 char module_name[] = "battery";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function data structures and prototypes */
@@ -60,7 +60,7 @@ void clear_batt(struct batt *cur);
 struct list *batt_ls = NULL;
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         batt_ls = init_list();
         module_var_add(module_name, "battper", "get_battper", 30.0, VARIABLE_STR);

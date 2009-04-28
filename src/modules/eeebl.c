@@ -27,7 +27,7 @@
 char module_name[] = "eeebl";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
@@ -44,7 +44,7 @@ char *cur_bl = NULL;
 char *max_bl = NULL;
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "eeeblper", "get_eeeblper", 5.0, VARIABLE_STR);
         module_var_add(module_name, "eeeblcur", "get_eeeblcur", 5.0, VARIABLE_STR);

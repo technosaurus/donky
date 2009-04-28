@@ -65,7 +65,7 @@ struct diskio_stat stats = {
 char module_name[] = "diskio";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
@@ -78,7 +78,7 @@ void update_diskio_values(struct diskio_stat *ds,
 void update_diskio(void);
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "diskio", "get_diskio", 1.0, VARIABLE_STR);
         module_var_cron_add(module_name, "diskio_cron", "update_diskio", 1.0);
@@ -163,7 +163,7 @@ void update_diskio(void)
 	char buf[512], devbuf[64];
 	unsigned int major, minor;
 	unsigned int reads, writes;
-	unsigned int total_reads, total_writes;
+	unsigned int total_reads = 0, total_writes = 0;
 	int col_count = 0;
 
 	stats.current = 0;

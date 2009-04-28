@@ -27,14 +27,14 @@
 char module_name[] = "scpuinfo";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes */
 char *get_scpufreq(char *args);
 
 /* These run on module startup */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name,
                        "scpufreq",

@@ -34,7 +34,7 @@
 char module_name[] = "mpd";
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes. */
@@ -91,7 +91,7 @@ struct mpd_info mpdinfo = {
 /**
  * @brief This is run on module initialization.
  */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "mpd_file", "get_file", 10.0, VARIABLE_STR);
         module_var_add(module_name, "mpd_artist", "get_artist", 10.0, VARIABLE_STR);
@@ -191,8 +191,6 @@ void pop_status(void)
 {
         char buffer[128];
         int i;
-
-        size_t n = sizeof(char);
 
         /* currentsong */
         for (i = 0; i < 3; i++) {

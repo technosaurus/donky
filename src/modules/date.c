@@ -29,7 +29,7 @@ char module_name[] = "date_shet"; /* Up to 63 characters, any more and it will
                                      needs to be a some-what unique name. */
 
 /* Required function prototypes. */
-int module_init(void);
+void module_init(void);
 void module_destroy(void);
 
 /* My function prototypes. */
@@ -38,7 +38,7 @@ char *get_date(char *args);
 /**
  * @brief This is run on module initialization.
  */
-int module_init(void)
+void module_init(void)
 {
         module_var_add(module_name, "date", "get_date", 1.0, VARIABLE_STR);
 }
