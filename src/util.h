@@ -64,5 +64,6 @@ char *d_strcpy(const char *str);
 char *d_strncpy(const char *str, size_t n);
 char *bytes_to_bigger(unsigned long bytes);
 bool csscanf(const char *str, const char *format, int n, ...);
+int random_range(int min, int max);
 
 #endif /* UTIL_H */

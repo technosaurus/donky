@@ -261,7 +261,7 @@ void parse_cfg(void)
 
         while ((getline(&str, &len, cfg_file)) != -1) {
                 if (is_comment(str)) {
-                        printf("Skipping comment [%s]\n\n", chomp(str));
+                        //printf("Skipping comment [%s]\n\n", chomp(str));
                         freenull(str);
                         continue;
                 }
@@ -304,7 +304,7 @@ void parse_cfg(void)
 
                 if (mod && key && value) {
                         add_key(mod, key, value);
-                        char *char_key = get_char_key(mod, key, "ERROR");
+                        /*char *char_key = get_char_key(mod, key, "ERROR");
                         printf("added-> mod [%s] key [%s] value [%s]\n",
                                mod, key, value);
                         printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
@@ -312,7 +312,7 @@ void parse_cfg(void)
                                get_int_key(mod, key, -1),
                                get_double_key(mod, key, -1),
                                get_bool_key(mod, key, -1));
-                        free(char_key);
+                        free(char_key);*/
                 }
 
                 freenull(str);

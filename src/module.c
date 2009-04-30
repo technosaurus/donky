@@ -119,7 +119,7 @@ int module_var_add(char *parent,
         /* Check that this variable is used in the [text] section.  If it isn't,
          * we won't even add it to the linked list.  Memorah efficiencah! */
         if (text_section_var_find(name) == NULL) {
-                printf("Var [%s] was not used.\n", name);
+                //printf("Var [%s] was not used.\n", name);
                 return 0;
         }
 
@@ -187,7 +187,7 @@ int module_var_cron_add(char *parent,
          * module defined default! */
         double user_timeout = get_double_key("cron", name, timeout);
 
-        printf("Adding [%s] to cron with timeout [%f]\n", name, user_timeout);
+        //printf("Adding [%s] to cron with timeout [%f]\n", name, user_timeout);
         
         n->timeout = user_timeout;
         n->last_update = 0.0;

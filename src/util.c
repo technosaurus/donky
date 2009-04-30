@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include "util.h"
 
@@ -276,5 +277,20 @@ bool csscanf(const char *str, const char *format, int n, ...)
         va_end(aq);
 
         return success;
+}
+
+int random_range(int min, int max)
+{
+        time_t seconds;
+        long int random_number;
+
+        if (max <= min)
+                return min;
+
+        time(&seconds);
+        srandom((unsigned int)seconds);
+        random_number = (random() % (max - min + 1)) + min;
+
+        return random_number;
 }
 

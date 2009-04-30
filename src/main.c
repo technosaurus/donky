@@ -15,10 +15,10 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <getopt.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <xcb/xcb.h>
 
 #include "../config.h"
@@ -44,6 +44,9 @@ static void clean_up_everything(void);
 static void sigterm_handler(int signum);
 static void sighup_handler(int signum);
 static void sigint_handler(int signum);
+static void donky_greet(void);
+static void donky_farewell(void);
+static void print_random_message(char **messages);
 
 /* Globals. */
 int donky_reload;
@@ -110,8 +113,7 @@ int main(int argc, char **argv)
         /* Initialize, then start donky. */
         initialize_stuff();
 
-        return 0;
-        //exit(EXIT_SUCCESS);
+        exit(EXIT_SUCCESS);
 }
 
 /**
@@ -123,7 +125,7 @@ static void initialize_stuff(void)
         struct window_settings *ws;
 
         while (1) {
-                printf("Welcome to donky! Have a mint.\n");
+                donky_greet();
 
                 printf("Making X connection...\n");
                 xc = init_x_connection();
@@ -181,7 +183,7 @@ static void clean_up_everything(void)
  */
 static void sigterm_handler(int signum)
 {
-        printf("donky is OUT like California lights. PEACE!\n");
+        donky_farewell();
         donky_exit = 1;
 }
 
@@ -190,7 +192,7 @@ static void sigterm_handler(int signum)
  */
 static void sighup_handler(int signum)
 {
-        printf("donky is reloading... brb...\n");
+        donky_farewell();
         donky_reload = 1;
 }
 
@@ -199,7 +201,63 @@ static void sighup_handler(int signum)
  */
 static void sigint_handler(int signum)
 {
-        printf("donky is exiting. Later d00d.\n");
+        donky_farewell();
         donky_exit = 1;
+}
+
+/** 
+ * @brief Prints a random donky greeting!!!!!! Wowwee
+ */
+static void donky_greet(void)
+{
+        char *greetings[] = {
+                "Welcome to donky! Have a mint.\n",
+                "SUP! donky in the h00se.\n",
+                "Who dare awakes donky? Mothereff.\n",
+                "donky. It's like honky, minus racial connotations.\n",
+                "My name is donky, and I am your g0d.\n",
+                "donky hygiene tip: shower before I segfault.\n",
+                "donky is starting... beginning... going... doing shit...\n",
+                NULL /* always last */
+        };
+
+        print_random_message(greetings);
+}
+
+/** 
+ * @brief donky is so nice, it says bye!
+ */
+static void donky_farewell(void)
+{
+        char *farewells[] = {
+                "donky is peacin' the eff out.\n",
+                "I'm OUT!\n",
+                "donky is out like California lights.\n",
+                "Okay... donky knows when it's not wanted... (//_.)\n",
+                "donky sez, \"PTFO!\"\n",
+                "KBYE. >:O\n",
+                NULL /* always last */
+        };
+
+        print_random_message(farewells);
+}
+
+/** 
+ * @brief Prints a random string from a string pointer array.
+ * 
+ * @param messages An array of char pointers with the last pointer = NULL
+ *                 (so we can count the number of elements!!!!1)
+ */
+static void print_random_message(char **messages)
+{
+        int i;
+        int j;
+
+        for (i = 0; messages[i] != NULL; i++) { }
+
+        if (i) {
+                j = random_range(0, (i - 1));
+                printf(messages[j]);
+        }
 }
 
