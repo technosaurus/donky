@@ -46,7 +46,7 @@ static void sighup_handler(int signum);
 static void sigint_handler(int signum);
 static void donky_greet(void);
 static void donky_farewell(void);
-static void print_random_message(char **messages);
+static void print_random_message(const char **messages);
 
 /* Globals. */
 int donky_reload;
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
                 { "help",    no_argument,       NULL, 'h' },
                 { "config",  required_argument, NULL, 'c' },
                 { "debug",   no_argument,       NULL, 'd' },
-                { NULL,         0,              NULL,  0  }
+                { NULL,      0,                 NULL,  0  }
         };
 
         int option_index = 0;
@@ -210,7 +210,7 @@ static void sigint_handler(int signum)
  */
 static void donky_greet(void)
 {
-        char *greetings[] = {
+        const char *greetings[] = {
                 "Welcome to donky! Have a mint.\n",
                 "SUP! donky in the h00se.\n",
                 "Who dare awakes donky? Mothereff.\n",
@@ -229,7 +229,7 @@ static void donky_greet(void)
  */
 static void donky_farewell(void)
 {
-        char *farewells[] = {
+        const char *farewells[] = {
                 "donky is peacin' the eff out.\n",
                 "I'm OUT!\n",
                 "donky is out like California lights.\n",
@@ -248,7 +248,7 @@ static void donky_farewell(void)
  * @param messages An array of char pointers with the last pointer = NULL
  *                 (so we can count the number of elements!!!!1)
  */
-static void print_random_message(char **messages)
+static void print_random_message(const char **messages)
 {
         int i;
         int j;
