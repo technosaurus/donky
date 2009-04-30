@@ -91,25 +91,25 @@ void *get_node(struct list *ls,
         int (*m)(void *data, void *match);
         void *(*a)(void *match);
 
-        if (!ls)
+        if (!ls || !match)
+                return NULL;
+
+        m = match_callback;
+        if (!m)
                 return NULL;
 
         cur = ls->first;
-        m = match_callback;
-        a = add_callback;
-
         while (cur) {
-                if (m && cur->data)
-                        if (m(cur->data, match))
-                                return cur->data;
-
+                if (cur->data && (m(cur->data, match)))
+                        return cur->data;
                 cur = cur->next;
         }
 
-        if (a && match)
+        a = add_callback;
+        if (a)
                 return a(match);
-        else
-                return NULL;
+
+        return NULL;
 }
 
 /** 
@@ -278,12 +278,12 @@ void act_on_list(struct list *ls, void *execute_callback)
                 return;
 
         e = execute_callback;
+        if (!e)
+                return;
 
         cur = ls->first;
         while (cur) {
-                if (e)
-                        e(cur->data);
-
+                e(cur->data);
                 cur = cur->next;
         }
 }
@@ -300,13 +300,16 @@ void act_on_list_raw(struct list *ls, void *execute_callback)
         struct list_item *cur;
         void (*e)(struct list_item *cur);
 
+        if (!ls)
+                return;
+
         e = execute_callback;
+        if (!e)
+                return;
 
         cur = ls->first;
         while (cur) {
-                if (e)
-                        e(cur);
-
+                e(cur);
                 cur = cur->next;
         }
 }
@@ -328,6 +331,9 @@ void act_on_list_if(struct list *ls,
         void (*e)(void *data);
         struct list_item *cur;
 
+        if (!ls)
+                return;
+
         m = match_callback;
         e = execute_callback;
         if (!m || !e)
@@ -337,7 +343,6 @@ void act_on_list_if(struct list *ls,
         while (cur) {
                 if (m(cur->data, match))
                         e(cur->data);
-
                 cur = cur->next;
         }
 }
@@ -359,6 +364,9 @@ void act_on_list_raw_if(struct list *ls,
         void (*e)(struct list_item *cur);
         struct list_item *cur;
 
+        if (!ls)
+                return;
+
         m = match_callback;
         e = execute_callback;
         if (!m || !e)
@@ -368,7 +376,6 @@ void act_on_list_raw_if(struct list *ls,
         while (cur) {
                 if (m(cur, match))
                         e(cur);
-
                 cur = cur->next;
         }
 }
