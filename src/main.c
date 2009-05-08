@@ -19,16 +19,13 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <xcb/xcb.h>
 
 #include "../config.h"
 #include "config.h"
+#include "daemon.h"
 #include "main.h"
 #include "module.h"
-#include "render.h"
-#include "text.h"
 #include "util.h"
-#include "x11.h"
 
 #define HELP \
         "donky usage:\n" \
@@ -121,29 +118,17 @@ int main(int argc, char **argv)
  */
 static void initialize_stuff(void)
 {
-        struct x_connection *xc;
-        struct window_settings *ws;
-
         while (1) {
                 donky_greet();
-
-                printf("Making X connection...\n");
-                xc = init_x_connection();
 
                 printf("Parsing .donkyrc...\n");
                 parse_cfg();
 
-                printf("Parsing [text]...\n");
-                parse_text();
-
                 printf("Loading modules...\n");
                 module_load_all();
 
-                printf("Drawing donky's window...\n");
-                ws = draw_window(xc);
-
                 printf("Starting the donky loop (TM)... >_<\n");
-                donky_loop(xc, ws);
+                donky_loop();
 
                 clean_up_everything();
 
@@ -167,10 +152,6 @@ static void clean_up_everything(void)
 
         printf("Clearing config list...");
         del_list(cfg_ls, &clear_cfg);
-        printf(" done.\n");
-
-        printf("Clearing text_section list...");
-        del_list(ts_ls, &clear_text);
         printf(" done.\n");
 
         printf("Clearing modules...");

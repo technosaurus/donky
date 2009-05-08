@@ -1,6 +1,6 @@
 moduledir = $(libdir)/donky
 
-AM_CFLAGS = -Wall -std=gnu99
+AM_CFLAGS = -Wall
 
 date_la_LDFLAGS     = -module -avoid-version
 sysinfo_la_LDFLAGS  = -module -avoid-version

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AC_INIT([donky], [2009.5], [lobo@ircage.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 
@@ -27,19 +27,13 @@ AC_PROG_LIBTOOL
 #AC_CHECK_LIB([iw], [main])
 # FIXME: Replace `main' with a function in `-lm':
 #AC_CHECK_LIB([m], [main])
-#AC_CHECK_LIB([xcb], [main])
-PKG_CHECK_MODULES(DEPS, xcb)
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h netdb.h netinet/in.h stdint.h stdlib.h string.h sys/param.h sys/socket.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
-AC_TYPE_INT16_T
 AC_TYPE_SIZE_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT8_T
 
 # Checks for library functions.
 AC_FUNC_MALLOC

@@ -65,7 +65,9 @@ char *trim_l(char *str)
  */
 void trim_t(char *str)
 {
-        for (int i = strlen(str) - 1; i >= 0; i--) {
+        int i;
+        
+        for (i = strlen(str) - 1; i >= 0; i--) {
                 if (!isspace(str[i])) {
                         str[i + 1] = '\0';
                         break;
@@ -98,7 +100,9 @@ int is_comment(char *str)
  */
 int is_all_spaces(char *str)
 {
-        for (int i = 0; i < strlen(str); i++)
+        int i;
+        
+        for (i = 0; i < strlen(str); i++)
                 if (!isspace(str[i]))
                         return 0;
 
@@ -258,12 +262,13 @@ bool csscanf(const char *str, const char *format, int n, ...)
         va_list aq;
         void **p;
         bool success;
+        int i;
 
         va_start(ap, n);
         va_copy(aq, ap);
 
         if (vsscanf(str, format, ap) != n) {
-                for (int i = 0; i < n; i++) {
+                for (i = 0; i < n; i++) {
                         p = va_arg(aq, void **);
                         freenullif(*p);
                 }
@@ -279,6 +284,14 @@ bool csscanf(const char *str, const char *format, int n, ...)
         return success;
 }
 
+/**
+ * @brief Return a random number between min and max.
+ *
+ * @param min
+ * @param max
+ *
+ * @return
+ */
 int random_range(int min, int max)
 {
         time_t seconds;

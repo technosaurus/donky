@@ -15,27 +15,9 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef DAEMON_H
+#define DAEMON_H
 
-#include <stdbool.h>
+void donky_loop(void);
 
-#include "lists.h"
-
-struct cfg {
-        char *mod;
-
-        struct list *setting_ls;
-};
-
-char *get_char_key(char *mod, char *key, char *otherwise);
-int get_int_key(char *mod, char *key, int otherwise);
-double get_double_key(char *mod, char *key, double otherwise);
-bool get_bool_key(char *mod, char *key, bool otherwise);
-void parse_cfg(void);
-void clear_cfg(struct cfg *cur);
-
-extern struct list *cfg_ls;
-
-#endif /* CONFIG_H */
-
+#endif /* DAEMON_H */

@@ -15,31 +15,6 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define DEFAULT_WINDOW_WIDTH 1024
-#define DEFAULT_WINDOW_HEIGHT 32
-#define DEFAULT_WINDOW_BGCOLOR "black"
-#define DEFAULT_WINDOW_FGCOLOR "white"
-
-#define DEFAULT_FONT "fixed"
-#define DEFAULT_FONT_BGCOLOR "black"
-#define DEFAULT_FONT_FGCOLOR "white"
-
-#define DEFAULT_X_GAP 0
-#define DEFAULT_Y_GAP 0
-#define DEFAULT_FONT_X_OFFSET 0
-#define DEFAULT_FONT_Y_OFFSET 0
-#define DEFAULT_ALIGNMENT "bottom_left"
-
-#define DEFAULT_OWN_WINDOW false
-#define DEFAULT_OVERRIDE false
-
-#define DEFAULT_MIN_LINE_HEIGHT 20
-#define DEFAULT_MIN_LINE_SPACING 4
-
 #define DEFAULT_GLOBAL_SLEEP 1.0
-
-#define DEFAULT_BAR_WIDTH 40
-#define DEFAULT_BAR_HEIGHT 10
-
 #define DEFAULT_CONF ".donkyrc"
 #define DEFAULT_CONF_GLOBAL "donky.conf"

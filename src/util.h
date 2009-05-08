@@ -22,7 +22,7 @@
 
 /* these are for certain macros to look less ugly */
 #define start do {
-#define end        } while (0)
+#define end } while (0)
 
 /** 
  * @brief Free a pointer if it exists.

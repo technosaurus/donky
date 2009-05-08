@@ -24,7 +24,6 @@
 
 #include "config.h"
 #include "module.h"
-#include "text.h"
 #include "util.h"
 #include "lists.h"
 
@@ -118,10 +117,10 @@ int module_var_add(char *parent,
 
         /* Check that this variable is used in the [text] section.  If it isn't,
          * we won't even add it to the linked list.  Memorah efficiencah! */
-        if (text_section_var_find(name) == NULL) {
+        //if (text_section_var_find(name) == NULL) {
                 //printf("Var [%s] was not used.\n", name);
                 return 0;
-        }
+        //}
 
         module_var_used = 1; /* Trigger that a module var was used from this module. */
         struct module_var *n = malloc(sizeof(struct module_var));
@@ -142,7 +141,7 @@ int module_var_add(char *parent,
         double user_timeout = get_double_key("timeout", name, timeout);
 
         /* Set a pointer to this node in all text sections using this variable. */
-        text_section_var_modvar(name, n, user_timeout);
+        //text_section_var_modvar(name, n, user_timeout);
 
         /* Add to linked list. */
         if (module_var_ls == NULL)

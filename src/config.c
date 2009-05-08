@@ -37,7 +37,6 @@ static int find_key(struct setting *cur, char *key);
 static FILE *get_cfg_file(void);
 static void clear_settings(struct setting *cur_s);
 
-char *cfg_text;
 struct list *cfg_ls;
 
 #define IS_TRUE(c) ( ((c) == 'y') || ((c) == 'Y') || \
@@ -244,7 +243,6 @@ void parse_cfg(void)
 
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
-        cfg_text = NULL;           /* used in handling [text] */
 
         str = NULL;
         len = 0;
@@ -267,29 +265,11 @@ void parse_cfg(void)
                 }
 
                 if (sscanf(str, format[0], &mod) == 1) {
-                        /* we don't add [text] to the cfg list */
-                        if (strcasecmp(mod, "text") != 0)
-                                add_mod(mod);
- 
+                        add_mod(mod);
                         continue;
                 }
 
-                /* handle [text] here instead */
-                if (mod && !strcasecmp(mod, "text")) {
-                        if (!cfg_text) {
-                                cfg_text = d_strcpy(str);
-                        } else {
-                                cfg_text = realloc(cfg_text,
-                                                   strlen(cfg_text) +
-                                                        strlen(str) +
-                                                        sizeof(char));
-                                strcat(cfg_text, str);
-                        }
-
-                        continue;
-                }
-
-                else if (csscanf(str, format[1], 2, &key, &value)) { }
+                if (csscanf(str, format[1], 2, &key, &value)) { }
                 else if (csscanf(str, format[2], 2, &key, &value)) { }
                 else if (csscanf(str, format[3], 2, &key, &value))
                         trim_t(value);
@@ -321,13 +301,6 @@ void parse_cfg(void)
         }
 
         fclose(cfg_file);
-
-        /* Set the default text section if none existed. */
-        if (cfg_text == NULL)
-                cfg_text = d_strcpy("${color red}ATTENTION TURD:$color Please" \
-                                    " edit your donky configuration file and" \
-                                    " add a ${color green}[text]$color" \
-                                    " section. Do not disappoint me again.");
 }
 
 /** 

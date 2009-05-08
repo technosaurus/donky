@@ -50,74 +50,73 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(moduledir)"
 moduleLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(module_LTLIBRARIES)
-am__DEPENDENCIES_1 =
-battery_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+battery_la_DEPENDENCIES =
 am_battery_la_OBJECTS = battery.lo
 battery_la_OBJECTS = $(am_battery_la_OBJECTS)
 battery_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(battery_la_LDFLAGS) $(LDFLAGS) -o $@
-date_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+date_la_DEPENDENCIES =
 am_date_la_OBJECTS = date.lo
 date_la_OBJECTS = $(am_date_la_OBJECTS)
 date_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(date_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-diskio_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+diskio_la_DEPENDENCIES =
 am_diskio_la_OBJECTS = diskio.lo
 diskio_la_OBJECTS = $(am_diskio_la_OBJECTS)
 diskio_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(diskio_la_LDFLAGS) $(LDFLAGS) -o $@
-eeebl_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+eeebl_la_DEPENDENCIES =
 am_eeebl_la_OBJECTS = eeebl.lo
 eeebl_la_OBJECTS = $(am_eeebl_la_OBJECTS)
 eeebl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(eeebl_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-exec_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+exec_la_DEPENDENCIES =
 am_exec_la_OBJECTS = exec.lo
 exec_la_OBJECTS = $(am_exec_la_OBJECTS)
 exec_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(exec_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-moc_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+moc_la_DEPENDENCIES =
 am_moc_la_OBJECTS = moc.lo
 moc_la_OBJECTS = $(am_moc_la_OBJECTS)
 moc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(moc_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-mpd_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+mpd_la_DEPENDENCIES =
 am_mpd_la_OBJECTS = mpd.lo
 mpd_la_OBJECTS = $(am_mpd_la_OBJECTS)
 mpd_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(mpd_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-pcpuinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+pcpuinfo_la_DEPENDENCIES =
 am_pcpuinfo_la_OBJECTS = pcpuinfo.lo
 pcpuinfo_la_OBJECTS = $(am_pcpuinfo_la_OBJECTS)
 pcpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(pcpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
-scpuinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+scpuinfo_la_DEPENDENCIES =
 am_scpuinfo_la_OBJECTS = scpuinfo.lo
 scpuinfo_la_OBJECTS = $(am_scpuinfo_la_OBJECTS)
 scpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(scpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
-sysinfo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+sysinfo_la_DEPENDENCIES =
 am_sysinfo_la_OBJECTS = sysinfo.lo
 sysinfo_la_OBJECTS = $(am_sysinfo_la_OBJECTS)
 sysinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(sysinfo_la_LDFLAGS) $(LDFLAGS) -o $@
-volume_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+volume_la_DEPENDENCIES =
 am_volume_la_OBJECTS = volume.lo
 volume_la_OBJECTS = $(am_volume_la_OBJECTS)
 volume_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(volume_la_LDFLAGS) $(LDFLAGS) -o $@
-wifi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+wifi_la_DEPENDENCIES =
 am_wifi_la_OBJECTS = wifi.lo
 wifi_la_OBJECTS = $(am_wifi_la_OBJECTS)
 wifi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -167,8 +166,6 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
-DEPS_CFLAGS = @DEPS_CFLAGS@
-DEPS_LIBS = @DEPS_LIBS@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -206,7 +203,6 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -267,7 +263,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 moduledir = $(libdir)/donky
-AM_CFLAGS = -Wall -std=gnu99
+AM_CFLAGS = -Wall
 date_la_LDFLAGS = -module -avoid-version
 sysinfo_la_LDFLAGS = -module -avoid-version
 pcpuinfo_la_LDFLAGS = -module -avoid-version

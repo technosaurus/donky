@@ -45,9 +45,9 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_donky_OBJECTS = main.$(OBJEXT) text.$(OBJEXT) config.$(OBJEXT) \
-	util.$(OBJEXT) module.$(OBJEXT) x11.$(OBJEXT) render.$(OBJEXT) \
-	mem.$(OBJEXT) lists.$(OBJEXT)
+am_donky_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) util.$(OBJEXT) \
+	module.$(OBJEXT) mem.$(OBJEXT) lists.$(OBJEXT) \
+	daemon.$(OBJEXT)
 donky_OBJECTS = $(am_donky_OBJECTS)
 donky_LDADD = $(LDADD)
 donky_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -99,8 +99,6 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
-DEPS_CFLAGS = @DEPS_CFLAGS@
-DEPS_LIBS = @DEPS_LIBS@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -138,7 +136,6 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
-PKG_CONFIG = @PKG_CONFIG@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -200,20 +197,18 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -DLIBDIR=\"$(libdir)/donky\" \
             -DSYSCONFDIR=\"$(sysconfdir)/donky\" \
-            -ldl -lm -Wall -std=gnu99
+            -ldl -lm -Wall
 
 SUBDIRS = modules
 donky_LDFLAGS = -export-dynamic
 donky_SOURCES = \
 	main.c \
-	text.c text.h \
 	config.c config.h \
 	util.c util.h \
 	module.c module.h \
-	x11.c x11.h \
-	render.c render.h \
 	mem.c mem.h \
-	lists.c lists.h
+	lists.c lists.h \
+	daemon.c daemon.h
 
 INCLUDES = $(DEPS_CFLAGS)
 all: all-recursive
@@ -288,14 +283,12 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lists.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/module.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/render.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/text.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/x11.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
