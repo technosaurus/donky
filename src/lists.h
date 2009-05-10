@@ -46,11 +46,6 @@ void del_nodes(struct list *fl,
                void *free_external);
 void del_list(struct list *fl, void *free_external);
 void act_on_list(struct list *fl, void *execute);
-void act_on_list_raw(struct list *fl, void *execute);
-void act_on_list_if(struct list *fl, void *execute,
-                    void *match_callback, void *match);
-void act_on_list_raw_if(struct list *fl, void *execute,
-                        void *match_callback, void *match);
 
 #endif /* LISTS_H */
 
