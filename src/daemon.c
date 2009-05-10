@@ -42,6 +42,7 @@ static donky_conn *donky_conn_add(int sock);
 static void donky_conn_drop(donky_conn *cur);
 static int donky_listen(void);
 static void clean_dis_shiz(void);
+static void donky_conn_set_fdmax(void);
 
 /**
  * @brief Donky loop (tm)
@@ -197,6 +198,10 @@ static void donky_conn_drop(donky_conn *cur)
         if (cur == dc_end)
                 dc_end = cur->prev;
 
+        /* This was fdmax, so lets find the next fdmax. */
+        if (cur->sock == donky_fdmax)
+                donky_conn_set_fdmax();
+
         /* Remove from fd set and close the socket. */
         FD_CLR(cur->sock, &donky_fds);
         close(cur->sock);
@@ -205,6 +210,23 @@ static void donky_conn_drop(donky_conn *cur)
         free(cur);
 
         printf("Dropped connection like a freakin' turd.\n");
+}
+
+/**
+ * @brief Find the largest sock file descriptor.
+ */
+static void donky_conn_set_fdmax(void)
+{
+        donky_conn *cur = dc_start;
+
+        donky_fdmax = -1;
+
+        while (cur) {
+                if (cur->sock > donky_fdmax)
+                        donky_fdmax = cur->sock;
+                
+                cur = cur->next;
+        }
 }
 
 /**
