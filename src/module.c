@@ -119,7 +119,7 @@ int module_var_add(char *parent,
          * we won't even add it to the linked list.  Memorah efficiencah! */
         //if (text_section_var_find(name) == NULL) {
                 //printf("Var [%s] was not used.\n", name);
-                return 0;
+                //return 0;
         //}
 
         module_var_used = 1; /* Trigger that a module var was used from this module. */
@@ -138,7 +138,7 @@ int module_var_add(char *parent,
 
         /* Set the timeout.  User configured timeouts take precedence over
          * module defined default! */
-        double user_timeout = get_double_key("timeout", name, timeout);
+        //double user_timeout = get_double_key("timeout", name, timeout);
 
         /* Set a pointer to this node in all text sections using this variable. */
         //text_section_var_modvar(name, n, user_timeout);

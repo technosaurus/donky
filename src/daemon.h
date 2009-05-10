@@ -18,6 +18,15 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
+struct donky_conn_node {
+        int sock;
+        
+        struct donky_conn_node *next;
+        struct donky_conn_node *prev;
+};
+
+typedef struct donky_conn_node donky_conn;
+
 void donky_loop(void);
 
 #endif /* DAEMON_H */

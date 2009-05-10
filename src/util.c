@@ -18,13 +18,17 @@
 #define _GNU_SOURCE
 #include <ctype.h>
 #include <math.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
 
 #include "util.h"
 
@@ -43,11 +47,11 @@ char *trim(char *str)
         return str;
 }
 
-/** 
+/**
  * @brief Trim leading whitespace only
- * 
+ *
  * @param str Char pointer
- * 
+ *
  * @return New offset location in string
  */
 char *trim_l(char *str)
@@ -58,15 +62,15 @@ char *trim_l(char *str)
         return str;
 }
 
-/** 
+/**
  * @brief Trim trailing whitespace only
- * 
+ *
  * @param str Char pointer
  */
 void trim_t(char *str)
 {
         int i;
-        
+
         for (i = strlen(str) - 1; i >= 0; i--) {
                 if (!isspace(str[i])) {
                         str[i + 1] = '\0';
@@ -75,11 +79,11 @@ void trim_t(char *str)
         }
 }
 
-/** 
+/**
  * @brief Is the current string a comment?
- * 
+ *
  * @param str String we're checking
- * 
+ *
  * @return 1 if comment, 0 if not
  */
 int is_comment(char *str)
@@ -101,7 +105,7 @@ int is_comment(char *str)
 int is_all_spaces(char *str)
 {
         int i;
-        
+
         for (i = 0; i < strlen(str); i++)
                 if (!isspace(str[i]))
                         return 0;
@@ -165,17 +169,17 @@ char *substr(char *str, int offset, int length)
  */
 double get_time(void)
 {
-        struct timeval timev;           
+        struct timeval timev;
         gettimeofday(&timev, NULL);
         return (double) timev.tv_sec + (((double) timev.tv_usec) / 1000000);
 }
 
-/** 
+/**
  * @brief A quicker alternative to strdup
- * 
+ *
  * @param str String to duplicate
  * @param n Number of chars to duplicate
- * 
+ *
  * @return Duplicated string
  */
 char *d_strcpy(const char *str)
@@ -187,12 +191,12 @@ char *d_strcpy(const char *str)
         return newstr;
 }
 
-/** 
+/**
  * @brief A quicker alternative to strndup
- * 
+ *
  * @param str String to duplicate
  * @param n Number of chars to duplicate
- * 
+ *
  * @return Duplicated string
  */
 char *d_strncpy(const char *str, size_t n)
@@ -244,16 +248,16 @@ char *bytes_to_bigger(unsigned long bytes)
         return (read != -1) ? str : NULL;
 }
 
-/** 
+/**
  * @brief Conditional sscanf wrapper. If the amount of matches and assignments
  *        do not equal parameter int n, free and NULL anything that *was*
  *        matched and assigned. In other words, it's an all-or-nothing sscanf.
- * 
+ *
  * @param str sscanf parameter
  * @param format sscanf parameter
  * @param n Number of arguments you're sending to be matched and assigned
  * @param ... sscanf parameter
- * 
+ *
  * @return 1 if everything was matched and assigned successfully, else 0
  */
 bool csscanf(const char *str, const char *format, int n, ...)
@@ -307,3 +311,77 @@ int random_range(int min, int max)
         return random_number;
 }
 
+/**
+ * @brief Create a TCP listening socket.
+ *
+ * @param host Hostname
+ * @param port Port to listen on
+ *
+ * @return Socket!
+ */
+int create_tcp_listener(char *host, char *port)
+{
+        /* Code taken pretty much straight from the man page of getaddrinfo. */
+        
+        struct addrinfo hints;
+        struct addrinfo *result, *rp;
+        int sfd;
+        int s;
+        int opt = 1;
+
+        memset(&hints, 0, sizeof(struct addrinfo));
+        hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
+        hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+        hints.ai_flags = AI_PASSIVE;     /* For wildcard IP address */
+        hints.ai_protocol = 0;           /* Any protocol */
+        hints.ai_canonname = NULL;
+        hints.ai_addr = NULL;
+        hints.ai_next = NULL;
+
+        s = getaddrinfo(host, port, &hints, &result);
+        if (s != 0) {
+                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+                return -1;
+        }
+
+        /* getaddrinfo() returns a list of address structures.
+         * Try each address until we successfully bind(2).
+         * If socket(2) (or bind(2)) fails, we (close the socket
+         * and) try the next address. */
+
+        for (rp = result; rp != NULL; rp = rp->ai_next) {
+                sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+
+                if (sfd == -1)
+                        continue;
+
+                if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
+                        break;
+
+                close(sfd);
+        }
+
+        if (rp == NULL) {
+                fprintf(stderr, "Could not bind\n");
+                return -1;
+        }
+
+        freeaddrinfo(result);
+
+        /* Allow this to be reused (needed for reloads and such) */
+        if ((setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
+                        &opt, sizeof(opt)) == -1)) {
+                perror("setsockopt");
+                close(sfd);
+                return -1;
+        }
+
+        /* Start listening. */
+        if ((listen(sfd, 10) == -1)) {
+                perror("listen");
+                close(sfd);
+                return -1;
+        }
+
+        return sfd;
+}

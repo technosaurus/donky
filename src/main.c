@@ -148,7 +148,6 @@ static void initialize_stuff(void)
 static void clean_up_everything(void)
 {
         extern struct list *cfg_ls;
-        extern struct list *ts_ls;
 
         printf("Clearing config list...");
         del_list(cfg_ls, &clear_cfg);

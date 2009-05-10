@@ -65,5 +65,6 @@ char *d_strncpy(const char *str, size_t n);
 char *bytes_to_bigger(unsigned long bytes);
 bool csscanf(const char *str, const char *format, int n, ...);
 int random_range(int min, int max);
+int create_tcp_listener(char *host, char *port);
 
 #endif /* UTIL_H */
