@@ -36,7 +36,7 @@ struct mem_data {
 static void mem_list_add(void *ptr);
 
 /* Globals. */
-static struct list *mem_fl = NULL;
+static struct list *mem_ls = NULL;
 
 /**
  * @brief Malloc wrapper.
@@ -129,10 +129,10 @@ static void mem_list_add(void *ptr)
         n->ptr = ptr;
 
         /* Add to linked list. */
-        if (mem_fl == NULL)
-                mem_fl = init_list();
+        if (mem_ls == NULL)
+                mem_ls = init_list();
 
-        add_node(mem_fl, n);
+        add_node(mem_ls, n);
 }
 
 /**
@@ -148,6 +148,6 @@ static void mem_list_clear_cb(struct mem_data *cur)
  */
 void mem_list_clear(void)
 {
-        del_list(mem_fl, &mem_list_clear_cb);
-        mem_fl = NULL;
+        del_list(mem_ls, &mem_list_clear_cb);
+        mem_ls = NULL;
 }

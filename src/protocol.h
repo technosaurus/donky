@@ -15,6 +15,16 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define DEFAULT_GLOBAL_SLEEP 1.0
-#define DEFAULT_CONF ".donkyrcx"
-#define DEFAULT_CONF_GLOBAL "donky.conf"
+#ifndef PROTOCOL_H
+#define PROTOCOL_H
+
+#include "../config.h"
+
+#define PROTO_CONN_ACK  "donky " VERSION
+#define PROTO_PASS_REQ  "pass: %m[^\r\n]"
+#define PROTO_PASS_ACK  "SUP"
+#define PROTO_PASS_NACK "STFU"
+
+void protocol_handle(donky_conn *cur, const char *buf);
+
+#endif /* PROTOCOL_H */

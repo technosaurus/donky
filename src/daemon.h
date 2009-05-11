@@ -18,8 +18,12 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
+#include <stdbool.h>
+
 struct donky_conn_node {
         int sock;
+        
+        bool authed;
         
         struct donky_conn_node *next;
         struct donky_conn_node *prev;

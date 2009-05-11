@@ -15,6 +15,7 @@
  * along with donky.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -26,6 +27,7 @@
 #include "lists.h"
 #include "main.h"
 #include "mem.h"
+#include "protocol.h"
 #include "util.h"
 
 /* Globals. */
@@ -128,7 +130,13 @@ static void donky_conn_read(donky_conn *cur)
         }
 
         buf[n] = '\0';
+
+        /* Remove \r\n (if it is there) */
+        chomp(buf);
+        chomp(buf);
+        
         printf("buf = %s\n", buf);
+        protocol_handle(cur, buf);
 }
 
 /**
@@ -150,6 +158,7 @@ static void donky_conn_new(donky_conn *cur)
 
         printf("New connection, adding to client list.\n");
         donky_conn_add(newfd);
+        sendcrlf(newfd, PROTO_CONN_ACK);
 }
 
 /**
@@ -164,6 +173,8 @@ static donky_conn *donky_conn_add(int sock)
         donky_conn *n = malloc(sizeof(donky_conn));
 
         n->sock = sock;
+        n->authed = false;
+        
         n->prev = NULL;
         n->next = NULL;
 

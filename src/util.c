@@ -56,7 +56,7 @@ char *trim(char *str)
  */
 char *trim_l(char *str)
 {
-        while(isspace(*str))
+        while (isspace(*str))
                 str++;
 
         return str;
@@ -86,13 +86,13 @@ void trim_t(char *str)
  *
  * @return 1 if comment, 0 if not
  */
-int is_comment(char *str)
+bool is_comment(char *str)
 {
         str = trim_l(str);
         if (*str == ';')
-                return 1;
+                return true;
 
-        return 0;
+        return false;
 }
 
 /**
@@ -102,15 +102,15 @@ int is_comment(char *str)
  *
  * @return 1 for yes, 0 for no
  */
-int is_all_spaces(char *str)
+bool is_all_spaces(char *str)
 {
         int i;
 
         for (i = 0; i < strlen(str); i++)
                 if (!isspace(str[i]))
-                        return 0;
+                        return false;
 
-        return 1;
+        return true;
 }
 
 /**
@@ -331,7 +331,7 @@ int create_tcp_listener(char *host, char *port)
 
         memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
-        hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+        hints.ai_socktype = SOCK_STREAM; /* TCP socket */
         hints.ai_flags = AI_PASSIVE;     /* For wildcard IP address */
         hints.ai_protocol = 0;           /* Any protocol */
         hints.ai_canonname = NULL;
@@ -384,4 +384,29 @@ int create_tcp_listener(char *host, char *port)
         }
 
         return sfd;
+}
+
+/**
+ * @brief Send sprintf formatted string to socket, CR-LF appended.
+ *
+ * @param sock Socket
+ * @param format Format string
+ * @param ... Format arguments
+ *
+ * @return Bytes written to socket
+ */
+ssize_t sendcrlf(int sock, const char *format, ...)
+{
+        char buffer[1024];
+	va_list ap;
+        int n;
+	
+	va_start(ap, format);
+	n = vsnprintf(buffer, sizeof(buffer) - 2, format, ap);
+	va_end(ap);
+
+	buffer[n] = '\r';
+        buffer[n + 1] = '\n';
+
+        return send(sock, buffer, n + 2, 0);
 }

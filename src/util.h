@@ -22,7 +22,7 @@
 
 /* these are for certain macros to look less ugly */
 #define start do {
-#define end } while (0)
+#define end   } while (0)
 
 /** 
  * @brief Free a pointer if it exists.
@@ -54,8 +54,8 @@ end
 char *trim(char *);
 char *trim_l(char *);
 void trim_t(char *);
-int is_comment(char *);
-int is_all_spaces(char *);
+bool is_comment(char *);
+bool is_all_spaces(char *);
 char *chop(char *);
 char *chomp(char *);
 char *substr(char *, int, int);
@@ -66,5 +66,6 @@ char *bytes_to_bigger(unsigned long bytes);
 bool csscanf(const char *str, const char *format, int n, ...);
 int random_range(int min, int max);
 int create_tcp_listener(char *host, char *port);
+ssize_t sendcrlf(int sock, const char *format, ...);
 
 #endif /* UTIL_H */
