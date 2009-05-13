@@ -32,5 +32,6 @@ struct donky_conn_node {
 typedef struct donky_conn_node donky_conn;
 
 void donky_loop(void);
+void donky_conn_drop(donky_conn *cur);
 
 #endif /* DAEMON_H */

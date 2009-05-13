@@ -30,6 +30,18 @@
 static void protocol_handle_auth(donky_conn *cur, const char *buf);
 static void protocol_handle_command(donky_conn *cur, const char *buf);
 
+static void protocol_command_var(donky_conn *cur, const char *args);
+static void protocol_command_varonce(donky_conn *cur, const char *args);
+static void protocol_command_bye(donky_conn *cur, const char *args);
+
+/* Globals. */
+donky_cmd commands[] = {
+        { "var",     &protocol_command_var },
+        { "varonce", &protocol_command_varonce },
+        { "bye",     &protocol_command_bye },
+        { NULL,      NULL }
+};
+
 /**
  * @brief This is the main protocol handler.
  *
@@ -84,5 +96,60 @@ static void protocol_handle_auth(donky_conn *cur, const char *buf)
  */
 static void protocol_handle_command(donky_conn *cur, const char *buf)
 {
+        char *args = NULL;
+        int i;
+        void *(*func)(donky_conn *, const char *);
+
+        args = strchr(buf, ' ');
+
+        /* Separate args from command. */
+        if (args) {
+                *args = '\0';
+                args++;
+        }
+
+        printf("cmd[%s]args[%s]\n", buf, args);
+
+        /* Look for this command. */
+        for (i = 0; commands[i].alias != NULL; i++) {
+                if (!strcasecmp(commands[i].alias, buf)) {
+                        func = commands[i].func;
+                        func(cur, args);
+                        break;
+                }
+        }
+}
+
+/**
+ * @brief Get variable
+ *
+ * @param cur Donky connection
+ * @param args Arguments
+ */
+static void protocol_command_var(donky_conn *cur, const char *args)
+{
         
+}
+
+/**
+ * @brief Get variable once
+ *
+ * @param cur Donky connection
+ * @param args Arguments
+ */
+static void protocol_command_varonce(donky_conn *cur, const char *args)
+{
+        
+}
+
+/**
+ * @brief Client disconnect
+ *
+ * @param cur Donky connection
+ * @param args Arguments
+ */
+static void protocol_command_bye(donky_conn *cur, const char *args)
+{
+        sendcrlf(cur->sock, "PEACE");
+        donky_conn_drop(cur);
 }

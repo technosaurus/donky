@@ -41,7 +41,6 @@ donky_conn *dc_end = NULL;
 static void donky_conn_read(donky_conn *cur);
 static void donky_conn_new(donky_conn *cur);
 static donky_conn *donky_conn_add(int sock);
-static void donky_conn_drop(donky_conn *cur);
 static int donky_listen(void);
 static void clean_dis_shiz(void);
 static void donky_conn_set_fdmax(void);
@@ -198,7 +197,7 @@ static donky_conn *donky_conn_add(int sock)
  *
  * @param cur Connection to drop
  */
-static void donky_conn_drop(donky_conn *cur)
+void donky_conn_drop(donky_conn *cur)
 {
         if (cur->prev)
                 cur->prev->next = cur->next;

@@ -1,0 +1,78 @@
+################################################################################
+# donky protocol doc :o                                                        #
+################################################################################
+
+1. Connection
+
+        Create TCP socket to the host and port you specified donky to run on,
+        or the default of localhost:7000!
+
+        Upon connection, donky will spit out it's version information.
+
+2. Authentication
+
+        If a password has been defined in the donky configuration, that means
+        a password is required to issue commands/receive information.
+
+        Send the password in the following format:
+
+                pass: <password here>\r\n
+
+3. Variable query
+
+        To tell donky which variables you'd wish to receive updates for, you
+        must send a list in the following format:
+
+                var <id>:<variable name> <args>\r\n
+
+        An example for receiving the date would be:
+
+                var 0:date %b %d, %R:%s\r\n
+
+        Note that <id> needs to be a unique ID that you yourself needs to use
+        to understand which variables you are receiving updates for.
+
+        Variables will be sent by the server in the following format:
+
+                <id>:<variable type>:<data>\r\n
+
+        For the date example above, you would receive:
+
+                0:1:May 12, 19:19:24\r\n
+
+        Variable type refers to the integer value of the variable type in the
+        library's enumeration.
+
+4. Variable query (once)
+
+        This is exactly like section (3) above, except you will not receive
+        continuous updates.  This is for one time variable grabbing.
+
+                varonce <id>:<variable name> <args>\r\n
+
+5. Cleanly quitting
+
+        Ideally clients should quit cleanly by issues the `bye` command.
+
+                bye
+
+        This will disconnect you and allow for the server to perform any
+        cleanups immediately.
+
+################################################################################
+# Full example transaction                                                     #
+################################################################################
+
+s: donky 2009.5\r\n
+c: pass: <password>\r\n
+s: SUP\r\n
+c: var 0:date %b %d, %R:%S\r\n
+c: var 1:usedram\r\n
+c: var 2:totalram\r\n
+c: var 3:mpd_volume\r\n
+s: 0:1:May 12, 19:19:24\r\n
+s: 1:1:1.95GiB\r\n
+s: 2:1:1.96GiB\r\n
+s: 3:1:90\r\n
+c: bye\r\n
+s: PEACE\r\n

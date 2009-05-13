@@ -137,7 +137,7 @@ char *chomp(char *str)
 {
         int len = strlen(str) - 1;
 
-        if (str[len] == '\n')
+        if (str[len] == '\n' || str[len] == '\r')
                 str[len] = '\0';
 
         return str;

@@ -25,6 +25,11 @@
 #define PROTO_PASS_ACK  "SUP"
 #define PROTO_PASS_NACK "STFU"
 
+typedef struct {
+        char *alias;
+        void *func;
+} donky_cmd;
+
 void protocol_handle(donky_conn *cur, const char *buf);
 
 #endif /* PROTOCOL_H */
