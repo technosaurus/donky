@@ -76,6 +76,7 @@ void *module_get_sym(void *handle, char *name);
 struct module_var *module_var_find_by_name(const char *name);
 int module_load(char *path);
 void module_unload(struct module *cur);
+void module_var_cron_init(struct module *parent);
 
 #endif /* MODULE_H */
 

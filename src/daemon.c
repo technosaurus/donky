@@ -230,6 +230,9 @@ void donky_conn_drop(donky_conn *cur)
         FD_CLR(cur->sock, &donky_fds);
         close(cur->sock);
 
+        /* Remove any requests this connection might have. */
+        request_list_remove(request_list_find_by_conn(cur));
+
         /* Free some memorah! */
         free(cur);
 

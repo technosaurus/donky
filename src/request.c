@@ -292,8 +292,10 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
 
         /* If the module currently has 0 clients, that means it isn't loaded,
          * so lets load it. */
-        if (mv->parent->clients == 0)
+        if (mv->parent->clients == 0) {
                 module_load(mv->parent->path);
+                module_var_cron_init(mv->parent);
+        }
 
         /* If the symbol is NULL, get a pointer to it. */
         if (!mv->sym)
@@ -312,6 +314,9 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
  */
 void request_list_remove(struct request_list *cur)
 {
+        if (!cur)
+                return;
+        
         cur->var->parent->clients--;
 
         printf("Removing from request list...\n");
@@ -332,6 +337,27 @@ void request_list_remove(struct request_list *cur)
 
         freeif(cur->id);
         free(cur);
+}
+
+/**
+ * @brief Find request list node by donky_conn
+ *
+ * @param conn Connection
+ *
+ * @return Request list node
+ */
+struct request_list *request_list_find_by_conn(donky_conn *conn)
+{
+        struct request_list *cur = rl_start;
+
+        while (cur) {
+                if (cur->conn == conn)
+                        return cur;
+                
+                cur = cur->next;
+        }
+
+        return NULL;
 }
 
 /**

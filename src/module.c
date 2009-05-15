@@ -165,6 +165,23 @@ void module_var_cron_exec(void)
 }
 
 /**
+ * @brief Load up the symbol pointer for crons.
+ *
+ * @param parent Module parent
+ */
+void module_var_cron_init(struct module *parent)
+{
+        struct module_var *cur = mv_start;
+
+        while (cur) {
+                if (cur->parent == parent)
+                        cur->sym = module_get_sym(parent->handle, cur->method);
+                
+                cur = cur->next;
+        }
+}
+
+/**
  * @brief Add module linked list node.
  *
  * @param name Module name
@@ -305,10 +322,8 @@ int module_load(char *path)
 
         /* When donky is first loaded, we want to immediately unload
          * modules after letting all the module variables register. */
-        if (first_load) {
+        if (first_load)
                 module_unload(cur);
-                first_load = false;
-        }
         
         return 1;
 }
@@ -330,6 +345,9 @@ void module_load_all(void)
                 return;
         }
 
+        /* We want to unload all modules after loading. */
+        first_load = true;
+
         while ((dir = readdir(d))) {
                 if (!strcmp(dir->d_name, ".") ||
                     !strcmp(dir->d_name, "..") ||
@@ -348,6 +366,9 @@ void module_load_all(void)
                 }
         }
 
+        /* Modules will stay loaded whenever module_load is called now. */
+        first_load = false;
+        
         closedir(d);
 }
 

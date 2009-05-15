@@ -44,5 +44,6 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove);
 void request_list_remove(struct request_list *cur);
 void request_list_clear(void);
 int request_handler_start(void);
+struct request_list *request_list_find_by_conn(donky_conn *conn);
 
 #endif /* REQUEST_H */
