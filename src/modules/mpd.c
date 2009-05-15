@@ -1,18 +1,28 @@
 /*
- * This file is part of donky.
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ * All rights reserved.
  *
- * donky is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * donky is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with donky.  If not, see <http://www.gnu.org/licenses/>.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #define _GNU_SOURCE
@@ -32,10 +42,6 @@
 #include "../util.h"
 
 char module_name[] = "mpd";
-
-/* Required function prototypes. */
-void module_init(void);
-void module_destroy(void);
 
 /* My function prototypes. */
 int start_connection(void);
@@ -91,31 +97,31 @@ struct mpd_info mpdinfo = {
 /**
  * @brief This is run on module initialization.
  */
-void module_init(void)
+void module_init(const struct module *mod)
 {
-        module_var_add(module_name, "mpd_file", "get_file", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_artist", "get_artist", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_title", "get_title", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_album", "get_album", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_track", "get_track", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_date", "get_date", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_genre", "get_genre", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_volume", "get_volume", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_repeat", "get_repeat", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_random", "get_random", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_playlist", "get_playlist", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_playlistlength", "get_playlistlength", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_xfade", "get_xfade", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_state", "get_state", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_song", "get_song", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_etime", "get_elapsed_time", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_ttime", "get_total_time", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_bitrate", "get_bitrate", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "mpd_audio", "get_audio", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_file", "get_file", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_artist", "get_artist", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_title", "get_title", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_album", "get_album", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_track", "get_track", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_date", "get_date", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_genre", "get_genre", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_volume", "get_volume", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_repeat", "get_repeat", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_random", "get_random", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_playlist", "get_playlist", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_playlistlength", "get_playlistlength", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_xfade", "get_xfade", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_state", "get_state", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_song", "get_song", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_etime", "get_elapsed_time", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_ttime", "get_total_time", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_bitrate", "get_bitrate", 10.0, VARIABLE_STR);
+        module_var_add(mod, "mpd_audio", "get_audio", 10.0, VARIABLE_STR);
 
-        module_var_add(module_name, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
+        module_var_add(mod, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
 
-        module_var_cron_add(module_name, "mpd_cron", "run_cron", 1.0);
+        module_var_add(mod, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);
 }
 
 /**

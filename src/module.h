@@ -1,62 +1,77 @@
 /*
- * This file is part of donky.
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ * All rights reserved.
  *
- * donky is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * donky is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with donky.  If not, see <http://www.gnu.org/licenses/>.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef MODULE_H
 #define MODULE_H
 
 enum variable_type {
-        VARIABLE_STR,           /* Function should return char * */
-        VARIABLE_BAR,           /* Function should return int between 0 and 100 */
-        VARIABLE_GRAPH,         /* TBA */
-        VARIABLE_CUSTOM,        /* TBA */
-        VARIABLE_CRON           /* This is simply a method to be run on schedule. */
+        VARIABLE_STR,   /* Function should return char * */
+        VARIABLE_BAR,   /* Function should return int between 0 and 100 */
+        VARIABLE_GRAPH, /* Function should return int between 0 and 100 */
+        VARIABLE_CRON   /* This is simply a method to be run on schedule. */
 };
 
 struct module {
-        char name[64];          /* Unique identifier, value really doesn't matter. */
-        void *handle;           /* Handle to the code in memory. */
-        void *destroy;          /* Pointer to the module_destroy function. */
+        char name[64];  /* Unique identifier, value really doesn't matter. */
+        char *path;     /* Path to the module file. */
+        void *handle;   /* Handle to the code in memory. */
+        void *destroy;  /* Pointer to the module_destroy function. */
+        int clients;    /* How many clients are using this module? */
+
+        struct module *next;
+        struct module *prev;
 };
 
 struct module_var {
-        char name[64];                  /* Name of the variable. */
-        char method[64];                /* Method name to call. */
-        enum variable_type type;        /* Type of method.  See the enum above. */
-        void *sym;                      /* Pointer to the function. */
+        char name[64];           /* Name of the variable. */
+        char method[64];         /* Method name to call. */
+        void *sym;               /* Link to method symbol. */
+        enum variable_type type; /* Type of method.  See the enum above. */
 
-        double timeout;                 /* Used for cron jobs */
-        double last_update;             /* Ditto */
+        double timeout;          /* Used for cron jobs */
+        double last_update;      /* Ditto */
 
-        struct module *parent;          /* Parent of this module. */
+        struct module *parent;   /* Parent of this module. */
+
+        struct module_var *next;
+        struct module_var *prev;
 };
 
 /* Function prototypes. */
-int module_var_add(char *parent,
+int module_var_add(const struct module *parent,
                    char *name,
-                   char *method,
+                   const char *method,
                    double timeout,
                    enum variable_type type);
-int module_var_cron_add(char *parent,
-                        char *name,
-                        char *method,
-                        double timeout);
 void module_load_all(void);
 void clear_module(void);
 void module_var_cron_exec(void);
+void *module_get_sym(void *handle, char *name);
+struct module_var *module_var_find_by_name(const char *name);
 
 #endif /* MODULE_H */
 

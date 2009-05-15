@@ -1,18 +1,28 @@
 /*
- * This file is part of donky.
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ * All rights reserved.
  *
- * donky is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * donky is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with donky.  If not, see <http://www.gnu.org/licenses/>.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <dirent.h>
@@ -27,231 +37,223 @@
 #include "util.h"
 #include "lists.h"
 
-/* internal prototypes */
-static int module_add(char *name, void *handle, void *destroy);
-static struct module *module_find(char *name);
-static int module_load(char *path);
-static void module_unload(char *name);
-static void *module_get_sym(void *handle, char *name);
-
 /* Globals. */
-static struct list *module_ls = NULL;
-static struct list *module_var_ls = NULL;
-static int module_var_used = 0;
+struct module *m_start = NULL;
+struct module *m_end = NULL;
 
-/**
- * @brief Add a new link to the "module" linked list.
- *
- * @param name Unique name for the module
- * @param handle Pointer to the code memory segment handle
- *
- * @return 1 for success, 0 for failure
- */
-static int module_add(char *name, void *handle, void *destroy)
-{
-        struct module *n = malloc(sizeof(struct module));
+struct module_var *mv_start = NULL;
+struct module_var *mv_end = NULL;
 
-        /* Fill in the module structure. */
-        memset(n->name, 0, sizeof(n->name));
-        strncpy(n->name, name, sizeof(n->name) - 1);
-        n->handle = handle;
-        n->destroy = destroy;
-
-        /* Add to linked list. */
-        if (module_ls == NULL)
-                module_ls = init_list();
-
-        add_node(module_ls, n);
-
-        return 1;
-}
-
-/**
- * @brief Callback for find_node for module_find.
- *
- * @param cur
- * @param match
- *
- * @return 1 = match, 0 = not match
- */
-static int module_find_cb(struct module *cur, char *match)
-{
-        if (!strcasecmp(cur->name, match))
-                return 1;
-
-        return 0;
-}
-
-/**
- * @brief Find a module link.
- *
- * @param name Unique name of module
- *
- * @return The module link matching the given name, or NULL if not found
- */
-static struct module *module_find(char *name)
-{
-        return find_node(module_ls, &module_find_cb, name);
-}
+/* Function prototypes. */
+static struct module *module_add(const char *name,
+                                 const char *path,
+                                 void *handle,
+                                 void *destroy);
+static int module_load(char *path);
+static void module_unload(struct module *cur);
+static struct module *module_find_by_name(const char *name);
 
 /**
  * @brief Add a module_var link.
  *
- * @param parent The unique name of this var's parent module
- * @param name A unique var name
- * @param method The name of the method to call
- * @param type Variable type,  @see variable_type
- *
- * @return 0 for utter phail, 1 for success
- */
-int module_var_add(char *parent,
-                   char *name,
-                   char *method,
-                   double timeout,
-                   enum variable_type type)
-{
-        struct module *mod = module_find(parent);
-
-        if (mod == NULL)
-                return 0;
-
-        /* Check that this variable is used in the [text] section.  If it isn't,
-         * we won't even add it to the linked list.  Memorah efficiencah! */
-        //if (text_section_var_find(name) == NULL) {
-                //printf("Var [%s] was not used.\n", name);
-                //return 0;
-        //}
-
-        module_var_used = 1; /* Trigger that a module var was used from this module. */
-        struct module_var *n = malloc(sizeof(struct module_var));
-
-        /* Fill in module_var structure. */
-        memset(n->name, 0, sizeof(n->name));
-        memset(n->method, 0, sizeof(n->method));
-        strncpy(n->name, name, sizeof(n->name) - 1);
-        strncpy(n->method, method, sizeof(n->method) - 1);
-        n->type = type;
-        n->sym = module_get_sym(mod->handle, method);
-        n->timeout = 0.0;
-        n->last_update = 0.0;
-        n->parent = mod;
-
-        /* Set the timeout.  User configured timeouts take precedence over
-         * module defined default! */
-        //double user_timeout = get_double_key("timeout", name, timeout);
-
-        /* Set a pointer to this node in all text sections using this variable. */
-        //text_section_var_modvar(name, n, user_timeout);
-
-        /* Add to linked list. */
-        if (module_var_ls == NULL)
-                module_var_ls = init_list();
-
-        add_node(module_var_ls, n);
-
-        return 1;
-}
-
-/**
- * @brief Add cron job.
- *
- * @param parent Unique name of parent module
- * @param name Unique name of this cron job
+ * @param parent Parent module
+ * @param name Unique name of this var
  * @param method Name of method
  * @param timeout Timeout in seconds
+ * @param type Variable type,  @see variable_type
  *
  * @return 1 success, 0 fail
  */
-int module_var_cron_add(char *parent,
-                        char *name,
-                        char *method,
-                        double timeout)
+int module_var_add(const struct module *parent,
+                   char *name,
+                   const char *method,
+                   double timeout,
+                   enum variable_type type)
 {
-        struct module *mod = module_find(parent);
+        double user_timeout;
+        struct module_var *find;
+        struct module_var *n;
 
-        if (mod == NULL)
+        if (parent == NULL)
                 return 0;
-        
-        struct module_var *n = malloc(sizeof(struct module_var));
+
+        find = module_var_find_by_name(name);
+        n = (find) ? find : malloc(sizeof(struct module_var));
 
         /* Fill in module_var structure. */
-        memset(n->name, 0, sizeof(n->name));
-        memset(n->method, 0, sizeof(n->method));
-        strncpy(n->name, name, sizeof(n->name) - 1);
-        strncpy(n->method, method, sizeof(n->method) - 1);
-        n->type = VARIABLE_CRON;
-        n->sym = module_get_sym(mod->handle, method);
+        snprintf(n->name, sizeof(n->name), "%s", name);
+        snprintf(n->method, sizeof(n->method), "%s", method);
+        n->type = type;
+        n->sym = NULL;
+        n->prev = NULL;
+        n->next = NULL;
 
         /* Set the timeout.  User configured timeouts take precedence over
          * module defined default! */
-        double user_timeout = get_double_key("cron", name, timeout);
+        if (type == VARIABLE_CRON)
+                user_timeout = get_double_key("cron", name, timeout);
+        else
+                user_timeout = get_double_key("timeout", name, timeout);
 
-        //printf("Adding [%s] to cron with timeout [%f]\n", name, user_timeout);
+        //printf("Adding [%s] with timeout [%f]\n", name, user_timeout);
         
         n->timeout = user_timeout;
         n->last_update = 0.0;
-        n->parent = mod;
+        n->parent = (struct module *) parent;
 
-        /* Add to linked list. */
-        if (module_var_ls == NULL)
-                module_var_ls = init_list();
+        if (find)
+                return 1;
 
-        add_node(module_var_ls, n);
-
+        /* Add node to linked list. */
+        if (mv_end == NULL) {
+                mv_start = n;
+                mv_end = n;
+        } else {
+                mv_end->next = n;
+                n->prev = mv_end;
+                mv_end = n;
+        }
+        
         return 1;
 }
 
 /**
- * @brief Call back for del_node in module_var_cron_clear.
+ * @brief Find module var by name.
  *
- * @param cur
- * @param parent
+ * @param name Module var name
  *
- * @return 1 = match, 0 = not match
+ * @return Module var
  */
-static int module_var_cron_clear_cb(struct module_var *cur,
-                                    struct module *parent)
+struct module_var *module_var_find_by_name(const char *name)
 {
-        if (cur->parent == parent)
-                return 1;
+        struct module_var *cur = mv_start;
 
-        return 0;
+        while (cur) {
+                if (!strcasecmp(cur->name, name))
+                        return cur;
+                
+                cur = cur->next;
+        }
+
+        return NULL;
 }
 
 /**
- * @brief Clear current cron jobs of a given module.
- *
- * @param parent Pointer to parent module
+ * @brief Run cron jobs.
  */
-static void module_var_cron_clear(struct module *parent)
-{
-        del_nodes(module_var_ls, &module_var_cron_clear_cb, parent, NULL);
-}
-
-/**
- * @brief Callback for act_on_list in module_var_cron_exec.
- *
- * @param cur
- */
-static void module_var_cron_exec_cb(struct module_var *cur)
+void module_var_cron_exec(void)
 {
         void *(*sym)(void);
+        struct module_var *cur = mv_start;
 
-        if (cur->type == VARIABLE_CRON &&
-            (get_time() - cur->last_update) >= cur->timeout) {
-                if ((sym = cur->sym) != NULL)
-                        sym();
-
-                cur->last_update = get_time();
+        while (cur) {
+                if (cur->type == VARIABLE_CRON &&
+                    (get_time() - cur->last_update) >= cur->timeout) {
+                        if ((sym = cur->sym) != NULL) {
+                                sym();
+                                cur->last_update = get_time();
+                        }
+                }
+                
+                cur = cur->next;
         }
 }
 
 /**
- * @brief Run all cron jobs.
+ * @brief Add module linked list node.
+ *
+ * @param name Module name
+ * @param path Path to module
+ * @param handle dlopen handle
+ * @param destroy Pointer to destroy method
+ *
+ * @return Module just added
  */
-void module_var_cron_exec(void)
+static struct module *module_add(const char *name,
+                                 const char *path,
+                                 void *handle,
+                                 void *destroy)
 {
-        act_on_list(module_var_ls, &module_var_cron_exec_cb);
+        struct module *find = module_find_by_name(name);
+        struct module *n = (find) ? find : malloc(sizeof(struct module));
+
+        snprintf(n->name, sizeof(n->name), "%s", name);
+        n->path = d_strcpy(path);
+        n->handle = handle;
+        n->destroy = destroy;
+        n->clients = 0;
+
+        n->prev = NULL;
+        n->next = NULL;
+
+        if (find)
+                return n;
+
+        /* Add node to linked list. */
+        if (m_end == NULL) {
+                m_start = n;
+                m_end = n;
+        } else {
+                m_end->next = n;
+                n->prev = m_end;
+                m_end = n;
+        }
+
+        return n;
+}
+
+/**
+ * @brief Find module by name.
+ *
+ * @param name Module name
+ *
+ * @return
+ */
+static struct module *module_find_by_name(const char *name)
+{
+        struct module *cur = m_start;
+
+        while (cur) {
+                if (!strcasecmp(cur->name, name))
+                        return cur;
+                
+                cur = cur->next;
+        }
+
+        return NULL;
+}
+
+/**
+ * @brief Unload a module.
+ *
+ * @param name Module name
+ */
+static void module_unload(struct module *cur)
+{
+        void *(*destroy)(void);
+        struct module_var *mv;
+
+        if (!cur)
+                return;
+
+        destroy = cur->destroy;
+        destroy();
+        dlclose(cur->handle);
+
+        cur->destroy = NULL;
+        cur->handle = NULL;
+        cur->clients = 0;
+
+        /* Set all module_var symbol pointers to NULL if this is their
+         * parent module. */
+        mv = mv_start;
+
+        while (mv) {
+                if (mv->parent == cur)
+                        mv->sym = NULL;
+                
+                mv = mv->next;
+        }
 }
 
 /**
@@ -265,8 +267,9 @@ static int module_load(char *path)
 {
         void *handle;
         char *module_name;
-        void (*module_init)(void);
+        void (*module_init)(struct module *);
         void *module_destroy;
+        struct module *cur;
 
         if ((handle = dlopen(path, RTLD_LAZY)) == NULL) {
                 fprintf(stderr, "%s: Could not open: %s\n", path, dlerror());
@@ -285,59 +288,12 @@ static int module_load(char *path)
                 return 0;
         }
 
-        module_add(module_name, handle, module_destroy);
-        module_var_used = 0;
-        module_init();
-
-        /* No module vars were loaded from this module, so lets unload it. */
-        if (!module_var_used) {
-                printf("Nobody's using module [%s], unloading!\n", module_name);
-                module_unload(module_name);
-        }
+        
+        cur = module_add(module_name, path, handle, module_destroy);
+        module_init(cur);
+        module_unload(cur);
         
         return 1;
-}
-
-/**
- * @brief Callback for del_node in module_unload.
- *
- * @param cur
- * @param match
- *
- * @return 1 = match, 0 = not match
- */
-static int module_unload_find(struct module *cur, char *match)
-{
-        if (!strcasecmp(cur->name, match))
-                return 1;
-
-        return 0;
-}
-
-/**
- * @brief Callback for del_node in module_unload.
- *
- * @param cur
- */
-static void module_unload_free(struct module *cur)
-{
-        void (*module_destroy)(void);
-
-        if ((module_destroy = cur->destroy) != NULL)
-                module_destroy();
-                
-        dlclose(cur->handle);
-        module_var_cron_clear(cur);
-}
-
-/**
- * @brief Unload a module.
- *
- * @param name Unique name of the module
- */
-static void module_unload(char *name)
-{
-        del_node(module_ls, &module_unload_find, name, &module_unload_free);
 }
 
 /**
@@ -386,7 +342,7 @@ void module_load_all(void)
  *
  * @return Address of symbol
  */
-static void *module_get_sym(void *handle, char *name)
+void *module_get_sym(void *handle, char *name)
 {
         /* Clear any existing errors. */
         dlerror();
@@ -403,13 +359,37 @@ static void *module_get_sym(void *handle, char *name)
 }
 
 /**
- * @brief Clear the module and module_var linked lists.
+ * @brief Cleanup all the module linked list crap.
  */
 void clear_module(void)
 {
-        del_list(module_var_ls, NULL);
-        module_var_ls = NULL;
-        
-        del_list(module_ls, &module_unload_free);
-        module_ls = NULL;
+        void *(*destroy)(void);
+        struct module *m = m_start;
+        struct module *mn;
+        struct module_var *mv = mv_start;
+        struct module_var *mvn;
+
+        while (m) {
+                mn = m->next;
+
+                freeif(m->path);
+                if ((destroy = m->destroy))
+                        destroy();
+                if (m->handle)
+                        dlclose(m->handle);
+                free(m);
+                
+                m = mn;
+        }
+
+        while (mv) {
+                mvn = mv->next;
+
+                free(mv);
+                
+                mv = mvn;
+        }
+
+        m_start = m_end = NULL;
+        mv_start = mv_end = NULL;
 }

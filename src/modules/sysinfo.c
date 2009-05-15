@@ -1,18 +1,28 @@
 /*
- * This file is part of donky.
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ * All rights reserved.
  *
- * donky is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * donky is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with donky.  If not, see <http://www.gnu.org/licenses/>.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
@@ -27,10 +37,6 @@
 char module_name[] = "sysinfo"; /* Up to 63 characters, any more and it will
                                    be truncated!  Doesn't matter though, just
                                    needs to be a some-what unique name. */
-
-/* Required function prototypes. */
-void module_init(void);
-void module_destroy(void);
 
 /* My function prototypes. */
 char *get_uptime(char *args);
@@ -55,22 +61,22 @@ struct sysinfo info;
 /**
  * @brief This is run on module initialization.
  */
-void module_init(void)
+void module_init(struct module *mod)
 {
-        module_var_add(module_name, "uptime", "get_uptime", 1.0, VARIABLE_STR);
-        module_var_add(module_name, "loadavg", "get_loadavg", 30.0, VARIABLE_STR);
-        module_var_add(module_name, "totalram", "get_totalram", 0.0, VARIABLE_STR);
-        module_var_add(module_name, "freeram", "get_freeram", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "usedram", "get_usedram", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "sharedram", "get_sharedram", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "bufferram", "get_bufferram", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "totalswap", "get_totalswap", 0.0, VARIABLE_STR);
-        module_var_add(module_name, "freeswap", "get_freeswap", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "usedswap", "get_usedswap", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "procs", "get_procs", 10.0, VARIABLE_STR);
-        module_var_add(module_name, "totalhigh", "get_totalhigh", 0.0, VARIABLE_STR);
-        module_var_add(module_name, "freehigh", "get_freehigh", 15.0, VARIABLE_STR);
-        module_var_add(module_name, "usedhigh", "get_usedhigh", 15.0, VARIABLE_STR);
+        module_var_add(mod, "uptime", "get_uptime", 1.0, VARIABLE_STR);
+        module_var_add(mod, "loadavg", "get_loadavg", 30.0, VARIABLE_STR);
+        module_var_add(mod, "totalram", "get_totalram", 0.0, VARIABLE_STR);
+        module_var_add(mod, "freeram", "get_freeram", 15.0, VARIABLE_STR);
+        module_var_add(mod, "usedram", "get_usedram", 15.0, VARIABLE_STR);
+        module_var_add(mod, "sharedram", "get_sharedram", 15.0, VARIABLE_STR);
+        module_var_add(mod, "bufferram", "get_bufferram", 15.0, VARIABLE_STR);
+        module_var_add(mod, "totalswap", "get_totalswap", 0.0, VARIABLE_STR);
+        module_var_add(mod, "freeswap", "get_freeswap", 15.0, VARIABLE_STR);
+        module_var_add(mod, "usedswap", "get_usedswap", 15.0, VARIABLE_STR);
+        module_var_add(mod, "procs", "get_procs", 10.0, VARIABLE_STR);
+        module_var_add(mod, "totalhigh", "get_totalhigh", 0.0, VARIABLE_STR);
+        module_var_add(mod, "freehigh", "get_freehigh", 15.0, VARIABLE_STR);
+        module_var_add(mod, "usedhigh", "get_usedhigh", 15.0, VARIABLE_STR);
 }
 
 /**

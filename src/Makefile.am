@@ -13,6 +13,7 @@ donky_SOURCES = \
 	mem.c mem.h \
 	lists.c lists.h \
 	daemon.c daemon.h \
-	protocol.c protocol.h
+	protocol.c protocol.h \
+	request.c request.h
 INCLUDES = $(DEPS_CFLAGS)
 LIBS = $(DEPS_LIBS)

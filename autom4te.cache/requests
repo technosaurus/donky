@@ -251,6 +251,7 @@
                         'AC_TYPE_INT16_T' => 1,
                         'AC_PROG_CC' => 1,
                         '_AM_COND_ELSE' => 1,
+                        'AC_TYPE_SSIZE_T' => 1,
                         'AC_SUBST_TRACE' => 1,
                         'AC_INIT' => 1,
                         '_AM_COND_IF' => 1,

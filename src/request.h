@@ -25,61 +25,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#ifndef REQUEST_H
+#define REQUEST_H
 
-#include "../util.h"
-#include "../mem.h"
-#include "../module.h"
-
-char module_name[] = "date_shet"; /* Up to 63 characters, any more and it will
-                                     be truncated!  Doesn't matter though, just
-                                     needs to be a some-what unique name. */
-
-/* My function prototypes. */
-char *get_date(char *args);
-
-/**
- * @brief This is run on module initialization.
- */
-void module_init(const struct module *mod)
-{
-        module_var_add(mod, "date", "get_date", 1.0, VARIABLE_STR);
-}
-
-/**
- * @brief This is run when the module is about to be unloaded.
- */
-void module_destroy(void)
-{
+struct request_list {
+        char *id;
+        const donky_conn *conn;
+        struct module_var *var;
+        char *args;
+        bool remove;
         
-}
+        struct request_list *prev;
+        struct request_list *next;
+};
 
-/**
- * @brief Get the current time in a custom format.
- *
- * @param args Argument string.
- *
- * @return Formatted time string
- */
-char *get_date(char *args)
-{        
-        char ret_value[96];
-        time_t t;
-        struct tm *tmp;
+int request_list_add(const donky_conn *conn, const char *buf, bool remove);
+void request_list_remove(struct request_list *cur);
+void request_list_clear(void);
 
-        t = time(NULL);
-        tmp = localtime(&t);
-
-        if (tmp == NULL)
-                return "n/a";
-
-        if (strftime(ret_value,
-                     sizeof(ret_value) - sizeof(char),
-                     args, tmp) == 0)
-                return "n/a";
-
-        return m_strdup(ret_value);
-}
+#endif /* REQUEST_H */

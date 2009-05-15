@@ -1,18 +1,28 @@
 /*
- * This file is part of donky.
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ * All rights reserved.
  *
- * donky is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * donky is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with donky.  If not, see <http://www.gnu.org/licenses/>.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <stdio.h>
@@ -26,10 +36,6 @@
 #include "../util.h"
 
 char module_name[] = "wifi_pwn_edition";
-
-/* Required function prototypes. */
-void module_init(void);
-void module_destroy(void);
 
 /* Globals */
 char *interface;
@@ -47,20 +53,20 @@ struct wifi_info {
 /**
  * @brief This is run on module initialization.
  */
-void module_init(void)
+void module_init(const struct module *mod)
 {
-        module_var_add(module_name, "wifi_essid", "get_essid", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "wifi_mode", "get_mode", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "wifi_bitrate", "get_bitrate", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "wifi_ap", "get_ap", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "wifi_link_qual", "get_link_qual", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "wifi_link_qual_max", "get_link_qual_max", 5.0, VARIABLE_STR);
-        module_var_add(module_name, "wifi_link_qual_perc", "get_link_qual_perc", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_essid", "get_essid", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_mode", "get_mode", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_bitrate", "get_bitrate", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_ap", "get_ap", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_link_qual", "get_link_qual", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_link_qual_max", "get_link_qual_max", 5.0, VARIABLE_STR);
+        module_var_add(mod, "wifi_link_qual_perc", "get_link_qual_perc", 5.0, VARIABLE_STR);
         
-        module_var_add(module_name, "wifi_link_bar", "get_link_bar", 5.0, VARIABLE_BAR);
+        module_var_add(mod, "wifi_link_bar", "get_link_bar", 5.0, VARIABLE_BAR);
 
         /* Add cron job. */
-        module_var_cron_add(module_name, "wifi_cron", "run_cron", 5.0);
+        module_var_add(mod, "wifi_cron", "run_cron", 5.0, VARIABLE_CRON);
 
         interface = get_char_key("wifi", "interface", "wlan0");
 }

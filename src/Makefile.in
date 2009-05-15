@@ -47,7 +47,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_donky_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) util.$(OBJEXT) \
 	module.$(OBJEXT) mem.$(OBJEXT) lists.$(OBJEXT) \
-	daemon.$(OBJEXT) protocol.$(OBJEXT)
+	daemon.$(OBJEXT) protocol.$(OBJEXT) request.$(OBJEXT)
 donky_OBJECTS = $(am_donky_OBJECTS)
 donky_LDADD = $(LDADD)
 donky_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -209,7 +209,8 @@ donky_SOURCES = \
 	mem.c mem.h \
 	lists.c lists.h \
 	daemon.c daemon.h \
-	protocol.c protocol.h
+	protocol.c protocol.h \
+	request.c request.h
 
 INCLUDES = $(DEPS_CFLAGS)
 all: all-recursive
@@ -290,6 +291,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mem.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/module.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/protocol.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/request.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@
 
 .c.o:
