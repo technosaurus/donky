@@ -34,6 +34,7 @@ struct request_list {
         struct module_var *var;
         char *args;
         bool remove;
+        bool first;
         
         struct request_list *prev;
         struct request_list *next;
@@ -42,5 +43,6 @@ struct request_list {
 int request_list_add(const donky_conn *conn, const char *buf, bool remove);
 void request_list_remove(struct request_list *cur);
 void request_list_clear(void);
+int request_handler_start(void);
 
 #endif /* REQUEST_H */

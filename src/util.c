@@ -420,3 +420,20 @@ ssize_t sendcrlf(int sock, const char *format, ...)
 
         return send(sock, buffer, n + 2, 0);
 }
+
+/**
+ * @brief Return the sum of all characters in a string.
+ *
+ * @param str String to get sum of
+ *
+ * @return Sum
+ */
+unsigned int get_str_sum(char *str)
+{
+        unsigned int sum = 0;
+        
+        for (; *str; str++)
+                sum += *str;
+
+        return sum;
+}

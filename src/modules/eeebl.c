@@ -40,7 +40,7 @@ char module_name[] = "eeebl";
 char *get_eeeblper(char *args);
 char *get_eeeblcur(char *args);
 char *get_eeeblmax(char *args);
-int get_eeeblbar(char *args);
+unsigned int get_eeeblbar(char *args);
 
 void get_cur_bl(void);
 void get_max_bl(void);
@@ -128,7 +128,7 @@ char *get_eeeblmax(char *args)
  * 
  * @return Integer representing current backlight level percentage.
  */
-int get_eeeblbar(char *args)
+unsigned int get_eeeblbar(char *args)
 {
         if (cur_bl && max_bl)
                 return (int)((atof(cur_bl) / atof(max_bl)) * 100);

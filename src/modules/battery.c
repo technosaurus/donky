@@ -49,7 +49,7 @@ struct batt {
 char *get_battper(char *args);
 char *get_battrem(char *args);
 char *get_battmax(char *args);
-int get_battbar(char *args);
+unsigned int get_battbar(char *args);
 
 void batt_cron(void);
 void clear_remaining_charge(struct batt *batt);
@@ -169,7 +169,7 @@ char *get_battmax(char *args)
  * 
  * @return Percentage of remaining battery charge as int
  */
-int get_battbar(char *args)
+unsigned int get_battbar(char *args)
 {
         struct batt *batt = prepare_batt((args) ? args : "0");
         if ((batt == NULL) ||

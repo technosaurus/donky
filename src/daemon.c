@@ -38,6 +38,7 @@
 #include "main.h"
 #include "mem.h"
 #include "protocol.h"
+#include "request.h"
 #include "util.h"
 
 /* Globals. */
@@ -78,6 +79,9 @@ void donky_loop(void)
 
         /* Add the listening socket to the connection list. */
         donky_conn_add(donky_sock);
+
+        /* Start the request handler. */
+        request_handler_start();
 
         /* Infinite donky listener loop of death (tm) */
         while (!donky_exit && !donky_reload) {

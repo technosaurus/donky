@@ -173,4 +173,4 @@ char *get_ap(char *args) { return m_strdup(wifistuff.ap); }
 char *get_link_qual(char *args) { return m_strdup(wifistuff.link_qual); }
 char *get_link_qual_max(char *args) { return m_strdup(wifistuff.link_qual_max); }
 char *get_link_qual_perc(char *args) { return m_strdup(wifistuff.link_qual_perc); }
-int get_link_bar(char *args) { return strtol(wifistuff.link_qual_perc, NULL, 0); }
+unsigned int get_link_bar(char *args) { return strtol(wifistuff.link_qual_perc, NULL, 0); }

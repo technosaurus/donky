@@ -77,5 +77,6 @@ bool csscanf(const char *str, const char *format, int n, ...);
 int random_range(int min, int max);
 int create_tcp_listener(char *host, char *port);
 ssize_t sendcrlf(int sock, const char *format, ...);
+unsigned int get_str_sum(char *str);
 
 #endif /* UTIL_H */

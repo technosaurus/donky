@@ -36,10 +36,6 @@
 /* Module name */
 char module_name[] = "exec";
 
-/* My function prototypes */
-char *get_exec(char *args);
-int get_execbar(char *args);
-
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
@@ -73,7 +69,7 @@ char *get_exec(char *args)
         return "n/a";
 }
 
-int get_execbar(char *args)
+unsigned int get_execbar(char *args)
 {
         FILE *execp;
         char *pipe;

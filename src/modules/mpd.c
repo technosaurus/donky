@@ -311,7 +311,7 @@ char *get_total_time(char *args) {
         return "00:00";
 }
 
-int get_volume_bar(char *args) {
+unsigned int get_volume_bar(char *args) {
         if (mpdinfo.volume)
                 return strtol(mpdinfo.volume, NULL, 0);
         return 0;

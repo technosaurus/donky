@@ -27,10 +27,11 @@
 
 #include <dirent.h>
 #include <dlfcn.h>
-#include <sys/param.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/param.h>
 
 #include "config.h"
 #include "module.h"
@@ -44,13 +45,13 @@ struct module *m_end = NULL;
 struct module_var *mv_start = NULL;
 struct module_var *mv_end = NULL;
 
+static bool first_load = true;
+
 /* Function prototypes. */
 static struct module *module_add(const char *name,
                                  const char *path,
                                  void *handle,
                                  void *destroy);
-static int module_load(char *path);
-static void module_unload(struct module *cur);
 static struct module *module_find_by_name(const char *name);
 
 /**
@@ -85,8 +86,11 @@ int module_var_add(const struct module *parent,
         snprintf(n->method, sizeof(n->method), "%s", method);
         n->type = type;
         n->sym = NULL;
-        n->prev = NULL;
-        n->next = NULL;
+
+        if (!find) {
+                n->prev = NULL;
+                n->next = NULL;
+        }
 
         /* Set the timeout.  User configured timeouts take precedence over
          * module defined default! */
@@ -99,6 +103,7 @@ int module_var_add(const struct module *parent,
         
         n->timeout = user_timeout;
         n->last_update = 0.0;
+        n->sum = 0;
         n->parent = (struct module *) parent;
 
         if (find)
@@ -177,14 +182,18 @@ static struct module *module_add(const char *name,
         struct module *find = module_find_by_name(name);
         struct module *n = (find) ? find : malloc(sizeof(struct module));
 
+        printf("Loaded module: %s\n", name);
+
         snprintf(n->name, sizeof(n->name), "%s", name);
         n->path = d_strcpy(path);
         n->handle = handle;
         n->destroy = destroy;
         n->clients = 0;
 
-        n->prev = NULL;
-        n->next = NULL;
+        if (!find) {
+                n->prev = NULL;
+                n->next = NULL;
+        }
 
         if (find)
                 return n;
@@ -228,13 +237,15 @@ static struct module *module_find_by_name(const char *name)
  *
  * @param name Module name
  */
-static void module_unload(struct module *cur)
+void module_unload(struct module *cur)
 {
         void *(*destroy)(void);
         struct module_var *mv;
 
         if (!cur)
                 return;
+
+        printf("Unloaded module %s\n", cur->name);
 
         destroy = cur->destroy;
         destroy();
@@ -263,7 +274,7 @@ static void module_unload(struct module *cur)
  *
  * @return 0 for failure, 1 for success
  */
-static int module_load(char *path)
+int module_load(char *path)
 {
         void *handle;
         char *module_name;
@@ -291,7 +302,13 @@ static int module_load(char *path)
         
         cur = module_add(module_name, path, handle, module_destroy);
         module_init(cur);
-        module_unload(cur);
+
+        /* When donky is first loaded, we want to immediately unload
+         * modules after letting all the module variables register. */
+        if (first_load) {
+                module_unload(cur);
+                first_load = false;
+        }
         
         return 1;
 }
@@ -392,4 +409,6 @@ void clear_module(void)
 
         m_start = m_end = NULL;
         mv_start = mv_end = NULL;
+
+        first_load = true;
 }

@@ -55,6 +55,8 @@ struct module_var {
         double timeout;          /* Used for cron jobs */
         double last_update;      /* Ditto */
 
+        unsigned int sum;        /* Sum of chars or what have you. */
+
         struct module *parent;   /* Parent of this module. */
 
         struct module_var *next;
@@ -72,6 +74,8 @@ void clear_module(void);
 void module_var_cron_exec(void);
 void *module_get_sym(void *handle, char *name);
 struct module_var *module_var_find_by_name(const char *name);
+int module_load(char *path);
+void module_unload(struct module *cur);
 
 #endif /* MODULE_H */
 
