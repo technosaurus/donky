@@ -28,6 +28,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -128,9 +129,10 @@ void donky_loop(void)
 static void donky_conn_read(donky_conn *cur)
 {
         char buf[1024];
+        char *line;
         int n;
         
-        n = recv(cur->sock, &buf, sizeof(buf), 0);
+        n = recv(cur->sock, &buf, sizeof(buf) - 1, 0);
 
         if (n == -1) {
                 perror("recv");
@@ -144,12 +146,16 @@ static void donky_conn_read(donky_conn *cur)
 
         buf[n] = '\0';
 
-        /* Remove \r\n (if it is there) */
-        chomp(buf);
-        chomp(buf);
-        
-        printf("buf = %s\n", buf);
-        protocol_handle(cur, buf);
+        /* Split up line by \r\n incase we got multiple commands at once. */
+        for (line = strtok(buf, "\r\n"); line; line = strtok(NULL, "\r\n")) {
+                /* Remove \r\n (if it is there) */
+                chomp(line);
+                chomp(line);
+
+                /* Send away to the protocol handler. */
+                printf("line = [%s]\n", line);
+                protocol_handle(cur, line);
+        }
 }
 
 /**
@@ -213,6 +219,8 @@ static donky_conn *donky_conn_add(int sock)
  */
 void donky_conn_drop(donky_conn *cur)
 {
+        struct request_list *r;
+        
         if (cur->prev)
                 cur->prev->next = cur->next;
         if (cur->next)
@@ -231,7 +239,8 @@ void donky_conn_drop(donky_conn *cur)
         close(cur->sock);
 
         /* Remove any requests this connection might have. */
-        request_list_remove(request_list_find_by_conn(cur));
+        while ((r = request_list_find_by_conn(cur)))
+                request_list_remove(r);
 
         /* Free some memorah! */
         free(cur);
