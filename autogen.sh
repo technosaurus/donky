@@ -19,7 +19,6 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-
 dir=`echo "$0" | sed 's,[^/]*$,,'`
 test "x${dir}" = "x" && dir='.'
 
@@ -32,7 +31,7 @@ fi
 rm -f config.cache acconfig.h
 
 echo "- libtoolize."			&& \
-libtoolize -fqci			&& \
+libtoolize -c				&& \
 echo "- aclocal."			&& \
 aclocal					&& \
 echo "- autoconf."			&& \
@@ -40,7 +39,7 @@ autoconf				&& \
 echo "- autoheader."			&& \
 autoheader				&& \
 echo "- automake."			&& \
-automake --add-missing --gnu --copy	&& \
+automake -ac				&& \
 echo					&& \
 ./configure "$@"			&& exit 0
 

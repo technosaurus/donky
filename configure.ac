@@ -6,6 +6,13 @@ AC_INIT([donky], [2009.5], [lobo@ircage.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
 
+# libtool
+LT_INIT
+LT_CONFIG_LTDL_DIR([libltdl])
+AC_CONFIG_AUX_DIR([libltdl/config])
+AC_CONFIG_MACRO_DIR([libltdl/m4])
+AC_LIB_LTDL
+
 # Checks for programs.
 AM_INIT_AUTOMAKE
 AC_PROG_CXX
@@ -21,12 +28,11 @@ AC_PROG_LIBTOOL
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lasound':
 #AC_CHECK_LIB([asound], [main])
-# FIXME: Replace `main' with a function in `-ldl':
-#AC_CHECK_LIB([dl], [main])
 # FIXME: Replace `main' with a function in `-liw':
 #AC_CHECK_LIB([iw], [main])
-# FIXME: Replace `main' with a function in `-lm':
-#AC_CHECK_LIB([m], [main])
+
+AC_CHECK_LIB([m], [pow])
+AC_CHECK_LIB([pthread], [pthread_create])
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h netdb.h netinet/in.h stdint.h stdlib.h string.h sys/param.h sys/socket.h sys/time.h unistd.h])
