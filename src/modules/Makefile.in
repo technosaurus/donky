@@ -32,10 +32,25 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@ENABLE_DATE_TRUE@am__append_1 = date.la
+@ENABLE_SYSINFO_TRUE@am__append_2 = sysinfo.la
+@ENABLE_PCPUINFO_TRUE@am__append_3 = pcpuinfo.la
+@ENABLE_SCPUINFO_TRUE@am__append_4 = scpuinfo.la
+@ENABLE_MOC_TRUE@am__append_5 = moc.la
+@ENABLE_BATTERY_TRUE@am__append_6 = battery.la
+@ENABLE_EXEC_TRUE@am__append_7 = exec.la
+@ENABLE_MPD_TRUE@am__append_8 = mpd.la
+@ENABLE_VOLUME_TRUE@am__append_9 = volume.la
+@ENABLE_EEEBL_TRUE@am__append_10 = eeebl.la
+@ENABLE_DISKIO_TRUE@am__append_11 = diskio.la
+@ENABLE_WIFI_TRUE@am__append_12 = wifi.la
 subdir = src/modules
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
+	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
+	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -51,79 +66,103 @@ am__installdirs = "$(DESTDIR)$(moduledir)"
 moduleLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(module_LTLIBRARIES)
 battery_la_DEPENDENCIES =
-am_battery_la_OBJECTS = battery.lo
+am__battery_la_SOURCES_DIST = battery.c
+@ENABLE_BATTERY_TRUE@am_battery_la_OBJECTS = battery.lo
 battery_la_OBJECTS = $(am_battery_la_OBJECTS)
 battery_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(battery_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_BATTERY_TRUE@am_battery_la_rpath = -rpath $(moduledir)
 date_la_DEPENDENCIES =
-am_date_la_OBJECTS = date.lo
+am__date_la_SOURCES_DIST = date.c
+@ENABLE_DATE_TRUE@am_date_la_OBJECTS = date.lo
 date_la_OBJECTS = $(am_date_la_OBJECTS)
 date_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(date_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_DATE_TRUE@am_date_la_rpath = -rpath $(moduledir)
 diskio_la_DEPENDENCIES =
-am_diskio_la_OBJECTS = diskio.lo
+am__diskio_la_SOURCES_DIST = diskio.c
+@ENABLE_DISKIO_TRUE@am_diskio_la_OBJECTS = diskio.lo
 diskio_la_OBJECTS = $(am_diskio_la_OBJECTS)
 diskio_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(diskio_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_DISKIO_TRUE@am_diskio_la_rpath = -rpath $(moduledir)
 eeebl_la_DEPENDENCIES =
-am_eeebl_la_OBJECTS = eeebl.lo
+am__eeebl_la_SOURCES_DIST = eeebl.c
+@ENABLE_EEEBL_TRUE@am_eeebl_la_OBJECTS = eeebl.lo
 eeebl_la_OBJECTS = $(am_eeebl_la_OBJECTS)
 eeebl_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(eeebl_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_EEEBL_TRUE@am_eeebl_la_rpath = -rpath $(moduledir)
 exec_la_DEPENDENCIES =
-am_exec_la_OBJECTS = exec.lo
+am__exec_la_SOURCES_DIST = exec.c
+@ENABLE_EXEC_TRUE@am_exec_la_OBJECTS = exec.lo
 exec_la_OBJECTS = $(am_exec_la_OBJECTS)
 exec_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(exec_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_EXEC_TRUE@am_exec_la_rpath = -rpath $(moduledir)
 moc_la_DEPENDENCIES =
-am_moc_la_OBJECTS = moc.lo
+am__moc_la_SOURCES_DIST = moc.c
+@ENABLE_MOC_TRUE@am_moc_la_OBJECTS = moc.lo
 moc_la_OBJECTS = $(am_moc_la_OBJECTS)
 moc_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(moc_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_MOC_TRUE@am_moc_la_rpath = -rpath $(moduledir)
 mpd_la_DEPENDENCIES =
-am_mpd_la_OBJECTS = mpd.lo
+am__mpd_la_SOURCES_DIST = mpd.c
+@ENABLE_MPD_TRUE@am_mpd_la_OBJECTS = mpd.lo
 mpd_la_OBJECTS = $(am_mpd_la_OBJECTS)
 mpd_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(mpd_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_MPD_TRUE@am_mpd_la_rpath = -rpath $(moduledir)
 pcpuinfo_la_DEPENDENCIES =
-am_pcpuinfo_la_OBJECTS = pcpuinfo.lo
+am__pcpuinfo_la_SOURCES_DIST = pcpuinfo.c
+@ENABLE_PCPUINFO_TRUE@am_pcpuinfo_la_OBJECTS = pcpuinfo.lo
 pcpuinfo_la_OBJECTS = $(am_pcpuinfo_la_OBJECTS)
 pcpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(pcpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_PCPUINFO_TRUE@am_pcpuinfo_la_rpath = -rpath $(moduledir)
 scpuinfo_la_DEPENDENCIES =
-am_scpuinfo_la_OBJECTS = scpuinfo.lo
+am__scpuinfo_la_SOURCES_DIST = scpuinfo.c
+@ENABLE_SCPUINFO_TRUE@am_scpuinfo_la_OBJECTS = scpuinfo.lo
 scpuinfo_la_OBJECTS = $(am_scpuinfo_la_OBJECTS)
 scpuinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(scpuinfo_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_SCPUINFO_TRUE@am_scpuinfo_la_rpath = -rpath $(moduledir)
 sysinfo_la_DEPENDENCIES =
-am_sysinfo_la_OBJECTS = sysinfo.lo
+am__sysinfo_la_SOURCES_DIST = sysinfo.c
+@ENABLE_SYSINFO_TRUE@am_sysinfo_la_OBJECTS = sysinfo.lo
 sysinfo_la_OBJECTS = $(am_sysinfo_la_OBJECTS)
 sysinfo_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(sysinfo_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_SYSINFO_TRUE@am_sysinfo_la_rpath = -rpath $(moduledir)
 volume_la_DEPENDENCIES =
-am_volume_la_OBJECTS = volume.lo
+am__volume_la_SOURCES_DIST = volume.c
+@ENABLE_VOLUME_TRUE@am_volume_la_OBJECTS = volume.lo
 volume_la_OBJECTS = $(am_volume_la_OBJECTS)
 volume_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(volume_la_LDFLAGS) $(LDFLAGS) -o $@
+@ENABLE_VOLUME_TRUE@am_volume_la_rpath = -rpath $(moduledir)
 wifi_la_DEPENDENCIES =
-am_wifi_la_OBJECTS = wifi.lo
+am__wifi_la_SOURCES_DIST = wifi.c
+@ENABLE_WIFI_TRUE@am_wifi_la_OBJECTS = wifi.lo
 wifi_la_OBJECTS = $(am_wifi_la_OBJECTS)
 wifi_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(wifi_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
+@ENABLE_WIFI_TRUE@am_wifi_la_rpath = -rpath $(moduledir)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
-depcomp = $(SHELL) $(top_srcdir)/libltdl/config/depcomp
+depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -139,18 +178,19 @@ SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
 	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
 	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
 	$(volume_la_SOURCES) $(wifi_la_SOURCES)
-DIST_SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
-	$(diskio_la_SOURCES) $(eeebl_la_SOURCES) $(exec_la_SOURCES) \
-	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
-	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
-	$(volume_la_SOURCES) $(wifi_la_SOURCES)
+DIST_SOURCES = $(am__battery_la_SOURCES_DIST) \
+	$(am__date_la_SOURCES_DIST) $(am__diskio_la_SOURCES_DIST) \
+	$(am__eeebl_la_SOURCES_DIST) $(am__exec_la_SOURCES_DIST) \
+	$(am__moc_la_SOURCES_DIST) $(am__mpd_la_SOURCES_DIST) \
+	$(am__pcpuinfo_la_SOURCES_DIST) \
+	$(am__scpuinfo_la_SOURCES_DIST) $(am__sysinfo_la_SOURCES_DIST) \
+	$(am__volume_la_SOURCES_DIST) $(am__wifi_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AR = @AR@
-ARGZ_H = @ARGZ_H@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -176,7 +216,6 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
-INCLTDL = @INCLTDL@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -184,23 +223,13 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
-LIBADD_DL = @LIBADD_DL@
-LIBADD_DLD_LINK = @LIBADD_DLD_LINK@
-LIBADD_DLOPEN = @LIBADD_DLOPEN@
-LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
-LIBLTDL = @LIBLTDL@
+LIBDL = @LIBDL@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
-LTDLDEPS = @LTDLDEPS@
-LTDLINCL = @LTDLINCL@
-LTDLOPEN = @LTDLOPEN@
 LTLIBOBJS = @LTLIBOBJS@
-LT_CONFIG_H = @LT_CONFIG_H@
-LT_DLLOADERS = @LT_DLLOADERS@
-LT_DLPREOPEN = @LT_DLPREOPEN@
 MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
@@ -260,8 +289,6 @@ libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
 lt_ECHO = @lt_ECHO@
-ltdl_LIBOBJS = @ltdl_LIBOBJS@
-ltdl_LTLIBOBJS = @ltdl_LTLIBOBJS@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -272,8 +299,6 @@ psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
-subdirs = @subdirs@
-sys_symbol_underscore = @sys_symbol_underscore@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
@@ -281,56 +306,46 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 moduledir = $(libdir)/donky
 AM_CFLAGS = -Wall
-date_la_LDFLAGS = -module -avoid-version
-sysinfo_la_LDFLAGS = -module -avoid-version
-pcpuinfo_la_LDFLAGS = -module -avoid-version
-scpuinfo_la_LDFLAGS = -module -avoid-version
-moc_la_LDFLAGS = -module -avoid-version
-battery_la_LDFLAGS = -module -avoid-version
-exec_la_LDFLAGS = -module -avoid-version
-mpd_la_LDFLAGS = -module -avoid-version
-volume_la_LDFLAGS = -module -avoid-version
-eeebl_la_LDFLAGS = -module -avoid-version
-diskio_la_LDFLAGS = -module -avoid-version
-wifi_la_LDFLAGS = -module -avoid-version
-module_LTLIBRARIES = \
-	date.la \
-	sysinfo.la \
-	pcpuinfo.la \
-	scpuinfo.la \
-	moc.la \
-	battery.la \
-	exec.la \
-	mpd.la \
-	volume.la \
-	eeebl.la \
-	diskio.la \
-	wifi.la
-
-date_la_SOURCES = date.c
-sysinfo_la_SOURCES = sysinfo.c
-pcpuinfo_la_SOURCES = pcpuinfo.c
-scpuinfo_la_SOURCES = scpuinfo.c
-moc_la_SOURCES = moc.c
-battery_la_SOURCES = battery.c
-exec_la_SOURCES = exec.c
-mpd_la_SOURCES = mpd.c
-volume_la_SOURCES = volume.c
-eeebl_la_SOURCES = eeebl.c
-diskio_la_SOURCES = diskio.c
-wifi_la_SOURCES = wifi.c
-date_la_LIBADD = $(DEPS_LIBS)
-sysinfo_la_LIBADD = $(DEPS_LIBS)
-pcpuinfo_la_LIBADD = $(DEPS_LIBS)
-scpuinfo_la_LIBADD = $(DEPS_LIBS)
-moc_la_LIBADD = $(DEPS_LIBS)
-battery_la_LIBADD = $(DEPS_LIBS)
-exec_la_LIBADD = $(DEPS_LIBS)
-mpd_la_LIBADD = $(DEPS_LIBS)
-volume_la_LIBADD = $(DEPS_LIBS) -lasound
-eeebl_la_LIBADD = $(DEPS_LIBS)
-diskio_la_LIBADD = $(DEPS_LIBS)
-wifi_la_LIBADD = $(DEPS_LIBS) -liw
+module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7) $(am__append_8) $(am__append_9) \
+	$(am__append_10) $(am__append_11) $(am__append_12)
+@ENABLE_DATE_TRUE@date_la_LDFLAGS = -module -avoid-version
+@ENABLE_DATE_TRUE@date_la_SOURCES = date.c
+@ENABLE_DATE_TRUE@date_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_SYSINFO_TRUE@sysinfo_la_LDFLAGS = -module -avoid-version
+@ENABLE_SYSINFO_TRUE@sysinfo_la_SOURCES = sysinfo.c
+@ENABLE_SYSINFO_TRUE@sysinfo_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_PCPUINFO_TRUE@pcpuinfo_la_LDFLAGS = -module -avoid-version
+@ENABLE_PCPUINFO_TRUE@pcpuinfo_la_SOURCES = pcpuinfo.c
+@ENABLE_PCPUINFO_TRUE@pcpuinfo_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_SCPUINFO_TRUE@scpuinfo_la_LDFLAGS = -module -avoid-version
+@ENABLE_SCPUINFO_TRUE@scpuinfo_la_SOURCES = scpuinfo.c
+@ENABLE_SCPUINFO_TRUE@scpuinfo_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_MOC_TRUE@moc_la_LDFLAGS = -module -avoid-version
+@ENABLE_MOC_TRUE@moc_la_SOURCES = moc.c
+@ENABLE_MOC_TRUE@moc_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_BATTERY_TRUE@battery_la_LDFLAGS = -module -avoid-version
+@ENABLE_BATTERY_TRUE@battery_la_SOURCES = battery.c
+@ENABLE_BATTERY_TRUE@battery_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_EXEC_TRUE@exec_la_LDFLAGS = -module -avoid-version
+@ENABLE_EXEC_TRUE@exec_la_SOURCES = exec.c
+@ENABLE_EXEC_TRUE@exec_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_MPD_TRUE@mpd_la_LDFLAGS = -module -avoid-version
+@ENABLE_MPD_TRUE@mpd_la_SOURCES = mpd.c
+@ENABLE_MPD_TRUE@mpd_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_VOLUME_TRUE@volume_la_LDFLAGS = -module -avoid-version
+@ENABLE_VOLUME_TRUE@volume_la_SOURCES = volume.c
+@ENABLE_VOLUME_TRUE@volume_la_LIBADD = $(DEPS_LIBS) -lasound
+@ENABLE_EEEBL_TRUE@eeebl_la_LDFLAGS = -module -avoid-version
+@ENABLE_EEEBL_TRUE@eeebl_la_SOURCES = eeebl.c
+@ENABLE_EEEBL_TRUE@eeebl_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_DISKIO_TRUE@diskio_la_LDFLAGS = -module -avoid-version
+@ENABLE_DISKIO_TRUE@diskio_la_SOURCES = diskio.c
+@ENABLE_DISKIO_TRUE@diskio_la_LIBADD = $(DEPS_LIBS)
+@ENABLE_WIFI_TRUE@wifi_la_LDFLAGS = -module -avoid-version
+@ENABLE_WIFI_TRUE@wifi_la_SOURCES = wifi.c
+@ENABLE_WIFI_TRUE@wifi_la_LIBADD = $(DEPS_LIBS) -liw
 all: all-am
 
 .SUFFIXES:
@@ -392,29 +407,29 @@ clean-moduleLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 battery.la: $(battery_la_OBJECTS) $(battery_la_DEPENDENCIES) 
-	$(battery_la_LINK) -rpath $(moduledir) $(battery_la_OBJECTS) $(battery_la_LIBADD) $(LIBS)
+	$(battery_la_LINK) $(am_battery_la_rpath) $(battery_la_OBJECTS) $(battery_la_LIBADD) $(LIBS)
 date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES) 
-	$(date_la_LINK) -rpath $(moduledir) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
+	$(date_la_LINK) $(am_date_la_rpath) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
 diskio.la: $(diskio_la_OBJECTS) $(diskio_la_DEPENDENCIES) 
-	$(diskio_la_LINK) -rpath $(moduledir) $(diskio_la_OBJECTS) $(diskio_la_LIBADD) $(LIBS)
+	$(diskio_la_LINK) $(am_diskio_la_rpath) $(diskio_la_OBJECTS) $(diskio_la_LIBADD) $(LIBS)
 eeebl.la: $(eeebl_la_OBJECTS) $(eeebl_la_DEPENDENCIES) 
-	$(eeebl_la_LINK) -rpath $(moduledir) $(eeebl_la_OBJECTS) $(eeebl_la_LIBADD) $(LIBS)
+	$(eeebl_la_LINK) $(am_eeebl_la_rpath) $(eeebl_la_OBJECTS) $(eeebl_la_LIBADD) $(LIBS)
 exec.la: $(exec_la_OBJECTS) $(exec_la_DEPENDENCIES) 
-	$(exec_la_LINK) -rpath $(moduledir) $(exec_la_OBJECTS) $(exec_la_LIBADD) $(LIBS)
+	$(exec_la_LINK) $(am_exec_la_rpath) $(exec_la_OBJECTS) $(exec_la_LIBADD) $(LIBS)
 moc.la: $(moc_la_OBJECTS) $(moc_la_DEPENDENCIES) 
-	$(moc_la_LINK) -rpath $(moduledir) $(moc_la_OBJECTS) $(moc_la_LIBADD) $(LIBS)
+	$(moc_la_LINK) $(am_moc_la_rpath) $(moc_la_OBJECTS) $(moc_la_LIBADD) $(LIBS)
 mpd.la: $(mpd_la_OBJECTS) $(mpd_la_DEPENDENCIES) 
-	$(mpd_la_LINK) -rpath $(moduledir) $(mpd_la_OBJECTS) $(mpd_la_LIBADD) $(LIBS)
+	$(mpd_la_LINK) $(am_mpd_la_rpath) $(mpd_la_OBJECTS) $(mpd_la_LIBADD) $(LIBS)
 pcpuinfo.la: $(pcpuinfo_la_OBJECTS) $(pcpuinfo_la_DEPENDENCIES) 
-	$(pcpuinfo_la_LINK) -rpath $(moduledir) $(pcpuinfo_la_OBJECTS) $(pcpuinfo_la_LIBADD) $(LIBS)
+	$(pcpuinfo_la_LINK) $(am_pcpuinfo_la_rpath) $(pcpuinfo_la_OBJECTS) $(pcpuinfo_la_LIBADD) $(LIBS)
 scpuinfo.la: $(scpuinfo_la_OBJECTS) $(scpuinfo_la_DEPENDENCIES) 
-	$(scpuinfo_la_LINK) -rpath $(moduledir) $(scpuinfo_la_OBJECTS) $(scpuinfo_la_LIBADD) $(LIBS)
+	$(scpuinfo_la_LINK) $(am_scpuinfo_la_rpath) $(scpuinfo_la_OBJECTS) $(scpuinfo_la_LIBADD) $(LIBS)
 sysinfo.la: $(sysinfo_la_OBJECTS) $(sysinfo_la_DEPENDENCIES) 
-	$(sysinfo_la_LINK) -rpath $(moduledir) $(sysinfo_la_OBJECTS) $(sysinfo_la_LIBADD) $(LIBS)
+	$(sysinfo_la_LINK) $(am_sysinfo_la_rpath) $(sysinfo_la_OBJECTS) $(sysinfo_la_LIBADD) $(LIBS)
 volume.la: $(volume_la_OBJECTS) $(volume_la_DEPENDENCIES) 
-	$(volume_la_LINK) -rpath $(moduledir) $(volume_la_OBJECTS) $(volume_la_LIBADD) $(LIBS)
+	$(volume_la_LINK) $(am_volume_la_rpath) $(volume_la_OBJECTS) $(volume_la_LIBADD) $(LIBS)
 wifi.la: $(wifi_la_OBJECTS) $(wifi_la_DEPENDENCIES) 
-	$(wifi_la_LINK) -rpath $(moduledir) $(wifi_la_OBJECTS) $(wifi_la_LIBADD) $(LIBS)
+	$(wifi_la_LINK) $(am_wifi_la_rpath) $(wifi_la_OBJECTS) $(wifi_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

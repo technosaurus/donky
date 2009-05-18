@@ -1,6 +1,6 @@
 AM_CFLAGS = -DLIBDIR=\"$(libdir)/donky\" \
             -DSYSCONFDIR=\"$(sysconfdir)/donky\" \
-            @LIBADD_DL@ -lpthread -lm -Wall
+            $(LIBDL) -lpthread -lm -Wall
 SUBDIRS = modules
 
 bin_PROGRAMS = donky

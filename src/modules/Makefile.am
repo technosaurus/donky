@@ -1,56 +1,88 @@
 moduledir = $(libdir)/donky
 
 AM_CFLAGS = -Wall
+module_LTLIBRARIES = 
 
+if ENABLE_DATE
 date_la_LDFLAGS     = -module -avoid-version
-sysinfo_la_LDFLAGS  = -module -avoid-version
-pcpuinfo_la_LDFLAGS = -module -avoid-version
-scpuinfo_la_LDFLAGS = -module -avoid-version
-moc_la_LDFLAGS      = -module -avoid-version
-battery_la_LDFLAGS  = -module -avoid-version
-exec_la_LDFLAGS     = -module -avoid-version
-mpd_la_LDFLAGS      = -module -avoid-version
-volume_la_LDFLAGS   = -module -avoid-version
-eeebl_la_LDFLAGS    = -module -avoid-version
-diskio_la_LDFLAGS   = -module -avoid-version
-wifi_la_LDFLAGS     = -module -avoid-version
-
-module_LTLIBRARIES = \
-	date.la \
-	sysinfo.la \
-	pcpuinfo.la \
-	scpuinfo.la \
-	moc.la \
-	battery.la \
-	exec.la \
-	mpd.la \
-	volume.la \
-	eeebl.la \
-	diskio.la \
-	wifi.la
-
 date_la_SOURCES     = date.c
-sysinfo_la_SOURCES  = sysinfo.c
-pcpuinfo_la_SOURCES = pcpuinfo.c
-scpuinfo_la_SOURCES = scpuinfo.c
-moc_la_SOURCES      = moc.c
-battery_la_SOURCES  = battery.c
-exec_la_SOURCES     = exec.c
-mpd_la_SOURCES      = mpd.c
-volume_la_SOURCES   = volume.c
-eeebl_la_SOURCES    = eeebl.c
-diskio_la_SOURCES   = diskio.c
-wifi_la_SOURCES     = wifi.c
+date_la_LIBADD      = $(DEPS_LIBS)
+module_LTLIBRARIES += date.la
+endif
 
-date_la_LIBADD     = $(DEPS_LIBS)
-sysinfo_la_LIBADD  = $(DEPS_LIBS)
-pcpuinfo_la_LIBADD = $(DEPS_LIBS)
-scpuinfo_la_LIBADD = $(DEPS_LIBS)
-moc_la_LIBADD      = $(DEPS_LIBS)
-battery_la_LIBADD  = $(DEPS_LIBS)
-exec_la_LIBADD     = $(DEPS_LIBS)
-mpd_la_LIBADD      = $(DEPS_LIBS)
-volume_la_LIBADD   = $(DEPS_LIBS) -lasound
-eeebl_la_LIBADD    = $(DEPS_LIBS)
-diskio_la_LIBADD   = $(DEPS_LIBS)
-wifi_la_LIBADD     = $(DEPS_LIBS) -liw
+if ENABLE_SYSINFO
+sysinfo_la_LDFLAGS  = -module -avoid-version
+sysinfo_la_SOURCES  = sysinfo.c
+sysinfo_la_LIBADD   = $(DEPS_LIBS)
+module_LTLIBRARIES += sysinfo.la
+endif
+
+if ENABLE_PCPUINFO
+pcpuinfo_la_LDFLAGS = -module -avoid-version
+pcpuinfo_la_SOURCES = pcpuinfo.c
+pcpuinfo_la_LIBADD  = $(DEPS_LIBS)
+module_LTLIBRARIES += pcpuinfo.la
+endif
+
+if ENABLE_SCPUINFO
+scpuinfo_la_LDFLAGS = -module -avoid-version
+scpuinfo_la_SOURCES = scpuinfo.c
+scpuinfo_la_LIBADD  = $(DEPS_LIBS)
+module_LTLIBRARIES += scpuinfo.la
+endif
+
+if ENABLE_MOC
+moc_la_LDFLAGS      = -module -avoid-version
+moc_la_SOURCES      = moc.c
+moc_la_LIBADD       = $(DEPS_LIBS)
+module_LTLIBRARIES += moc.la
+endif
+
+if ENABLE_BATTERY
+battery_la_LDFLAGS  = -module -avoid-version
+battery_la_SOURCES  = battery.c
+battery_la_LIBADD   = $(DEPS_LIBS)
+module_LTLIBRARIES += battery.la
+endif
+
+if ENABLE_EXEC
+exec_la_LDFLAGS     = -module -avoid-version
+exec_la_SOURCES     = exec.c
+exec_la_LIBADD      = $(DEPS_LIBS)
+module_LTLIBRARIES += exec.la
+endif
+
+if ENABLE_MPD
+mpd_la_LDFLAGS      = -module -avoid-version
+mpd_la_SOURCES      = mpd.c
+mpd_la_LIBADD       = $(DEPS_LIBS)
+module_LTLIBRARIES += mpd.la
+endif
+
+if ENABLE_VOLUME
+volume_la_LDFLAGS   = -module -avoid-version
+volume_la_SOURCES   = volume.c
+volume_la_LIBADD    = $(DEPS_LIBS) -lasound
+module_LTLIBRARIES += volume.la
+endif
+
+if ENABLE_EEEBL
+eeebl_la_LDFLAGS    = -module -avoid-version
+eeebl_la_SOURCES    = eeebl.c
+eeebl_la_LIBADD     = $(DEPS_LIBS)
+module_LTLIBRARIES += eeebl.la
+endif
+
+if ENABLE_DISKIO
+diskio_la_LDFLAGS   = -module -avoid-version
+diskio_la_SOURCES   = diskio.c
+diskio_la_LIBADD    = $(DEPS_LIBS)
+module_LTLIBRARIES += diskio.la
+endif
+
+if ENABLE_WIFI
+wifi_la_LDFLAGS     = -module -avoid-version
+wifi_la_SOURCES     = wifi.c
+wifi_la_LIBADD      = $(DEPS_LIBS) -liw
+module_LTLIBRARIES += wifi.la
+endif

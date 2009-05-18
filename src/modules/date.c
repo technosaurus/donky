@@ -70,6 +70,10 @@ char *get_date(char *args)
         time_t t;
         struct tm *tmp;
 
+        /* %c represents the recommended time display for the current locale. */
+        if (args == NULL || is_all_spaces(args))
+                args = "%c";
+
         t = time(NULL);
         tmp = localtime(&t);
 
