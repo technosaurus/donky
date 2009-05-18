@@ -40,6 +40,22 @@ AC_CHECK_FUNCS([floor gettimeofday memset pow socket strcasecmp strchr strndup s
 dnl Get unix name
 uname=`uname`
 
+case $uname in
+        Linux*)
+                AC_DEFINE([OS_LINUX], [1], [linux])
+                ;;
+        FreeBSD*)
+                AC_DEFINE([OS_FREEBSD], [1], [freebsd])
+                ;;
+        OpenBSD*)
+                AC_DEFINE([OS_OPENBSD], [1], [openbsd])
+                ;;
+        *)
+                echo "Sorry, we do not currently support $uname!"
+                exit 1
+                ;;
+esac
+
 dnl Wifi support...
 AC_MSG_CHECKING([whether to build the wifi module])
 AC_ARG_ENABLE(wifi,
@@ -67,8 +83,13 @@ AC_ARG_ENABLE(battery,
                              [enable the battery module (linux only) [default=no]]), ,
               [enable_battery=no])
 if test "x$enable_battery" = "xyes"; then
-        AC_MSG_RESULT([yes])
-        MODULES="$MODULES battery"
+        if test "x$uname" != "xLinux"; then
+                AC_MSG_RESULT([no])
+                AC_MSG_NOTICE([battery module not supported on $uname, disabling])
+        else
+                AC_MSG_RESULT([yes])
+                MODULES="$MODULES battery"
+        fi
 else
         AC_MSG_RESULT([no])
 fi

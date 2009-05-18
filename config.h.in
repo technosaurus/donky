@@ -114,6 +114,15 @@
    */
 #undef LT_OBJDIR
 
+/* freebsd */
+#undef OS_FREEBSD
+
+/* linux */
+#undef OS_LINUX
+
+/* openbsd */
+#undef OS_OPENBSD
+
 /* Name of package */
 #undef PACKAGE
 
