@@ -18,7 +18,7 @@
 
                 pass: <password here>\r\n
 
-3. Variable query
+3. Variable request
 
         To tell donky which variables you'd wish to receive updates for, you
         must send a list in the following format:
@@ -38,7 +38,7 @@
 
         For the date example above, you would receive:
 
-                0:1:May 12, 19:19:24\r\n
+                0:0:May 12, 19:19:24\r\n
 
         Variable type refers to the integer value of the variable type in the
         library's enumeration.
@@ -63,16 +63,19 @@
 # Full example transaction                                                     #
 ################################################################################
 
+s = server
+c = client
+
 s: donky 2009.5\r\n
-c: pass: <password>\r\n
+c: pass: letmein\r\n
 s: SUP\r\n
 c: var 0:date %b %d, %R:%S\r\n
 c: var 1:usedram\r\n
 c: var 2:totalram\r\n
 c: var 3:mpd_volume\r\n
-s: 0:1:May 12, 19:19:24\r\n
-s: 1:1:1.95GiB\r\n
-s: 2:1:1.96GiB\r\n
-s: 3:1:90\r\n
+s: 0:0:May 12, 19:19:24\r\n
+s: 1:0:1.95GiB\r\n
+s: 2:0:1.96GiB\r\n
+s: 3:0:90\r\n
 c: bye\r\n
 s: PEACE\r\n

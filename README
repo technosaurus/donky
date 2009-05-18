@@ -1,33 +1,26 @@
-donky: A minimal, modular X11 system monitor intended to destroy conky.
+donky: A minimal, modular system monitor daemon.
 
 This contains: 1) Summary  2) Getting started
 
-[1) SUMMARY]
-We are a couple of dewds who started writing patches for conky, only to 
-find that conky is pretty much a terrible code base that obviously was 
-designed with no intention of easily expanding it.  Put on top of that 
-the inefficiencies in redrawing an entire display of text based on a 
-global timeout.  donky has been designed from the ground up for 
-developers and end users to be infinitely expandable.  This is done 
-through a dynamically linked module system.  Variables can be configured 
-on an individual basis to accept different timeouts based on user 
-preference.  An example might be that you only want your current MPD 
-song display updated every 20 seconds, while you might want your time 
-display updated every 1 second.
+1. Summary
 
-donky is under heavy development, so we would not be in the least 
-surprised if this doesn't even compile on your system.  No tests have 
-been done outside of the Arch Linux distribution and the configure 
-scripts are extremely minimal, meaning that if you do not have certain 
-libraries installed, even for "optional" modules, you will not be able 
-to compile without modifying a few autoconf configuration files.
+        Inspired originally to create a conky clone, donky has recently evolved
+        into a modular system monitor daemon.  This was brought on by a radical
+        IRC conversation between the creators.  Being a daemon with a simple
+        to use protocol allows for a variety of different front-ends to be
+        built, not to mention the practical applications of monitoring remote
+        machines or a cluster of boxes in your local area network.
 
-[2) Getting Started]
-Start off by running `./autogen.sh`, followed by `make install`.
+2. Getting started
 
-A default configuration will be installed in your configuration 
-directory (usually /usr/local/etc), under the sub-directory 'donky', 
-file named 'donky.conf'.  Copy this to your home directory as ~/.donkyrc 
-or edit in its place for a global configuration.
+        Start off by running `./autogen.sh`, followed by `./configure`, followed
+        by `make install`.  You can fine tune what modules you would like to be
+        built by adding `--enable-module` for whatever module you wish.
+        To see a list run `./configure --help`.
 
-More later...
+        A default configuration will be installed in your configuration 
+        directory (usually /usr/local/etc), under the sub-directory 'donky', 
+        file named 'donky.conf'.  Copy this to your home directory as ~/.donkyrc 
+        or edit in its place for a global configuration.
+
+        More later...
