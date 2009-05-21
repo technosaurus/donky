@@ -272,13 +272,13 @@ void parse_cfg(void)
                 else if (parse(str, format[3], 2, key, value))
                         trim_t(value);
                 else if (sscanf(str, format[4], key) == 1) {
-                        strncpy(value, "True", sizeof(value));
+                        strncpy(value, "True", sizeof(value) - 1);
                         value[sizeof(value) - 1] = '\0';
                 }
 
                 /* values of "" or '' are interpreted as False */
                 if (!strcmp(value, "\"\"") || !strcmp(value, "''")) {
-                        strncpy(value, "False", sizeof(value));
+                        strncpy(value, "False", sizeof(value) - 1);
                         value[sizeof(value) - 1] = '\0';
                 }
 
