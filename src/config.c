@@ -1,31 +1,21 @@
 /*
- * Copyright (c) 2009 Matt Hayes, Jake LeMaster
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+* Copyright (c) 2009 Matt Hayes, Jake LeMaster
+*
+* Permission to use, copy, modify, and distribute this software for any
+* purpose with or without fee is hereby granted, provided that the above
+* copyright notice and this permission notice appear in all copies.
+*
+* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
 
 #define _GNU_SOURCE
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -44,6 +34,7 @@ static void add_mod(char *mod);
 static int find_mod(struct cfg *cur, char *mod);
 static void add_key(char *mod, char *key, char *value);
 static int find_key(struct setting *cur, char *key);
+bool parse(const char *str, const char *format, int n, ...);
 static FILE *get_cfg_file(void);
 static void clear_settings(struct setting *cur_s);
 
@@ -57,6 +48,8 @@ struct list *cfg_ls;
                       ((c) == 'f') || ((c) == 'F') || \
                       ((c) == '0') )
 
+#define MAX_LINE_SIZE 1024
+
 /** 
  * @brief Add a mod to the configuration list
  * 
@@ -67,7 +60,7 @@ void add_mod(char *mod)
         struct cfg *new_mod;
 
         new_mod = malloc(sizeof(struct cfg));
-        new_mod->mod = mod;
+        new_mod->mod = d_strcpy(mod);
         new_mod->setting_ls = init_list();
 
         add_node(cfg_ls, new_mod);
@@ -244,57 +237,54 @@ bool get_bool_key(char *mod, char *key, bool otherwise)
 void parse_cfg(void)
 {
         FILE *cfg_file;
-        char *str;
-        size_t len;
-        char *mod;
-        char *key;
-        char *value;
+        char str[MAX_LINE_SIZE];
+        char mod[64];
+        char key[64];
+        char value[128];
         const char *format[5];     /* sscanf formats */
 
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
 
-        str = NULL;
-        len = 0;
+        mod[0] = '\0';
+        key[0] = '\0';
+        value[0] = '\0';
 
-        mod = NULL;
-        key = NULL;
-        value = NULL;
+        format[0] = " [%63s[a-zA-Z0-9_-]]";                 /* [mod]         */
+        format[1] = " %63s[a-zA-Z0-9_-] = \"%127s[^\"]\" "; /* key = "value" */
+        format[2] = " %63s[a-zA-Z0-9_-] = '%127s[^\']' ";   /* key = 'value' */
+        format[3] = " %63s[a-zA-Z0-9_-] = %127s[^;\n] ";    /* key = value   */
+        format[4] = " %63s[a-zA-Z0-9_-] ";                  /* key           */
 
-        format[0] = " [%m[a-zA-Z0-9_-]]";              /* [mod]            */
-        format[1] = " %m[a-zA-Z0-9_-] = \"%m[^\"]\" "; /* key = "value"    */
-        format[2] = " %m[a-zA-Z0-9_-] = '%m[^\']' ";   /* key = 'value'    */
-        format[3] = " %m[a-zA-Z0-9_-] = %m[^;\n] ";    /* key = value      */
-        format[4] = " %m[a-zA-Z0-9_-] ";               /* key              */
-
-        while ((getline(&str, &len, cfg_file)) != -1) {
+        while ((fgets(str, MAX_LINE_SIZE, cfg_file)) != NULL) {
                 if (is_comment(str)) {
                         //printf("Skipping comment [%s]\n\n", chomp(str));
-                        freenull(str);
                         continue;
                 }
 
-                if (sscanf(str, format[0], &mod) == 1) {
+                if (sscanf(str, format[0], mod) == 1) {
                         add_mod(mod);
                         continue;
                 }
 
-                if (csscanf(str, format[1], 2, &key, &value)) { }
-                else if (csscanf(str, format[2], 2, &key, &value)) { }
-                else if (csscanf(str, format[3], 2, &key, &value))
+                if (parse(str, format[1], 2, key, value)) { }
+                else if (parse(str, format[2], 2, key, value)) { }
+                else if (parse(str, format[3], 2, key, value))
                         trim_t(value);
-                else if (sscanf(str, format[4], &key) == 1)
-                        value = d_strcpy("True");
-
-                /* values of "" or '' are interpreted as False */
-                if (value && (!strcmp(value, "\"\"") || !strcmp(value, "''"))) {
-                        free(value);
-                        value = d_strcpy("False");
+                else if (sscanf(str, format[4], key) == 1) {
+                        strncpy(value, "True", sizeof(value));
+                        value[sizeof(value) - 1] = '\0';
                 }
 
-                if (mod && key && value) {
+                /* values of "" or '' are interpreted as False */
+                if (!strcmp(value, "\"\"") || !strcmp(value, "''")) {
+                        strncpy(value, "False", sizeof(value));
+                        value[sizeof(value) - 1] = '\0';
+                }
+
+                if (mod[0] && key[0] && value[0]) {
                         add_key(mod, key, value);
-                        /*char *char_key = get_char_key(mod, key, "ERROR");
+                        char *char_key = get_char_key(mod, key, "ERROR");
                         printf("added-> mod [%s] key [%s] value [%s]\n",
                                mod, key, value);
                         printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
@@ -302,15 +292,42 @@ void parse_cfg(void)
                                get_int_key(mod, key, -1),
                                get_double_key(mod, key, -1),
                                get_bool_key(mod, key, -1));
-                        free(char_key);*/
+                        free(char_key);
                 }
 
-                freenull(str);
-                freenullif(key);
-                freenullif(value);
+                key[0] = '\0';
+                value[0] = '\0';
         }
 
         fclose(cfg_file);
+}
+
+bool parse(const char *str, const char *format, int n, ...)
+{
+        va_list ap;
+        va_list aq;
+        char *p;
+        int i;
+        bool success;
+
+        va_start(ap, n);
+        va_copy(aq, ap);
+
+        if (vsscanf(str, format, ap) != n) {
+                for (i = 0; i < n; i++) {
+                        p = va_arg(aq, char *);
+                        *p = '\0';
+                }
+
+                success = false;
+        } else {
+                success = true;
+        }
+
+        va_end(ap);
+        va_end(aq);
+
+        return success;
 }
 
 /** 
@@ -358,7 +375,7 @@ FILE *get_cfg_file(void)
  */
 void clear_cfg(struct cfg *cur)
 {
-        freeif(cur->mod);
+        free(cur->mod);
         del_list(cur->setting_ls, &clear_settings);
 }
 
@@ -369,7 +386,7 @@ void clear_cfg(struct cfg *cur)
  */
 void clear_settings(struct setting *cur_s)
 {
-        freeif(cur_s->key);
-        freeif(cur_s->value);
+        free(cur_s->key);
+        free(cur_s->value);
 }
 

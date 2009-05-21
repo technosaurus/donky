@@ -73,13 +73,6 @@ eeebl_la_LIBADD     = $(DEPS_LIBS)
 module_LTLIBRARIES += eeebl.la
 endif
 
-if ENABLE_DISKIO
-diskio_la_LDFLAGS   = -module -avoid-version
-diskio_la_SOURCES   = diskio.c
-diskio_la_LIBADD    = $(DEPS_LIBS)
-module_LTLIBRARIES += diskio.la
-endif
-
 if ENABLE_WIFI
 wifi_la_LDFLAGS     = -module -avoid-version
 wifi_la_SOURCES     = wifi.c

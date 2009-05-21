@@ -1,29 +1,18 @@
 /*
- * Copyright (c) 2009 Matt Hayes, Jake LeMaster
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+* Copyright (c) 2009 Matt Hayes, Jake LeMaster
+*
+* Permission to use, copy, modify, and distribute this software for any
+* purpose with or without fee is hereby granted, provided that the above
+* copyright notice and this permission notice appear in all copies.
+*
+* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
 
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -32,6 +21,8 @@
 #include "../mem.h"
 #include "../module.h"
 #include "../util.h"
+
+#define MAX_RESULT_SIZE 128
 
 /* Module name */
 char module_name[] = "exec";
@@ -52,19 +43,18 @@ void module_destroy(void)
 char *get_exec(char *args)
 {
         FILE *execp;
-        char *pipe;
-        size_t len;
+        char pipe[MAX_RESULT_SIZE];
+        char *fgets_check;
 
         execp = popen(args, "r");
-        if (!execp)
-                return "n/a";
-
-        pipe = NULL;
-        len = 0;
-        getline(&pipe, &len, execp);
-        pclose(execp);
-        if (len && pipe)
-                return m_freelater(chomp(pipe));
+        if (execp != NULL) {
+                fgets_check = fgets(pipe, MAX_RESULT_SIZE, execp);
+                pclose(execp);
+                if (fgets_check != NULL) {
+                        chomp(pipe);
+                        return m_strdup(pipe);
+                }
+        }
 
         return "n/a";
 }
@@ -72,22 +62,15 @@ char *get_exec(char *args)
 unsigned int get_execbar(char *args)
 {
         FILE *execp;
-        char *pipe;
-        size_t len;
-        int value;
+        char pipe[MAX_RESULT_SIZE];
+        char *fgets_check;
 
         execp = popen(args, "r");
-        if (!execp)
-                return 0;
-
-        pipe = NULL;
-        len = 0;
-        getline(&pipe, &len, execp);
-        pclose(execp);
-        if (len && pipe) {
-                value = atoi(pipe);
-                free(pipe);
-                return value;
+        if (execp != NULL) {
+                fgets_check = fgets(pipe, MAX_RESULT_SIZE, execp);
+                pclose(execp);
+                if (fgets_check != NULL)
+                        return atoi(pipe);
         }
 
         return 0;
