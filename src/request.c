@@ -253,6 +253,7 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         /* Find the module_var node for this variable. */
         if ((mv = module_var_find_by_name(var)) == NULL) {
                 printf("Couldn't find module var!\n");
+                freeif(id);
                 return 0;
         }
 

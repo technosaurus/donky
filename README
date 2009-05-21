@@ -1,16 +1,26 @@
-donky: A minimal, modular X11 system monitor intended to destroy conky.
+donky: A minimal, modular system monitor daemon.
 
 This contains: 1) Summary  2) Getting started
 
-[1) SUMMARY]
-LOOKS LIKE WE NEED TO UPDATE THIS.
+1. Summary
 
-[2) Getting Started]
-Start off by running `./autogen.sh`, followed by `make install`.
+        Inspired originally to create a conky clone, donky has recently evolved
+        into a modular system monitor daemon.  This was brought on by a radical
+        IRC conversation between the creators.  Being a daemon with a simple
+        to use protocol allows for a variety of different front-ends to be
+        built, not to mention the practical applications of monitoring remote
+        machines or a cluster of boxes in your local area network.
 
-A default configuration will be installed in your configuration 
-directory (usually /usr/local/etc), under the sub-directory 'donky', 
-file named 'donky.conf'.  Copy this to your home directory as ~/.donkyrc 
-or edit in its place for a global configuration.
+2. Getting started
 
-More later...
+        Start off by running `./autogen.sh`, followed by `./configure`, followed
+        by `make install`.  You can fine tune what modules you would like to be
+        built by adding `--enable-module` for whatever module you wish.
+        To see a list run `./configure --help`.
+
+        A default configuration will be installed in your configuration 
+        directory (usually /usr/local/etc), under the sub-directory 'donky', 
+        file named 'donky.conf'.  Copy this to your home directory as ~/.donkyrc 
+        or edit in its place for a global configuration.
+
+        More later...
