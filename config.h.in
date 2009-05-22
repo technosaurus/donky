@@ -77,6 +77,12 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
+
+/* Define to 1 if you have the `strlcpy' function. */
+#undef HAVE_STRLCPY
+
 /* Define to 1 if you have the `strndup' function. */
 #undef HAVE_STRNDUP
 
@@ -113,15 +119,17 @@
 /* Define to 1 if the system has the type `_Bool'. */
 #undef HAVE__BOOL
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#undef LT_OBJDIR
+/* dragonflybsd */
+#undef OS_DRAGONFLYBSD
 
 /* freebsd */
 #undef OS_FREEBSD
 
 /* linux */
 #undef OS_LINUX
+
+/* netbsd */
+#undef OS_NETBSD
 
 /* openbsd */
 #undef OS_OPENBSD
@@ -156,5 +164,5 @@
 /* Define to rpl_realloc if the replacement function should be used. */
 #undef realloc
 
-/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t

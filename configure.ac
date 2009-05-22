@@ -1,4 +1,4 @@
-AC_PREREQ([2.63])
+#AC_PREREQ([2.63])
 AC_INIT([donky], [2009.5], [lobo@ircage.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
@@ -35,7 +35,7 @@ AC_TYPE_SIZE_T
 dnl Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([floor gettimeofday memset pow socket strcasecmp strchr strndup strrchr strstr strtol sysinfo snprintf])
+AC_CHECK_FUNCS([floor gettimeofday memset pow socket strcasecmp strchr strlcpy strlcat strndup strrchr strstr strtol sysinfo snprintf])
 
 dnl Get unix name
 uname=`uname`
@@ -49,6 +49,12 @@ case $uname in
                 ;;
         OpenBSD*)
                 AC_DEFINE([OS_OPENBSD], [1], [openbsd])
+                ;;
+        NetBSD*)
+                AC_DEFINE([OS_NETBSD], [1], [netbsd])
+                ;;
+        DragonFly*)
+                AC_DEFINE([OS_DRAGONFLYBSD], [1], [dragonflybsd])
                 ;;
         *)
                 echo "Sorry, we do not currently support $uname!"

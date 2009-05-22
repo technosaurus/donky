@@ -6,7 +6,7 @@ SUBDIRS = modules
 bin_PROGRAMS = donky
 donky_LDFLAGS = -export-dynamic
 donky_SOURCES = \
-	main.c \
+	main.c main.h \
 	config.c config.h \
 	util.c util.h \
 	module.c module.h \
@@ -15,6 +15,9 @@ donky_SOURCES = \
 	daemon.c daemon.h \
 	protocol.c protocol.h \
 	request.c request.h \
-	c99.c c99.h
+	c99.c c99.h \
+	std/string.h \
+	std/string/strlcpy.c std/string/strlcpy.h \
+	std/string/strlcat.c std/string/strlcat.h
 INCLUDES = $(DEPS_CFLAGS)
 LIBS = $(DEPS_LIBS)

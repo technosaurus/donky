@@ -17,9 +17,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
+#include "std/string.h"
 #include "c99.h"
+
 #include "config.h"
 #include "default_settings.h"
 #include "lists.h"
@@ -34,7 +35,6 @@ static void add_mod(char *mod);
 static int find_mod(struct cfg *cur, char *mod);
 static void add_key(char *mod, char *key, char *value);
 static int find_key(struct setting *cur, char *key);
-static bool parse(const char *str, const char *format, int n, ...);
 static FILE *get_cfg_file(void);
 static void clear_settings(struct setting *cur_s);
 
@@ -242,19 +242,18 @@ void parse_cfg(void)
         char key[64];
         char value[128];
         const char *format[5];     /* sscanf formats */
+        bool mod_check;
 
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
 
-        mod[0] = '\0';
-        key[0] = '\0';
-        value[0] = '\0';
+        mod_check = false;
 
-        format[0] = " [%63s[a-zA-Z0-9_-]]";                 /* [mod]         */
-        format[1] = " %63s[a-zA-Z0-9_-] = \"%127s[^\"]\" "; /* key = "value" */
-        format[2] = " %63s[a-zA-Z0-9_-] = '%127s[^\']' ";   /* key = 'value' */
-        format[3] = " %63s[a-zA-Z0-9_-] = %127s[^;\n] ";    /* key = value   */
-        format[4] = " %63s[a-zA-Z0-9_-] ";                  /* key           */
+        format[0] = " [%63[a-zA-Z0-9_-]]";                /* [mod]         */
+        format[1] = " %63[a-zA-Z0-9_-] = \"%127[^\"]\" "; /* key = "value" */
+        format[2] = " %63[a-zA-Z0-9_-] = '%127[^\']' ";   /* key = 'value' */
+        format[3] = " %63[a-zA-Z0-9_-] = %127[^;\n] ";    /* key = value   */
+        format[4] = " %63[a-zA-Z0-9_-] ";                 /* key           */
 
         while ((fgets(str, MAX_LINE_SIZE, cfg_file)) != NULL) {
                 if (is_comment(str)) {
@@ -264,80 +263,46 @@ void parse_cfg(void)
 
                 if (sscanf(str, format[0], mod) == 1) {
                         add_mod(mod);
+                        if (mod_check == false)
+                                mod_check = true;
                         continue;
                 }
 
-                if (parse(str, format[1], 2, key, value)) { }
-                else if (parse(str, format[2], 2, key, value)) { }
-                else if (parse(str, format[3], 2, key, value))
-                        trim_t(value);
-                else if (sscanf(str, format[4], key) == 1) {
-                        strncpy(value, "True", sizeof(value) - 1);
-                        value[sizeof(value) - 1] = '\0';
+                if (mod_check == true) {
+                        if (sscanf(str, format[1], key, value) == 2) {
+                                goto handle_key;
+                        } else if (sscanf(str, format[2], key, value) == 2) {
+                                goto handle_key;
+                        } else if (sscanf(str, format[3], key, value) == 2) {
+                                trim_t(value);
+                                goto handle_key;
+                        } else if (sscanf(str, format[4], key) == 1) {
+                                strlcpy(value, "True", sizeof(value));
+                                goto handle_key;
+                        }
                 }
 
+                continue;
+
+handle_key:
                 /* values of "" or '' are interpreted as False */
-                if (!strcmp(value, "\"\"") || !strcmp(value, "''")) {
-                        strncpy(value, "False", sizeof(value) - 1);
-                        value[sizeof(value) - 1] = '\0';
-                }
+                if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
+                        strlcpy(value, "False", sizeof(value));
 
-                if (mod[0] && key[0] && value[0]) {
-                        add_key(mod, key, value);
-                        char *char_key = get_char_key(mod, key, "ERROR");
-                        printf("added-> mod [%s] key [%s] value [%s]\n",
-                               mod, key, value);
-                        printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
-                               char_key,
-                               get_int_key(mod, key, -1),
-                               get_double_key(mod, key, -1),
-                               get_bool_key(mod, key, -1));
-                        free(char_key);
-                }
+                add_key(mod, key, value);
 
-                key[0] = '\0';
-                value[0] = '\0';
+                char *char_key = get_char_key(mod, key, "ERROR");
+                printf("added-> mod [%s] key [%s] value [%s]\n",
+                       mod, key, value);
+                printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
+                       char_key,
+                       get_int_key(mod, key, -1),
+                       get_double_key(mod, key, -1),
+                       get_bool_key(mod, key, -1));
+                free(char_key);
         }
 
         fclose(cfg_file);
-}
-
-/**
- * @brief Parse config bs
- *
- * @param str
- * @param format
- * @param n
- * @param ...
- *
- * @return
- */
-static bool parse(const char *str, const char *format, int n, ...)
-{
-        va_list ap;
-        va_list aq;
-        char *p;
-        int i;
-        bool success;
-
-        va_start(ap, n);
-        va_copy(aq, ap);
-
-        if (vsscanf(str, format, ap) != n) {
-                for (i = 0; i < n; i++) {
-                        p = va_arg(aq, char *);
-                        *p = '\0';
-                }
-
-                success = false;
-        } else {
-                success = true;
-        }
-
-        va_end(ap);
-        va_end(aq);
-
-        return success;
 }
 
 /** 
@@ -349,7 +314,7 @@ static bool parse(const char *str, const char *format, int n, ...)
  */
 static FILE *get_cfg_file(void)
 {
-        char cfg_file_path[1024]; /* FIX ME ? */
+        char cfg_file_path[256]; /* FIX ME ? */ /* yes, TODO: MAXPATHLEN */
         FILE *cfg_file;
 
         snprintf(cfg_file_path, sizeof(cfg_file_path),

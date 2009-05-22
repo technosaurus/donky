@@ -14,29 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#include <string.h>
 
-#include <stdbool.h>
+#ifndef HAVE_STRLCPY
+#include "string/strlcpy.h"
+#endif /* HAVE_STRLCPY */
 
-#include "lists.h"
-
-struct cfg {
-        char *mod;
-
-        struct list *setting_ls;
-};
-
-char *get_char_key(char *mod, char *key, char *otherwise);
-int get_int_key(char *mod, char *key, int otherwise);
-double get_double_key(char *mod,
-                      char *key,
-                      double otherwise);
-bool get_bool_key(char *mod, char *key, bool otherwise);
-void parse_cfg(void);
-void clear_cfg(struct cfg *cur);
-
-extern struct list *cfg_ls;
-
-#endif /* CONFIG_H */
-
+#ifndef HAVE_STRLCAT
+#include "string/strlcat.h"
+#endif /* HAVE_STRLCAT */
