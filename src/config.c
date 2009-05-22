@@ -314,24 +314,20 @@ handle_key:
  */
 static FILE *get_cfg_file(void)
 {
-        char cfg_file_path[256]; /* FIX ME ? */ /* yes, TODO: MAXPATHLEN */
+        char cfg_file_path[256]; /* FIXME ? */ /* yes, TODO: MAXPATHLEN */
         FILE *cfg_file;
 
         snprintf(cfg_file_path, sizeof(cfg_file_path),
                  "%s/%s", getenv("HOME"), DEFAULT_CONF);
 
         cfg_file = fopen(cfg_file_path, "r");
-        
         if (!cfg_file) {
                 printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
 
                 snprintf(cfg_file_path, sizeof(cfg_file_path),
-                         "%s/%s", 
-                         SYSCONFDIR,
-                         DEFAULT_CONF_GLOBAL);
+                         "%s/%s", SYSCONFDIR, DEFAULT_CONF_GLOBAL);
 
                 cfg_file = fopen(cfg_file_path, "r");
-                
                 if (!cfg_file) {
                         fprintf(stderr,
                                 "Error: %s/%s file not found.\n",

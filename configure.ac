@@ -1,4 +1,5 @@
 #AC_PREREQ([2.63])
+AC_PREREQ([2.59])
 AC_INIT([donky], [2009.5], [lobo@ircage.org])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADERS([config.h])
@@ -66,14 +67,14 @@ dnl Wifi support...
 AC_MSG_CHECKING([whether to build the wifi module])
 AC_ARG_ENABLE(wifi,
               AC_HELP_STRING([--enable-wifi],
-                             [enable the wifi module (linux only, requires wireless-tools) [default=no]]), ,
-              [enable_wifi=no])
+                             [enable the wifi module (linux only, requires wireless-tools) [default=yes]]), ,
+              [enable_wifi=yes])
 if test "x$enable_wifi" = "xyes"; then
         if test "x$uname" != "xLinux"; then
                 AC_MSG_RESULT([no])
                 AC_MSG_NOTICE([wifi module not supported on $uname, disabling])
                 enable_wifi="no"
-        else
+        else 
                 AC_MSG_RESULT([yes])
                 AC_CHECK_LIB([iw], [iw_sockets_open])
                 MODULES="$MODULES wifi"
@@ -86,16 +87,17 @@ dnl Battery support...
 AC_MSG_CHECKING([whether to build the battery module])
 AC_ARG_ENABLE(battery,
               AC_HELP_STRING([--enable-battery],
-                             [enable the battery module (linux only) [default=no]]), ,
-              [enable_battery=no])
+                             [enable the battery module (linux only) [default=yes]]), ,
+              [enable_battery=yes])
 if test "x$enable_battery" = "xyes"; then
-        if test "x$uname" != "xLinux"; then
-                AC_MSG_RESULT([no])
-                AC_MSG_NOTICE([battery module not supported on $uname, disabling])
-        else
+#        if test "x$uname" != "xLinux"; then
+#                AC_MSG_RESULT([no])
+#                AC_MSG_NOTICE([battery module not supported on $uname, disabling])
+#                enable_battery="no"
+#        else
                 AC_MSG_RESULT([yes])
                 MODULES="$MODULES battery"
-        fi
+#        fi
 else
         AC_MSG_RESULT([no])
 fi
@@ -113,25 +115,12 @@ else
         AC_MSG_RESULT([no])
 fi
 
-dnl Diskio support...
-AC_MSG_CHECKING([whether to build the diskio module])
-AC_ARG_ENABLE(diskio,
-              AC_HELP_STRING([--enable-diskio],
-                             [enable the diskio module [default=no]]), ,
-              [enable_diskio=no])
-if test "x$enable_diskio" = "xyes"; then
-        AC_MSG_RESULT([yes])
-        MODULES="$MODULES diskio"
-else
-        AC_MSG_RESULT([no])
-fi
-
 dnl Eee PC backlight support...
 AC_MSG_CHECKING([whether to build the eeebl module])
 AC_ARG_ENABLE(eeebl,
               AC_HELP_STRING([--enable-eeebl],
-                             [enable the eeebl module [default=no]]), ,
-              [enable_eeebl=no])
+                             [enable the eeebl module [default=yes]]), ,
+              [enable_eeebl=yes])
 if test "x$enable_eeebl" = "xyes"; then
         AC_MSG_RESULT([yes])
         MODULES="$MODULES eeebl"
@@ -156,8 +145,8 @@ dnl MOC supprt...
 AC_MSG_CHECKING([whether to build the moc module])
 AC_ARG_ENABLE(moc,
               AC_HELP_STRING([--enable-moc],
-                             [enable the moc module [default=no]]), ,
-              [enable_moc=no])
+                             [enable the moc module [default=yes]]), ,
+              [enable_moc=yes])
 if test "x$enable_moc" = "xyes"; then
         AC_MSG_RESULT([yes])
         MODULES="$MODULES moc"
@@ -169,8 +158,8 @@ dnl MPD support...
 AC_MSG_CHECKING([whether to build the mpd module])
 AC_ARG_ENABLE(mpd,
               AC_HELP_STRING([--enable-mpd],
-                             [enable the mpd module [default=no]]), ,
-              [enable_mpd=no])
+                             [enable the mpd module [default=yes]]), ,
+              [enable_mpd=yes])
 if test "x$enable_mpd" = "xyes"; then
         AC_MSG_RESULT([yes])
         MODULES="$MODULES mpd"
@@ -182,8 +171,8 @@ dnl pcpuinfo support...
 AC_MSG_CHECKING([whether to build the pcpuinfo module])
 AC_ARG_ENABLE(pcpuinfo,
               AC_HELP_STRING([--enable-pcpuinfo],
-                             [enable the /proc cpuinfo module [default=no]]), ,
-              [enable_pcpuinfo=no])
+                             [enable the /proc cpuinfo module [default=yes]]), ,
+              [enable_pcpuinfo=yes])
 if test "x$enable_pcpuinfo" = "xyes"; then
         AC_MSG_RESULT([yes])
         MODULES="$MODULES pcpuinfo"
@@ -195,8 +184,8 @@ dnl scpuinfo support...
 AC_MSG_CHECKING([whether to build the scpuinfo module])
 AC_ARG_ENABLE(scpuinfo,
               AC_HELP_STRING([--enable-scpuinfo],
-                             [enable the /sys cpuinfo module [default=no]]), ,
-              [enable_scpuinfo=no])
+                             [enable the /sys cpuinfo module [default=yes]]), ,
+              [enable_scpuinfo=yes])
 if test "x$enable_scpuinfo" = "xyes"; then
         AC_MSG_RESULT([yes])
         MODULES="$MODULES scpuinfo"
@@ -211,8 +200,14 @@ AC_ARG_ENABLE(sysinfo,
                              [enable the sysinfo module [default=yes]]), ,
               [enable_sysinfo=yes])
 if test "x$enable_sysinfo" = "xyes"; then
-        AC_MSG_RESULT([yes])
-        MODULES="$MODULES sysinfo"
+        if test "x$uname" != "xLinux"; then
+                AC_MSG_RESULT([no])
+                AC_MSG_NOTICE([sysinfo module not supported on $uname, disabling])
+                enable_sysinfo="no"
+        else
+                AC_MSG_RESULT([yes])
+                MODULES="$MODULES sysinfo"
+        fi
 else
         AC_MSG_RESULT([no])
 fi
@@ -221,12 +216,18 @@ dnl alsa volume support...
 AC_MSG_CHECKING([whether to build the volume module])
 AC_ARG_ENABLE(volume,
               AC_HELP_STRING([--enable-volume],
-                             [enable the alsa volume module [default=no]]), ,
-              [enable_volume=no])
+                             [enable the alsa volume module [default=yes]]), ,
+              [enable_volume=yes])
 if test "x$enable_volume" = "xyes"; then
-        AC_MSG_RESULT([yes])
-        AC_CHECK_LIB([asound], [snd_mixer_open])
-        MODULES="$MODULES volume"
+        if test "x$uname" != "xLinux"; then
+                AC_MSG_RESULT([no])
+                AC_MSG_NOTICE([volume module not supported on $uname, disabling])
+                enable_volume="no"
+        else
+                AC_MSG_RESULT([yes])
+                AC_CHECK_LIB([asound], [snd_mixer_open])
+                MODULES="$MODULES volume"
+        fi
 else
         AC_MSG_RESULT([no])
 fi

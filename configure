@@ -1037,18 +1037,17 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-wifi           enable the wifi module (linux only, requires
-                          wireless-tools) default=no
-  --enable-battery        enable the battery module (linux only) default=no
+                          wireless-tools) default=yes
+  --enable-battery        enable the battery module (linux only) default=yes
   --enable-date           enable the date module default=yes
-  --enable-diskio         enable the diskio module default=no
-  --enable-eeebl          enable the eeebl module default=no
+  --enable-eeebl          enable the eeebl module default=yes
   --enable-exec           enable the exec module default=yes
-  --enable-moc            enable the moc module default=no
-  --enable-mpd            enable the mpd module default=no
-  --enable-pcpuinfo       enable the /proc cpuinfo module default=no
-  --enable-scpuinfo       enable the /sys cpuinfo module default=no
+  --enable-moc            enable the moc module default=yes
+  --enable-mpd            enable the mpd module default=yes
+  --enable-pcpuinfo       enable the /proc cpuinfo module default=yes
+  --enable-scpuinfo       enable the /sys cpuinfo module default=yes
   --enable-sysinfo        enable the sysinfo module default=yes
-  --enable-volume         enable the alsa volume module default=no
+  --enable-volume         enable the alsa volume module default=yes
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -4500,7 +4499,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4503 "configure"' > conftest.$ac_ext
+  echo '#line 4502 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5412,7 +5411,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5415:" \
+echo "$as_me:5414:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6761,11 +6760,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6764: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6763: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6768: \$? = $ac_status" >&5
+   echo "$as_me:6767: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7051,11 +7050,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7054: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7053: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7058: \$? = $ac_status" >&5
+   echo "$as_me:7057: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7155,11 +7154,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7158: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7157: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7162: \$? = $ac_status" >&5
+   echo "$as_me:7161: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9556,7 +9555,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9559 "configure"
+#line 9558 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9656,7 +9655,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9659 "configure"
+#line 9658 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12061,11 +12060,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12064: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12063: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12068: \$? = $ac_status" >&5
+   echo "$as_me:12067: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -12165,11 +12164,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12168: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12167: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:12172: \$? = $ac_status" >&5
+   echo "$as_me:12171: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -13748,11 +13747,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13751: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13750: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13755: \$? = $ac_status" >&5
+   echo "$as_me:13754: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -13852,11 +13851,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13855: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13854: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13859: \$? = $ac_status" >&5
+   echo "$as_me:13858: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -16064,11 +16063,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16067: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16066: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16071: \$? = $ac_status" >&5
+   echo "$as_me:16070: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -16354,11 +16353,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16357: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16356: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:16361: \$? = $ac_status" >&5
+   echo "$as_me:16360: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -16458,11 +16457,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:16461: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:16460: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:16465: \$? = $ac_status" >&5
+   echo "$as_me:16464: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -20482,7 +20481,7 @@ if test "${enable_wifi+set}" = set; then
   enableval="$enable_wifi"
 
 else
-  enable_wifi=no
+  enable_wifi=yes
 fi;
 if test "x$enable_wifi" = "xyes"; then
         if test "x$uname" != "xLinux"; then
@@ -20582,19 +20581,18 @@ if test "${enable_battery+set}" = set; then
   enableval="$enable_battery"
 
 else
-  enable_battery=no
+  enable_battery=yes
 fi;
 if test "x$enable_battery" = "xyes"; then
-        if test "x$uname" != "xLinux"; then
-                echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-                { echo "$as_me:$LINENO: battery module not supported on $uname, disabling" >&5
-echo "$as_me: battery module not supported on $uname, disabling" >&6;}
-        else
+#        if test "x$uname" != "xLinux"; then
+#                AC_MSG_RESULT([no])
+#                AC_MSG_NOTICE([battery module not supported on $uname, disabling])
+#                enable_battery="no"
+#        else
                 echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
                 MODULES="$MODULES battery"
-        fi
+#        fi
 else
         echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -20618,24 +20616,6 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-echo "$as_me:$LINENO: checking whether to build the diskio module" >&5
-echo $ECHO_N "checking whether to build the diskio module... $ECHO_C" >&6
-# Check whether --enable-diskio or --disable-diskio was given.
-if test "${enable_diskio+set}" = set; then
-  enableval="$enable_diskio"
-
-else
-  enable_diskio=no
-fi;
-if test "x$enable_diskio" = "xyes"; then
-        echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-        MODULES="$MODULES diskio"
-else
-        echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
 echo "$as_me:$LINENO: checking whether to build the eeebl module" >&5
 echo $ECHO_N "checking whether to build the eeebl module... $ECHO_C" >&6
 # Check whether --enable-eeebl or --disable-eeebl was given.
@@ -20643,7 +20623,7 @@ if test "${enable_eeebl+set}" = set; then
   enableval="$enable_eeebl"
 
 else
-  enable_eeebl=no
+  enable_eeebl=yes
 fi;
 if test "x$enable_eeebl" = "xyes"; then
         echo "$as_me:$LINENO: result: yes" >&5
@@ -20679,7 +20659,7 @@ if test "${enable_moc+set}" = set; then
   enableval="$enable_moc"
 
 else
-  enable_moc=no
+  enable_moc=yes
 fi;
 if test "x$enable_moc" = "xyes"; then
         echo "$as_me:$LINENO: result: yes" >&5
@@ -20697,7 +20677,7 @@ if test "${enable_mpd+set}" = set; then
   enableval="$enable_mpd"
 
 else
-  enable_mpd=no
+  enable_mpd=yes
 fi;
 if test "x$enable_mpd" = "xyes"; then
         echo "$as_me:$LINENO: result: yes" >&5
@@ -20715,7 +20695,7 @@ if test "${enable_pcpuinfo+set}" = set; then
   enableval="$enable_pcpuinfo"
 
 else
-  enable_pcpuinfo=no
+  enable_pcpuinfo=yes
 fi;
 if test "x$enable_pcpuinfo" = "xyes"; then
         echo "$as_me:$LINENO: result: yes" >&5
@@ -20733,7 +20713,7 @@ if test "${enable_scpuinfo+set}" = set; then
   enableval="$enable_scpuinfo"
 
 else
-  enable_scpuinfo=no
+  enable_scpuinfo=yes
 fi;
 if test "x$enable_scpuinfo" = "xyes"; then
         echo "$as_me:$LINENO: result: yes" >&5
@@ -20754,9 +20734,17 @@ else
   enable_sysinfo=yes
 fi;
 if test "x$enable_sysinfo" = "xyes"; then
-        echo "$as_me:$LINENO: result: yes" >&5
+        if test "x$uname" != "xLinux"; then
+                echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+                { echo "$as_me:$LINENO: sysinfo module not supported on $uname, disabling" >&5
+echo "$as_me: sysinfo module not supported on $uname, disabling" >&6;}
+                enable_sysinfo="no"
+        else
+                echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-        MODULES="$MODULES sysinfo"
+                MODULES="$MODULES sysinfo"
+        fi
 else
         echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -20769,10 +20757,17 @@ if test "${enable_volume+set}" = set; then
   enableval="$enable_volume"
 
 else
-  enable_volume=no
+  enable_volume=yes
 fi;
 if test "x$enable_volume" = "xyes"; then
-        echo "$as_me:$LINENO: result: yes" >&5
+        if test "x$uname" != "xLinux"; then
+                echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+                { echo "$as_me:$LINENO: volume module not supported on $uname, disabling" >&5
+echo "$as_me: volume module not supported on $uname, disabling" >&6;}
+                enable_volume="no"
+        else
+                echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 
 echo "$as_me:$LINENO: checking for snd_mixer_open in -lasound" >&5
@@ -20848,7 +20843,8 @@ _ACEOF
 
 fi
 
-        MODULES="$MODULES volume"
+                MODULES="$MODULES volume"
+        fi
 else
         echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
