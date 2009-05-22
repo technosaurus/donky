@@ -42,8 +42,7 @@ host_triplet = @host@
 @ENABLE_MPD_TRUE@am__append_8 = mpd.la
 @ENABLE_VOLUME_TRUE@am__append_9 = volume.la
 @ENABLE_EEEBL_TRUE@am__append_10 = eeebl.la
-@ENABLE_DISKIO_TRUE@am__append_11 = diskio.la
-@ENABLE_WIFI_TRUE@am__append_12 = wifi.la
+@ENABLE_WIFI_TRUE@am__append_11 = wifi.la
 subdir = src/modules
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -81,14 +80,6 @@ date_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(date_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 @ENABLE_DATE_TRUE@am_date_la_rpath = -rpath $(moduledir)
-diskio_la_DEPENDENCIES =
-am__diskio_la_SOURCES_DIST = diskio.c
-@ENABLE_DISKIO_TRUE@am_diskio_la_OBJECTS = diskio.lo
-diskio_la_OBJECTS = $(am_diskio_la_OBJECTS)
-diskio_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(diskio_la_LDFLAGS) $(LDFLAGS) -o $@
-@ENABLE_DISKIO_TRUE@am_diskio_la_rpath = -rpath $(moduledir)
 eeebl_la_DEPENDENCIES =
 am__eeebl_la_SOURCES_DIST = eeebl.c
 @ENABLE_EEEBL_TRUE@am_eeebl_la_OBJECTS = eeebl.lo
@@ -173,16 +164,14 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) \
-	$(diskio_la_SOURCES) $(eeebl_la_SOURCES) $(exec_la_SOURCES) \
-	$(moc_la_SOURCES) $(mpd_la_SOURCES) $(pcpuinfo_la_SOURCES) \
-	$(scpuinfo_la_SOURCES) $(sysinfo_la_SOURCES) \
-	$(volume_la_SOURCES) $(wifi_la_SOURCES)
+SOURCES = $(battery_la_SOURCES) $(date_la_SOURCES) $(eeebl_la_SOURCES) \
+	$(exec_la_SOURCES) $(moc_la_SOURCES) $(mpd_la_SOURCES) \
+	$(pcpuinfo_la_SOURCES) $(scpuinfo_la_SOURCES) \
+	$(sysinfo_la_SOURCES) $(volume_la_SOURCES) $(wifi_la_SOURCES)
 DIST_SOURCES = $(am__battery_la_SOURCES_DIST) \
-	$(am__date_la_SOURCES_DIST) $(am__diskio_la_SOURCES_DIST) \
-	$(am__eeebl_la_SOURCES_DIST) $(am__exec_la_SOURCES_DIST) \
-	$(am__moc_la_SOURCES_DIST) $(am__mpd_la_SOURCES_DIST) \
-	$(am__pcpuinfo_la_SOURCES_DIST) \
+	$(am__date_la_SOURCES_DIST) $(am__eeebl_la_SOURCES_DIST) \
+	$(am__exec_la_SOURCES_DIST) $(am__moc_la_SOURCES_DIST) \
+	$(am__mpd_la_SOURCES_DIST) $(am__pcpuinfo_la_SOURCES_DIST) \
 	$(am__scpuinfo_la_SOURCES_DIST) $(am__sysinfo_la_SOURCES_DIST) \
 	$(am__volume_la_SOURCES_DIST) $(am__wifi_la_SOURCES_DIST)
 ETAGS = etags
@@ -309,7 +298,7 @@ AM_CFLAGS = -Wall
 module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12)
+	$(am__append_10) $(am__append_11)
 @ENABLE_DATE_TRUE@date_la_LDFLAGS = -module -avoid-version
 @ENABLE_DATE_TRUE@date_la_SOURCES = date.c
 @ENABLE_DATE_TRUE@date_la_LIBADD = $(DEPS_LIBS)
@@ -340,9 +329,6 @@ module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
 @ENABLE_EEEBL_TRUE@eeebl_la_LDFLAGS = -module -avoid-version
 @ENABLE_EEEBL_TRUE@eeebl_la_SOURCES = eeebl.c
 @ENABLE_EEEBL_TRUE@eeebl_la_LIBADD = $(DEPS_LIBS)
-@ENABLE_DISKIO_TRUE@diskio_la_LDFLAGS = -module -avoid-version
-@ENABLE_DISKIO_TRUE@diskio_la_SOURCES = diskio.c
-@ENABLE_DISKIO_TRUE@diskio_la_LIBADD = $(DEPS_LIBS)
 @ENABLE_WIFI_TRUE@wifi_la_LDFLAGS = -module -avoid-version
 @ENABLE_WIFI_TRUE@wifi_la_SOURCES = wifi.c
 @ENABLE_WIFI_TRUE@wifi_la_LIBADD = $(DEPS_LIBS) -liw
@@ -410,8 +396,6 @@ battery.la: $(battery_la_OBJECTS) $(battery_la_DEPENDENCIES)
 	$(battery_la_LINK) $(am_battery_la_rpath) $(battery_la_OBJECTS) $(battery_la_LIBADD) $(LIBS)
 date.la: $(date_la_OBJECTS) $(date_la_DEPENDENCIES) 
 	$(date_la_LINK) $(am_date_la_rpath) $(date_la_OBJECTS) $(date_la_LIBADD) $(LIBS)
-diskio.la: $(diskio_la_OBJECTS) $(diskio_la_DEPENDENCIES) 
-	$(diskio_la_LINK) $(am_diskio_la_rpath) $(diskio_la_OBJECTS) $(diskio_la_LIBADD) $(LIBS)
 eeebl.la: $(eeebl_la_OBJECTS) $(eeebl_la_DEPENDENCIES) 
 	$(eeebl_la_LINK) $(am_eeebl_la_rpath) $(eeebl_la_OBJECTS) $(eeebl_la_LIBADD) $(LIBS)
 exec.la: $(exec_la_OBJECTS) $(exec_la_DEPENDENCIES) 
@@ -439,7 +423,6 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/battery.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/diskio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eeebl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/exec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/moc.Plo@am__quote@

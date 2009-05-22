@@ -50,7 +50,8 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_donky_OBJECTS = main.$(OBJEXT) config.$(OBJEXT) util.$(OBJEXT) \
 	module.$(OBJEXT) mem.$(OBJEXT) lists.$(OBJEXT) \
-	daemon.$(OBJEXT) protocol.$(OBJEXT) request.$(OBJEXT)
+	daemon.$(OBJEXT) protocol.$(OBJEXT) request.$(OBJEXT) \
+	c99.$(OBJEXT)
 donky_OBJECTS = $(am_donky_OBJECTS)
 donky_LDADD = $(LDADD)
 donky_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -214,7 +215,8 @@ donky_SOURCES = \
 	lists.c lists.h \
 	daemon.c daemon.h \
 	protocol.c protocol.h \
-	request.c request.h
+	request.c request.h \
+	c99.c c99.h
 
 INCLUDES = $(DEPS_CFLAGS)
 all: all-recursive
@@ -288,6 +290,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/c99.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/daemon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lists.Po@am__quote@

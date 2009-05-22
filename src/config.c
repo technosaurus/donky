@@ -1,25 +1,25 @@
 /*
-* Copyright (c) 2009 Matt Hayes, Jake LeMaster
-*
-* Permission to use, copy, modify, and distribute this software for any
-* purpose with or without fee is hereby granted, provided that the above
-* copyright notice and this permission notice appear in all copies.
-*
-* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
-#define _GNU_SOURCE
 #include <stdarg.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "c99.h"
 #include "config.h"
 #include "default_settings.h"
 #include "lists.h"
@@ -34,7 +34,7 @@ static void add_mod(char *mod);
 static int find_mod(struct cfg *cur, char *mod);
 static void add_key(char *mod, char *key, char *value);
 static int find_key(struct setting *cur, char *key);
-bool parse(const char *str, const char *format, int n, ...);
+static bool parse(const char *str, const char *format, int n, ...);
 static FILE *get_cfg_file(void);
 static void clear_settings(struct setting *cur_s);
 
@@ -55,7 +55,7 @@ struct list *cfg_ls;
  * 
  * @param mod The name of the mod to add
  */
-void add_mod(char *mod)
+static void add_mod(char *mod)
 {
         struct cfg *new_mod;
 
@@ -89,7 +89,7 @@ static int find_mod(struct cfg *cur, char *mod)
  * @param key Name of key
  * @param value Value of the key to add (as a string)
  */
-void add_key(char *mod, char *key, char *value)
+static void add_key(char *mod, char *key, char *value)
 {
         struct cfg *cur;
         struct setting *new_setting;
@@ -258,7 +258,7 @@ void parse_cfg(void)
 
         while ((fgets(str, MAX_LINE_SIZE, cfg_file)) != NULL) {
                 if (is_comment(str)) {
-                        //printf("Skipping comment [%s]\n\n", chomp(str));
+                        /*printf("Skipping comment [%s]\n\n", chomp(str));*/
                         continue;
                 }
 
@@ -302,7 +302,17 @@ void parse_cfg(void)
         fclose(cfg_file);
 }
 
-bool parse(const char *str, const char *format, int n, ...)
+/**
+ * @brief Parse config bs
+ *
+ * @param str
+ * @param format
+ * @param n
+ * @param ...
+ *
+ * @return
+ */
+static bool parse(const char *str, const char *format, int n, ...)
 {
         va_list ap;
         va_list aq;
@@ -337,25 +347,26 @@ bool parse(const char *str, const char *format, int n, ...)
  *
  * @return Pointer to an open .donkyrc file, if successful.
  */
-FILE *get_cfg_file(void)
+static FILE *get_cfg_file(void)
 {
-        char *cfg_file_path;
+        char cfg_file_path[1024]; /* FIX ME ? */
         FILE *cfg_file;
 
-        asprintf(&cfg_file_path, "%s/%s", getenv("HOME"), DEFAULT_CONF);
+        snprintf(cfg_file_path, sizeof(cfg_file_path),
+                 "%s/%s", getenv("HOME"), DEFAULT_CONF);
 
         cfg_file = fopen(cfg_file_path, "r");
-        free(cfg_file_path);
+        
         if (!cfg_file) {
                 printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
 
-                asprintf(&cfg_file_path,
+                snprintf(cfg_file_path, sizeof(cfg_file_path),
                          "%s/%s", 
                          SYSCONFDIR,
                          DEFAULT_CONF_GLOBAL);
 
                 cfg_file = fopen(cfg_file_path, "r");
-                free(cfg_file_path);
+                
                 if (!cfg_file) {
                         fprintf(stderr,
                                 "Error: %s/%s file not found.\n",
@@ -384,7 +395,7 @@ void clear_cfg(struct cfg *cur)
  * 
  * @param cur_s setting struct to clean
  */
-void clear_settings(struct setting *cur_s)
+static void clear_settings(struct setting *cur_s)
 {
         free(cur_s->key);
         free(cur_s->value);

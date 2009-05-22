@@ -1,25 +1,23 @@
 /*
-* Copyright (c) 2009 Matt Hayes, Jake LeMaster
-*
-* Permission to use, copy, modify, and distribute this software for any
-* purpose with or without fee is hereby granted, provided that the above
-* copyright notice and this permission notice appear in all copies.
-*
-* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
-#define _GNU_SOURCE
 #include <ctype.h>
 #include <math.h>
 #include <netdb.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,9 +27,10 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include "c99.h"
 #include "util.h"
 
-//extern void freenull(const void *ptr);
+/*extern void freenull(const void *ptr);*/
 
 /**
  * @brief Trim leading and trailing whitespace from a string.
@@ -217,9 +216,8 @@ char *d_strncpy(const char *str, size_t n)
  */
 char *bytes_to_bigger(unsigned long bytes)
 {
-        char *str;
+        char str[16];
         char label[4];
-        int read;
         double tera = pow(1024, 4);
         double giga = pow(1024, 3);
         double mega = pow(1024, 2);
@@ -244,9 +242,9 @@ char *bytes_to_bigger(unsigned long bytes)
         }
 
         label[3] = '\0';
-        read = asprintf(&str, "%.2f%s", recalc, label);
+        snprintf(str, sizeof(str), "%.2f%s", recalc, label);
 
-        return (read != -1) ? str : NULL;
+        return d_strcpy(str);
 }
 
 /**
@@ -356,7 +354,7 @@ int create_tcp_listener(char *host, char *port)
  *
  * @return Bytes written to socket
  */
-ssize_t sendcrlf(int sock, const char *format, ...)
+int sendcrlf(int sock, const char *format, ...)
 {
         char buffer[1024];
 	va_list ap;

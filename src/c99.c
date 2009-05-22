@@ -14,25 +14,30 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef REQUEST_H
-#define REQUEST_H
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-struct request_list {
-        char *id;
-        const donky_conn *conn;
-        struct module_var *var;
-        char *args;
-        bool remove;
-        bool first;
-        
-        struct request_list *prev;
-        struct request_list *next;
-};
+#include "../config.h"
+#include "c99.h"
 
-int request_list_add(const donky_conn *conn, const char *buf, bool remove);
-void request_list_remove(struct request_list *cur);
-void request_list_clear(void);
-int request_handler_start(void);
-struct request_list *request_list_find_by_conn(donky_conn *conn);
+#ifndef HAVE_STRCASECMP
+/**
+ * @brief Compare two strings case insensitively.  Note: I return -1 if not
+ *        equal rather than the greater than less than crap. 0 means equal.
+ *
+ * @param s1 string 1
+ * @param s2 string 2
+ *
+ * @return -1 for no match, 0 for match
+ */
+int strcasecmp(const char *s1, const char *s2)
+{
+        for (; (*s1 || *s2); s1++, s2++)
+                if (tolower(*s1) != tolower(*s2))
+                        return -1;
 
-#endif /* REQUEST_H */
+        return 0;
+}
+#endif /* HAVE_STRCASECMP */

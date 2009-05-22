@@ -1,20 +1,19 @@
 /*
-* Copyright (c) 2009 Matt Hayes, Jake LeMaster
-*
-* Permission to use, copy, modify, and distribute this software for any
-* purpose with or without fee is hereby granted, provided that the above
-* copyright notice and this permission notice appear in all copies.
-*
-* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +24,7 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "../c99.h"
 #include "../config.h"
 #include "../mem.h"
 #include "../module.h"
@@ -277,9 +277,10 @@ char *get_bitrate(char *args) { return (mpdinfo.bitrate) ? mpdinfo.bitrate : "0"
 char *get_audio(char *args) { return (mpdinfo.audio) ? mpdinfo.audio : "\0"; }
 
 char *get_elapsed_time(char *args) {
+        char ret[8];
+        
         if (mpdinfo.etime) {
-                char *ret;
-                asprintf(&ret,
+                snprintf(ret, sizeof(ret),
                          "%.2d:%.2d",
                          mpdinfo.etime / 60, mpdinfo.etime % 60);
                 return m_freelater(ret);
@@ -289,9 +290,10 @@ char *get_elapsed_time(char *args) {
 }
 
 char *get_total_time(char *args) {
+        char ret[8];
+        
         if (mpdinfo.ttime) {
-                char *ret;
-                asprintf(&ret,
+                snprintf(ret, sizeof(ret),
                          "%.2d:%.2d",
                          mpdinfo.ttime / 60, mpdinfo.ttime % 60);
                 return m_freelater(ret);

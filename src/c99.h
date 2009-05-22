@@ -14,25 +14,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef REQUEST_H
-#define REQUEST_H
+#include "../config.h"
 
-struct request_list {
-        char *id;
-        const donky_conn *conn;
-        struct module_var *var;
-        char *args;
-        bool remove;
-        bool first;
-        
-        struct request_list *prev;
-        struct request_list *next;
-};
+#ifndef HAVE_STDBOOL_H
+#define bool int
+#define true 1
+#define false 0
+#define __bool_true_false_are_defined 1
+#else /* ifdef HAVE_STDBOOL_H */
+#include <stdbool.h>
+#endif /* HAVE_STDBOOL_H */
 
-int request_list_add(const donky_conn *conn, const char *buf, bool remove);
-void request_list_remove(struct request_list *cur);
-void request_list_clear(void);
-int request_handler_start(void);
-struct request_list *request_list_find_by_conn(donky_conn *conn);
-
-#endif /* REQUEST_H */
+#ifndef HAVE_STRCASECMP
+int strcasecmp(const char *s1, const char *s2);
+#endif /* HAVE_STRCASECMP */

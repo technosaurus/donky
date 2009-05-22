@@ -1,27 +1,27 @@
 /*
-* Copyright (c) 2009 Matt Hayes, Jake LeMaster
-*
-* Permission to use, copy, modify, and distribute this software for any
-* purpose with or without fee is hereby granted, provided that the above
-* copyright notice and this permission notice appear in all copies.
-*
-* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
+ * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 #include <dirent.h>
 #include <dlfcn.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 
+#include "c99.h"
 #include "config.h"
 #include "module.h"
 #include "util.h"
@@ -88,7 +88,7 @@ int module_var_add(const struct module *parent,
         else
                 user_timeout = get_double_key("timeout", name, timeout);
 
-        //printf("Adding [%s] with timeout [%f]\n", name, user_timeout);
+        /*printf("Adding [%s] with timeout [%f]\n", name, user_timeout);*/
         
         n->timeout = user_timeout;
         n->last_update = 0.0;
@@ -339,8 +339,7 @@ void module_load_all(void)
 
         while ((dir = readdir(d))) {
                 if (!strcmp(dir->d_name, ".") ||
-                    !strcmp(dir->d_name, "..") ||
-                    dir->d_type == DT_DIR)
+                    !strcmp(dir->d_name, ".."))
                         continue;
 
                 sptr = strrchr(dir->d_name, '.');

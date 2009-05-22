@@ -35,7 +35,7 @@ AC_TYPE_SIZE_T
 dnl Checks for library functions.
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([floor gettimeofday memset pow socket strcasecmp strchr strndup strrchr strstr strtol sysinfo])
+AC_CHECK_FUNCS([floor gettimeofday memset pow socket strcasecmp strchr strndup strrchr strstr strtol sysinfo snprintf])
 
 dnl Get unix name
 uname=`uname`
