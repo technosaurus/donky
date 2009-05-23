@@ -229,6 +229,7 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         char *id;
         char *var;
         char *args;
+        char *args_cut;
         struct module_var *mv;
 
         id = d_strcpy(buf);
@@ -248,6 +249,12 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         if (args) {
                 *args = '\0';
                 args++;
+
+                /* remove \r\n before sending args to module functions */
+                args_cut = args;
+                while ((args_cut = strchr(args_cut, '\\')))
+                        if (*(++args_cut) == 'r')
+                                *(--args_cut) = '\0';
         }
 
         printf("Request list add: id[%s] var[%s] args[%s]\n", id, var, args);
