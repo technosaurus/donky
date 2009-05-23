@@ -22,7 +22,7 @@
 #include <sys/socket.h>
 
 #include "c99.h"
-#include "config.h"
+#include "cfg.h"
 #include "daemon.h"
 #include "lists.h"
 #include "main.h"

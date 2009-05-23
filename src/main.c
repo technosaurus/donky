@@ -21,7 +21,7 @@
 
 #include "../config.h"
 #include "c99.h"
-#include "config.h"
+#include "cfg.h"
 #include "daemon.h"
 #include "main.h"
 #include "module.h"

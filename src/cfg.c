@@ -21,7 +21,7 @@
 #include "std/string.h"
 #include "c99.h"
 
-#include "config.h"
+#include "cfg.h"
 #include "default_settings.h"
 #include "lists.h"
 #include "util.h"

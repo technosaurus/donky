@@ -22,7 +22,7 @@
 #include <sys/param.h>
 
 #include "c99.h"
-#include "config.h"
+#include "cfg.h"
 #include "module.h"
 #include "util.h"
 #include "lists.h"

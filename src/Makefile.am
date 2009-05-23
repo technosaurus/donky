@@ -7,7 +7,7 @@ bin_PROGRAMS = donky
 donky_LDFLAGS = -export-dynamic
 donky_SOURCES = \
 	main.c main.h \
-	config.c config.h \
+	cfg.c cfg.h \
 	util.c util.h \
 	module.c module.h \
 	mem.c mem.h \
