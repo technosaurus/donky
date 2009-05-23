@@ -3,7 +3,7 @@
 
 # Make m4 directory if it doesn't exist.
 if [ ! -d "m4" ]; then
-	mkdir "m4"
+        mkdir "m4"
 fi
 
 echo "- libtoolize"

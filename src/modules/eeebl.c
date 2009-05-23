@@ -46,7 +46,6 @@ void module_init(const struct module *mod)
         module_var_add(mod, "eeeblmax", "get_eeeblmax", 5.0, VARIABLE_STR);
         module_var_add(mod, "eeeblbar", "get_eeeblbar", 5.0, VARIABLE_BAR);
         module_var_add(mod, "eeebl_cron", "eeebl_cron", 5.0, VARIABLE_CRON);
-        get_max_bl();
 }
 
 /* These run on module unload */
@@ -61,7 +60,10 @@ void module_destroy(void)
  */
 void eeebl_cron(void)
 {
-        freenull(cur_bl);
+        if (max_bl == NULL)
+                get_max_bl();
+
+        free(cur_bl);
         get_cur_bl();
 }
 
@@ -74,13 +76,14 @@ void eeebl_cron(void)
  */
 char *get_eeeblper(char *args)
 {
-        int charge;
-        char *ret_eeeblper;
+        int percentage;
+        char ret_per[4];
 
         if (cur_bl && max_bl) {
-                charge = (atof(cur_bl) / atof(max_bl)) * 100;
-                asprintf(&ret_eeeblper, "%d", charge);
-                return m_freelater(ret_eeeblper);
+                percentage = (atof(cur_bl) / atof(max_bl)) * 100;
+                snprintf(ret_per, sizeof(ret_per), "%d", percentage);
+
+                return m_strdup(ret_per);
         }
 
         return "n/a";
@@ -132,17 +135,18 @@ void get_cur_bl(void)
 {
         char *path;
         FILE *cur_bl_file;
-        size_t len;
+        char buf[4];
 
         path = "/sys/devices/virtual/backlight/eeepc/brightness";
         cur_bl_file = fopen(path, "r");
-        if (!cur_bl_file)
+        if (!cur_bl_file) {
+                cur_bl = NULL;
                 return;
+        }
 
-        len = 0;
-        getline(&cur_bl, &len, cur_bl_file);
+        cur_bl = fgets(buf, sizeof(buf), cur_bl_file);
         fclose(cur_bl_file);
-        if (len && cur_bl)
+        if (cur_bl != NULL)
                 chomp(cur_bl);
 }
 
@@ -154,17 +158,18 @@ void get_max_bl(void)
 {
         char *path;
         FILE *max_bl_file;
-        size_t len;
+        char buf[4];
 
         path = "/sys/devices/virtual/backlight/eeepc/max_brightness";
         max_bl_file = fopen(path, "r");
-        if (!max_bl_file)
+        if (!max_bl_file) {
+                max_bl = NULL;
                 return;
+        }
 
-        len = 0;
-        getline(&max_bl, &len, max_bl_file);
+        max_bl = fgets(buf, sizeof(buf), max_bl_file);
         fclose(max_bl_file);
-        if (len && max_bl)
+        if (max_bl != NULL)
                 chomp(max_bl);
 }
 

@@ -14,7 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +21,7 @@
 #include "../c99.h"
 #include "../mem.h"
 #include "../module.h"
+#include "../util.h"
 
 /* Module name */
 char module_name[] = "scpuinfo";
@@ -32,11 +32,7 @@ char *get_scpufreq(char *args);
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod,
-                       "scpufreq",
-                       "get_scpufreq",
-                       1.0,
-                       VARIABLE_STR);
+        module_var_add(mod, "scpufreq", "get_scpufreq", 1.0, VARIABLE_STR);
 }
 
 /* These run on module unload */
@@ -47,30 +43,32 @@ void module_destroy(void)
 
 char *get_scpufreq(char *args)
 {
-        char *path = NULL;
-        if ((asprintf(&path,
-                      "/sys/devices/system/cpu/cpu%s/cpufreq/scaling_cur_freq",
-                      (args) ? args : "0") == -1))
-                return "n/a";
+        char path[DMAXPATHLEN];
+        int read;
+        FILE *freq_file;
+        char freq[16];
+        char *fgets_check;
 
-        FILE *freq_file = fopen(path, "r");
-        free(path);
+        read = snprintf(path, sizeof(path), 
+                        "/sys/devices/system/cpu/cpu%s/cpufreq/scaling_cur_freq",
+                        args);
+
+        if (read >= DMAXPATHLEN)
+                printf("WARNING: [scpuinfo:get_scpufreq] "
+                       "snprintf truncation! read = %d, DMAXPATHLEN = %d!\n",
+                       read, DMAXPATHLEN);
+
+        freq_file = fopen(path, "r");
         if (!freq_file)
                 return "n/a";
 
-        char *freq = NULL;
-        size_t len = 0;
-        int read = getline(&freq, &len, freq_file);
+        fgets_check = fgets(freq, sizeof(freq), freq_file);
         fclose(freq_file);
-        if (!freq || (read == -1))
+        if (fgets_check == NULL)
                 return "n/a";
 
-        char *ret = NULL;
-        int check = asprintf(&ret, "%d", (atoi(freq) / 1000));
-        free(freq);
-        if (check == -1)
-                return "n/a";
+        snprintf(freq, sizeof(freq), "%d", (atoi(freq) / 1000));
 
-        return m_freelater(ret);
+        return m_strdup(freq);
 }
 

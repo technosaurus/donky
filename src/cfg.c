@@ -314,7 +314,7 @@ handle_key:
  */
 static FILE *get_cfg_file(void)
 {
-        char cfg_file_path[256]; /* FIXME ? */ /* yes, TODO: MAXPATHLEN */
+        char cfg_file_path[DMAXPATHLEN];
         FILE *cfg_file;
 
         snprintf(cfg_file_path, sizeof(cfg_file_path),

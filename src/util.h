@@ -19,6 +19,8 @@
 
 #include <stdbool.h>
 
+#define DMAXPATHLEN 256
+
 #define freenull(ptr)           \
         do {                    \
                 free(ptr);      \
