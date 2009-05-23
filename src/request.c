@@ -94,7 +94,7 @@ static void *request_handler_exec(void *arg)
         char *(*func_str)(char *);
         unsigned int (*func_int)(char *);
         char *ret_str;
-        int ret_int;
+        unsigned int ret_int;
         unsigned int sum;
         int n;
 

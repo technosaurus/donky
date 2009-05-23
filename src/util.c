@@ -377,7 +377,7 @@ int sendcrlf(int sock, const char *format, ...)
  *
  * @return Sum
  */
-unsigned int get_str_sum(char *str)
+unsigned int get_str_sum(const char *str)
 {
         unsigned int sum = 0;
         

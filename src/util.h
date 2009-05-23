@@ -40,7 +40,7 @@ char *bytes_to_bigger(unsigned long bytes);
 int random_range(int min, int max);
 int create_tcp_listener(char *host, char *port);
 int sendcrlf(int sock, const char *format, ...);
-unsigned int get_str_sum(char *str);
+unsigned int get_str_sum(const char *str);
 
 /*
 inline void freenull(const void *ptr)
