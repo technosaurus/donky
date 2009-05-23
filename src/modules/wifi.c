@@ -20,7 +20,7 @@
 #include <iwlib.h>
 
 #include "../c99.h"
-#include "../config.h"
+#include "../cfg.h"
 #include "../mem.h"
 #include "../module.h"
 #include "../util.h"

@@ -22,7 +22,7 @@
 #include <time.h>
 
 #include "c99.h"
-#include "config.h"
+#include "cfg.h"
 #include "daemon.h"
 #include "default_settings.h"
 #include "mem.h"
