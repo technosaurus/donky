@@ -235,8 +235,10 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
 
         /* Get the variable name... */
         var = strchr(id, ':');
-        if (!var)
+        if (!var) {
+                free(id);
                 return 0;
+        }
 
         *var = '\0';
         var++;
@@ -253,6 +255,10 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         /* Find the module_var node for this variable. */
         if ((mv = module_var_find_by_name(var)) == NULL) {
                 printf("Couldn't find module var!\n");
+
+                /* Send an error response. */
+                sendcrlf(conn->sock, "%s:404:", id);
+                
                 free(id);
                 return 0;
         }
