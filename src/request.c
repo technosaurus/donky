@@ -108,6 +108,13 @@ static void *request_handler_exec(void *arg)
                 while (cur) {
                         next = cur->next;
 
+                        /* Remove this request IMMEDIATELY. */
+                        if (cur->remove_now) {
+                                request_list_remove(cur);
+                                cur = next;
+                                continue;
+                        }
+
                         timeout = cur->var->timeout;
                         last_update = cur->var->last_update;
 
@@ -194,6 +201,7 @@ static void *request_handler_exec(void *arg)
                 }
         }
 
+        printf("Done with thread!\n");
         return NULL;
 }
 
@@ -271,6 +279,7 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         n->var = mv;
         n->args = args;
         n->remove = remove;
+        n->remove_now = false;
         n->first = true;
 
         n->prev = NULL;

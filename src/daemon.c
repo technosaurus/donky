@@ -229,8 +229,7 @@ void donky_conn_drop(donky_conn *cur)
 
         /* Remove any requests this connection might have. */
         while ((r = request_list_find_by_conn(cur)))
-                r->remove = true;
-                /*request_list_remove(r);*/
+                r->remove_now = true;
 
         /* Free some memorah! */
         free(cur);

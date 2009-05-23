@@ -107,6 +107,7 @@ int main(int argc, char **argv)
         signal(SIGTERM, sigterm_handler);
         signal(SIGHUP, sighup_handler);
         signal(SIGINT, sigint_handler);
+        signal(SIGPIPE, SIG_IGN);
 
         /* Initialize, then start donky. */
         initialize_stuff();

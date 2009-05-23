@@ -188,7 +188,7 @@ static struct module *module_add(const char *name,
         struct module *find = module_find_by_name(name);
         struct module *n = (find) ? find : malloc(sizeof(struct module));
 
-        printf("Loaded module: %s\n", name);
+        printf("Loading module: %s...", name);
 
         snprintf(n->name, sizeof(n->name), "%s", name);
         n->path = d_strcpy(path);
@@ -213,6 +213,8 @@ static struct module *module_add(const char *name,
                 n->prev = m_end;
                 m_end = n;
         }
+
+        printf("done.\n");
 
         return n;
 }
