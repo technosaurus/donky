@@ -251,7 +251,7 @@ void module_unload(struct module *cur)
         if (!cur)
                 return;
 
-        printf("Unloaded module %s\n", cur->name);
+        printf("Unloading module %s... ", cur->name);
 
         destroy = cur->destroy;
         destroy();
@@ -271,6 +271,8 @@ void module_unload(struct module *cur)
                 
                 mv = mv->next;
         }
+
+        printf("done.\n");
 }
 
 /**

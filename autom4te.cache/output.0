@@ -937,7 +937,6 @@ enable_libtool_lock
 enable_wifi
 enable_battery
 enable_date
-enable_diskio
 enable_eeebl
 enable_exec
 enable_moc
@@ -1598,18 +1597,17 @@ Optional Features:
                           optimize for fast installation @<:@default=yes@:>@
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-wifi           enable the wifi module (linux only, requires
-                          wireless-tools) default=no
-  --enable-battery        enable the battery module (linux only) default=no
+                          wireless-tools) default=yes
+  --enable-battery        enable the battery module (linux only) default=yes
   --enable-date           enable the date module default=yes
-  --enable-diskio         enable the diskio module default=no
-  --enable-eeebl          enable the eeebl module default=no
+  --enable-eeebl          enable the eeebl module default=yes
   --enable-exec           enable the exec module default=yes
-  --enable-moc            enable the moc module default=no
-  --enable-mpd            enable the mpd module default=no
-  --enable-pcpuinfo       enable the /proc cpuinfo module default=no
-  --enable-scpuinfo       enable the /sys cpuinfo module default=no
+  --enable-moc            enable the moc module default=yes
+  --enable-mpd            enable the mpd module default=yes
+  --enable-pcpuinfo       enable the /proc cpuinfo module default=yes
+  --enable-scpuinfo       enable the /sys cpuinfo module default=yes
   --enable-sysinfo        enable the sysinfo module default=yes
-  --enable-volume         enable the alsa volume module default=no
+  --enable-volume         enable the alsa volume module default=yes
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -15365,8 +15363,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-#
-#AC_CHECK_LIB([iw], [main])
 
 { $as_echo "$as_me:$LINENO: checking for pow in -lm" >&5
 $as_echo_n "checking for pow in -lm... " >&6; }
@@ -16675,7 +16671,10 @@ fi
 
 
 
-for ac_func in floor gettimeofday memset pow socket strcasecmp strchr strndup strrchr strstr strtol sysinfo
+
+
+
+for ac_func in floor gettimeofday memset pow socket strcasecmp strchr strlcpy strlcat strndup strrchr strstr strtol sysinfo snprintf
 do
 as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 { $as_echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -16776,19 +16775,70 @@ fi
 done
 
 
+uname=`uname`
+
+case $uname in
+        Linux*)
+                
+cat >>confdefs.h <<\_ACEOF
+@%:@define OS_LINUX 1
+_ACEOF
+
+                ;;
+        FreeBSD*)
+                
+cat >>confdefs.h <<\_ACEOF
+@%:@define OS_FREEBSD 1
+_ACEOF
+
+                ;;
+        OpenBSD*)
+                
+cat >>confdefs.h <<\_ACEOF
+@%:@define OS_OPENBSD 1
+_ACEOF
+
+                ;;
+        NetBSD*)
+                
+cat >>confdefs.h <<\_ACEOF
+@%:@define OS_NETBSD 1
+_ACEOF
+
+                ;;
+        DragonFly*)
+                
+cat >>confdefs.h <<\_ACEOF
+@%:@define OS_DRAGONFLYBSD 1
+_ACEOF
+
+                ;;
+        *)
+                echo "Sorry, we do not currently support $uname!"
+                exit 1
+                ;;
+esac
+
 { $as_echo "$as_me:$LINENO: checking whether to build the wifi module" >&5
 $as_echo_n "checking whether to build the wifi module... " >&6; }
 @%:@ Check whether --enable-wifi was given.
 if test "${enable_wifi+set}" = set; then
   enableval=$enable_wifi; 
 else
-  enable_wifi=no
+  enable_wifi=yes
 fi
 
 if test "x$enable_wifi" = "xyes"; then
-        { $as_echo "$as_me:$LINENO: result: yes" >&5
+        if test "x$uname" != "xLinux"; then
+                { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+                { $as_echo "$as_me:$LINENO: wifi module not supported on $uname, disabling" >&5
+$as_echo "$as_me: wifi module not supported on $uname, disabling" >&6;}
+                enable_wifi="no"
+        else 
+                { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-        
+                
 { $as_echo "$as_me:$LINENO: checking for iw_sockets_open in -liw" >&5
 $as_echo_n "checking for iw_sockets_open in -liw... " >&6; }
 if test "${ac_cv_lib_iw_iw_sockets_open+set}" = set; then
@@ -16863,7 +16913,8 @@ _ACEOF
 
 fi
 
-        MODULES="$MODULES wifi"
+                MODULES="$MODULES wifi"
+        fi
 else
         { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
@@ -16875,13 +16926,19 @@ $as_echo_n "checking whether to build the battery module... " >&6; }
 if test "${enable_battery+set}" = set; then
   enableval=$enable_battery; 
 else
-  enable_battery=no
+  enable_battery=yes
 fi
 
 if test "x$enable_battery" = "xyes"; then
-        { $as_echo "$as_me:$LINENO: result: yes" >&5
+#        if test "x$uname" != "xLinux"; then
+#                AC_MSG_RESULT([no])
+#                AC_MSG_NOTICE([battery module not supported on $uname, disabling])
+#                enable_battery="no"
+#        else
+                { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-        MODULES="$MODULES battery"
+                MODULES="$MODULES battery"
+#        fi
 else
         { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
@@ -16905,31 +16962,13 @@ else
 $as_echo "no" >&6; }
 fi
 
-{ $as_echo "$as_me:$LINENO: checking whether to build the diskio module" >&5
-$as_echo_n "checking whether to build the diskio module... " >&6; }
-@%:@ Check whether --enable-diskio was given.
-if test "${enable_diskio+set}" = set; then
-  enableval=$enable_diskio; 
-else
-  enable_diskio=no
-fi
-
-if test "x$enable_diskio" = "xyes"; then
-        { $as_echo "$as_me:$LINENO: result: yes" >&5
-$as_echo "yes" >&6; }
-        MODULES="$MODULES diskio"
-else
-        { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
 { $as_echo "$as_me:$LINENO: checking whether to build the eeebl module" >&5
 $as_echo_n "checking whether to build the eeebl module... " >&6; }
 @%:@ Check whether --enable-eeebl was given.
 if test "${enable_eeebl+set}" = set; then
   enableval=$enable_eeebl; 
 else
-  enable_eeebl=no
+  enable_eeebl=yes
 fi
 
 if test "x$enable_eeebl" = "xyes"; then
@@ -16965,7 +17004,7 @@ $as_echo_n "checking whether to build the moc module... " >&6; }
 if test "${enable_moc+set}" = set; then
   enableval=$enable_moc; 
 else
-  enable_moc=no
+  enable_moc=yes
 fi
 
 if test "x$enable_moc" = "xyes"; then
@@ -16983,7 +17022,7 @@ $as_echo_n "checking whether to build the mpd module... " >&6; }
 if test "${enable_mpd+set}" = set; then
   enableval=$enable_mpd; 
 else
-  enable_mpd=no
+  enable_mpd=yes
 fi
 
 if test "x$enable_mpd" = "xyes"; then
@@ -17001,7 +17040,7 @@ $as_echo_n "checking whether to build the pcpuinfo module... " >&6; }
 if test "${enable_pcpuinfo+set}" = set; then
   enableval=$enable_pcpuinfo; 
 else
-  enable_pcpuinfo=no
+  enable_pcpuinfo=yes
 fi
 
 if test "x$enable_pcpuinfo" = "xyes"; then
@@ -17019,7 +17058,7 @@ $as_echo_n "checking whether to build the scpuinfo module... " >&6; }
 if test "${enable_scpuinfo+set}" = set; then
   enableval=$enable_scpuinfo; 
 else
-  enable_scpuinfo=no
+  enable_scpuinfo=yes
 fi
 
 if test "x$enable_scpuinfo" = "xyes"; then
@@ -17041,9 +17080,17 @@ else
 fi
 
 if test "x$enable_sysinfo" = "xyes"; then
-        { $as_echo "$as_me:$LINENO: result: yes" >&5
+        if test "x$uname" != "xLinux"; then
+                { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+                { $as_echo "$as_me:$LINENO: sysinfo module not supported on $uname, disabling" >&5
+$as_echo "$as_me: sysinfo module not supported on $uname, disabling" >&6;}
+                enable_sysinfo="no"
+        else
+                { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-        MODULES="$MODULES sysinfo"
+                MODULES="$MODULES sysinfo"
+        fi
 else
         { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
@@ -17055,13 +17102,20 @@ $as_echo_n "checking whether to build the volume module... " >&6; }
 if test "${enable_volume+set}" = set; then
   enableval=$enable_volume; 
 else
-  enable_volume=no
+  enable_volume=yes
 fi
 
 if test "x$enable_volume" = "xyes"; then
-        { $as_echo "$as_me:$LINENO: result: yes" >&5
+        if test "x$uname" != "xLinux"; then
+                { $as_echo "$as_me:$LINENO: result: no" >&5
+$as_echo "no" >&6; }
+                { $as_echo "$as_me:$LINENO: volume module not supported on $uname, disabling" >&5
+$as_echo "$as_me: volume module not supported on $uname, disabling" >&6;}
+                enable_volume="no"
+        else
+                { $as_echo "$as_me:$LINENO: result: yes" >&5
 $as_echo "yes" >&6; }
-        
+                
 { $as_echo "$as_me:$LINENO: checking for snd_mixer_open in -lasound" >&5
 $as_echo_n "checking for snd_mixer_open in -lasound... " >&6; }
 if test "${ac_cv_lib_asound_snd_mixer_open+set}" = set; then
@@ -17136,7 +17190,8 @@ _ACEOF
 
 fi
 
-        MODULES="$MODULES volume"
+                MODULES="$MODULES volume"
+        fi
 else
         { $as_echo "$as_me:$LINENO: result: no" >&5
 $as_echo "no" >&6; }
@@ -19961,7 +20016,5 @@ $as_echo ">> MODULES: $MODULES" >&6; }
 $as_echo ">> CFLAGS: $CFLAGS" >&6; }
 { $as_echo "$as_me:$LINENO: result: >> LIBS: $LIBS" >&5
 $as_echo ">> LIBS: $LIBS" >&6; }
-{ $as_echo "$as_me:$LINENO: result: >> LIBDL: $LIBDL" >&5
-$as_echo ">> LIBDL: $LIBDL" >&6; }
 { $as_echo "$as_me:$LINENO: result: >>" >&5
 $as_echo ">>" >&6; }

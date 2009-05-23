@@ -33,17 +33,17 @@
 char module_name[] = "mpd";
 
 /* My function prototypes. */
-int start_connection(void);
-void mpd_free_everythang(void);
-void pop_currentsong(void);
-void pop_status(void);
-void init_settings(void);
+static int start_connection(void);
+static void mpd_free_everythang(void);
+static void pop_currentsong(void);
+static void pop_status(void);
+static void init_settings(void);
 
 /* Globals. */
 int mpd_sock = -1;
 FILE *sockin, *sockout;
-char *mpd_host;
-char *mpd_port;
+char *mpd_host = NULL;
+char *mpd_port = NULL;
 struct addrinfo hints;
 struct addrinfo *result;
 struct addrinfo *rp;
@@ -51,37 +51,28 @@ int initialized = 0;
 
 struct mpd_info {
         /* currentsong */
-        char *file;
-        char *artist;
-        char *title;
-        char *album;
-        char *track;
-        char *date;
-        char *genre;
+        char file[256];
+        char artist[128];
+        char title[128];
+        char album[128];
+        char track[16];
+        char date[16];
+        char genre[64];
 
         /* status */
-        char *volume;
-        char *repeat;
-        char *random;
-        char *playlist;
-        char *playlistlength;
-        char *xfade;
-        char *state;
-        char *song;
+        char volume[8];
+        char repeat[8];
+        char random[8];
+        char playlist[16];
+        char playlistlength[16];
+        char xfade[8];
+        char state[8];
+        char song[8];
         int etime;
         int ttime;
-        char *bitrate;
-        char *audio;
-};
-
-struct mpd_info mpdinfo = {
-        NULL,
-        NULL, NULL,
-        NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL, NULL,
-        NULL,    0,    0, NULL, NULL /* Pretty huh! */
-}; /* YES! IT'S LIKE A PYRAMID! sideways. */
+        char bitrate[16];
+        char audio[16];
+} mpdinfo;
 
 /**
  * @brief This is run on module initialization.
@@ -128,33 +119,31 @@ void module_destroy(void)
                 close(mpd_sock);
         }
 
-        free(mpd_host);
-        free(mpd_port);
         freeaddrinfo(result);
 }
 
 /**
  * @brief Free a bunch of CRAP!
  */
-void mpd_free_everything(void)
+static void mpd_free_everythang(void)
 {
-        freenull(mpdinfo.file);
-        freenull(mpdinfo.artist);
-        freenull(mpdinfo.title);
-        freenull(mpdinfo.album);
-        freenull(mpdinfo.track);
-        freenull(mpdinfo.date);
-        freenull(mpdinfo.genre);
-        freenull(mpdinfo.volume);
-        freenull(mpdinfo.repeat);
-        freenull(mpdinfo.random);
-        freenull(mpdinfo.playlist);
-        freenull(mpdinfo.playlistlength);
-        freenull(mpdinfo.xfade);
-        freenull(mpdinfo.state);
-        freenull(mpdinfo.song);
-        freenull(mpdinfo.bitrate);
-        freenull(mpdinfo.audio);
+        mpdinfo.file[0] = '\0';
+        mpdinfo.artist[0] = '\0';
+        mpdinfo.title[0] = '\0';
+        mpdinfo.album[0] = '\0';
+        mpdinfo.track[0] = '\0';
+        mpdinfo.date[0] = '\0';
+        mpdinfo.genre[0] = '\0';
+        mpdinfo.volume[0] = '\0';
+        mpdinfo.repeat[0] = '\0';
+        mpdinfo.random[0] = '\0';
+        mpdinfo.playlist[0] = '\0';
+        mpdinfo.playlistlength[0] = '\0';
+        mpdinfo.xfade[0] = '\0';
+        mpdinfo.state[0] = '\0';
+        mpdinfo.song[0] = '\0';
+        mpdinfo.bitrate[0] = '\0';
+        mpdinfo.audio[0] = '\0';
         mpdinfo.ttime = 0;
         mpdinfo.etime = 0;
 }
@@ -174,7 +163,7 @@ void run_cron(void)
         if (mpd_sock == -1)
                 start_connection();
 
-        mpd_free_everything();
+        mpd_free_everythang();
         pop_currentsong();
         pop_status();
 }
@@ -182,7 +171,7 @@ void run_cron(void)
 /**
  * @brief Populate the status variables.
  */
-void pop_status(void)
+static void pop_status(void)
 {
         char buffer[128];
         int i;
@@ -200,24 +189,24 @@ void pop_status(void)
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (sscanf(buffer, "volume: %m[^\n]", &mpdinfo.volume) == 1) { }
-                else if (sscanf(buffer, "repeat: %m[^\n]", &mpdinfo.repeat) == 1) { }
-                else if (sscanf(buffer, "random: %m[^\n]", &mpdinfo.random) == 1) { }
-                else if (sscanf(buffer, "playlist: %m[^\n]", &mpdinfo.playlist) == 1) { }
-                else if (sscanf(buffer, "playlistlength: %m[^\n]", &mpdinfo.playlistlength) == 1) { }
-                else if (sscanf(buffer, "xfade: %m[^\n]", &mpdinfo.xfade) == 1) { }
-                else if (sscanf(buffer, "state: %m[^\n]", &mpdinfo.state) == 1) { }
-                else if (sscanf(buffer, "song: %m[^\n]", &mpdinfo.song) == 1) { }
+                else if (sscanf(buffer, "volume: %7[^\n]", mpdinfo.volume) == 1) { }
+                else if (sscanf(buffer, "repeat: %7[^\n]", mpdinfo.repeat) == 1) { }
+                else if (sscanf(buffer, "random: %7[^\n]", mpdinfo.random) == 1) { }
+                else if (sscanf(buffer, "playlist: %15[^\n]", mpdinfo.playlist) == 1) { }
+                else if (sscanf(buffer, "playlistlength: %15[^\n]", mpdinfo.playlistlength) == 1) { }
+                else if (sscanf(buffer, "xfade: %7[^\n]", mpdinfo.xfade) == 1) { }
+                else if (sscanf(buffer, "state: %7[^\n]", mpdinfo.state) == 1) { }
+                else if (sscanf(buffer, "song: %7[^\n]", mpdinfo.song) == 1) { }
                 else if (sscanf(buffer, "time: %d:%d", &mpdinfo.etime, &mpdinfo.ttime) == 2) { }
-                else if (sscanf(buffer, "bitrate: %m[^\n]", &mpdinfo.bitrate) == 1) { }
-                else if (sscanf(buffer, "audio: %m[^\n]", &mpdinfo.audio) == 1) { }
+                else if (sscanf(buffer, "bitrate: %15[^\n]", mpdinfo.bitrate) == 1) { }
+                else if (sscanf(buffer, "audio: %15[^\n]", mpdinfo.audio) == 1) { }
         }
 }
 
 /**
  * @brief Populate the currentsong variables.
  */
-void pop_currentsong(void)
+static void pop_currentsong(void)
 {
         char buffer[128];
         int i;
@@ -235,13 +224,13 @@ void pop_currentsong(void)
         while (fgets(buffer, sizeof(buffer), sockin)) {
                 if (!strcmp(buffer, "OK\n"))
                         break;
-                else if (sscanf(buffer, "file: %m[^\n]", &mpdinfo.file) == 1) { }
-                else if (sscanf(buffer, "Artist: %m[^\n]", &mpdinfo.artist) == 1) { }
-                else if (sscanf(buffer, "Title: %m[^\n]", &mpdinfo.title) == 1) { }
-                else if (sscanf(buffer, "Album: %m[^\n]", &mpdinfo.album) == 1) { }
-                else if (sscanf(buffer, "Track: %m[^\n]", &mpdinfo.track) == 1) { }
-                else if (sscanf(buffer, "Date: %m[^\n]", &mpdinfo.date) == 1) { }
-                else if (sscanf(buffer, "Genre: %m[^\n]", &mpdinfo.genre) == 1) { }
+                else if (sscanf(buffer, "file: %255[^\n]", mpdinfo.file) == 1) { }
+                else if (sscanf(buffer, "Artist: %127[^\n]", mpdinfo.artist) == 1) { }
+                else if (sscanf(buffer, "Title: %127[^\n]", mpdinfo.title) == 1) { }
+                else if (sscanf(buffer, "Album: %127[^\n]", mpdinfo.album) == 1) { }
+                else if (sscanf(buffer, "Track: %15[^\n]", mpdinfo.track) == 1) { }
+                else if (sscanf(buffer, "Date: %15[^\n]", mpdinfo.date) == 1) { }
+                else if (sscanf(buffer, "Genre: %63[^\n]", mpdinfo.genre) == 1) { }
         }
 }
 
@@ -259,22 +248,22 @@ char *get_state(char *args) {
         return "MPD";
 }
 
-char *get_file(char *args) { return (mpdinfo.file) ? mpdinfo.file : "\0"; }
-char *get_artist(char *args) { return (mpdinfo.artist) ? mpdinfo.artist : "\0"; }
-char *get_title(char *args) { return (mpdinfo.title) ? mpdinfo.title : "\0"; }
-char *get_album(char *args) { return (mpdinfo.album) ? mpdinfo.album : "\0"; }
-char *get_track(char *args) { return (mpdinfo.track) ? mpdinfo.track : "\0"; }
-char *get_date(char *args) { return (mpdinfo.date) ? mpdinfo.date : "\0"; }
-char *get_genre(char *args) { return (mpdinfo.genre) ? mpdinfo.genre : "\0"; }
-char *get_volume(char *args) { return (mpdinfo.volume) ? mpdinfo.volume : "0"; }
-char *get_repeat(char *args) { return (mpdinfo.repeat) ? mpdinfo.repeat : "\0"; }
-char *get_random(char *args) { return (mpdinfo.random) ? mpdinfo.random : "\0"; }
-char *get_playlist(char *args) { return (mpdinfo.playlist) ? mpdinfo.playlist : "\0"; }
-char *get_playlistlength(char *args) { return (mpdinfo.playlistlength) ? mpdinfo.playlistlength : "\0"; }
-char *get_xfade(char *args) { return (mpdinfo.xfade) ? mpdinfo.xfade : "\0"; }
-char *get_song(char *args) { return (mpdinfo.song) ? mpdinfo.song : "\0"; }
-char *get_bitrate(char *args) { return (mpdinfo.bitrate) ? mpdinfo.bitrate : "0"; }
-char *get_audio(char *args) { return (mpdinfo.audio) ? mpdinfo.audio : "\0"; }
+char *get_file(char *args) { return mpdinfo.file; }
+char *get_artist(char *args) { return mpdinfo.artist; }
+char *get_title(char *args) { return mpdinfo.title; }
+char *get_album(char *args) { return mpdinfo.album; }
+char *get_track(char *args) { return mpdinfo.track; }
+char *get_date(char *args) { return mpdinfo.date; }
+char *get_genre(char *args) { return mpdinfo.genre; }
+char *get_volume(char *args) { return mpdinfo.volume; }
+char *get_repeat(char *args) { return mpdinfo.repeat; }
+char *get_random(char *args) { return mpdinfo.random; }
+char *get_playlist(char *args) { return mpdinfo.playlist; }
+char *get_playlistlength(char *args) { return mpdinfo.playlistlength; }
+char *get_xfade(char *args) { return mpdinfo.xfade; }
+char *get_song(char *args) { return mpdinfo.song; }
+char *get_bitrate(char *args) { return mpdinfo.bitrate; }
+char *get_audio(char *args) { return mpdinfo.audio; }
 
 char *get_elapsed_time(char *args) {
         char ret[8];
@@ -283,7 +272,7 @@ char *get_elapsed_time(char *args) {
                 snprintf(ret, sizeof(ret),
                          "%.2d:%.2d",
                          mpdinfo.etime / 60, mpdinfo.etime % 60);
-                return m_freelater(ret);
+                return m_strdup(ret);
         }
 
         return "00:00";
@@ -296,7 +285,7 @@ char *get_total_time(char *args) {
                 snprintf(ret, sizeof(ret),
                          "%.2d:%.2d",
                          mpdinfo.ttime / 60, mpdinfo.ttime % 60);
-                return m_freelater(ret);
+                return m_strdup(ret);
         }
 
         return "00:00";
@@ -311,7 +300,7 @@ unsigned int get_volume_bar(char *args) {
 /**
  * @brief Initialize some things that we use quite often.
  */
-void init_settings(void)
+static void init_settings(void)
 {
         int s;
 
@@ -331,8 +320,13 @@ void init_settings(void)
                         "mpd: Could not get host [%s] by name: %s",
                         mpd_host,
                         gai_strerror(s));
+                free(mpd_host);
+                free(mpd_port);
                 return;
         }
+
+        free(mpd_host);
+        free(mpd_port);
 }
 
 /**

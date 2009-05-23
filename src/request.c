@@ -172,16 +172,16 @@ static void *request_handler_exec(void *arg)
                         /* Set the last time it was updated. */
                         cur->var->last_update = get_time();
 
-                        /* Remove this request. */
-                        if (cur->remove)
-                                request_list_remove(cur);
+                        /* Clear memory list. */
+                        mem_list_clear();
 
                         /* This isn't the first handle anymore. */
                         if (cur->first)
                                 cur->first = false;
 
-                        /* Clear memory list. */
-                        mem_list_clear();
+                        /* Remove this request. */
+                        if (cur->remove)
+                                request_list_remove(cur);
                         
                         /* Next node. */
                         cur = next;
