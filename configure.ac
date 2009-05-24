@@ -19,8 +19,14 @@ dnl Set macro directory
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl Checks for libraries.
-AC_CHECK_LIB([m], [pow])
-AC_CHECK_LIB([pthread], [pthread_create])
+AC_CHECK_LIB([m], [pow], [], [
+        echo "You don't have the math library! Later nub."
+        exit -1
+        ])
+AC_CHECK_LIB([pthread], [pthread_create], [], [
+        echo "You don't have pthreads support! You suck!"
+        exit -1
+        ])
 
 dnl Took this from pidgin, I guess *bsd systems don't need -ldl.
 AC_CHECK_FUNC(dlopen, LIBDL="", [AC_CHECK_LIB(dl, dlopen, LIBDL="-ldl")])
@@ -76,7 +82,10 @@ if test "x$enable_wifi" = "xyes"; then
                 enable_wifi="no"
         else 
                 AC_MSG_RESULT([yes])
-                AC_CHECK_LIB([iw], [iw_sockets_open])
+                AC_CHECK_LIB([iw], [iw_sockets_open], [], [
+                        echo "To build the wifi module you need wireless-tools!"
+                        exit -1
+                        ])
                 MODULES="$MODULES wifi"
         fi
 else
@@ -225,7 +234,10 @@ if test "x$enable_volume" = "xyes"; then
                 enable_volume="no"
         else
                 AC_MSG_RESULT([yes])
-                AC_CHECK_LIB([asound], [snd_mixer_open])
+                AC_CHECK_LIB([asound], [snd_mixer_open], [], [
+                        echo "To build the alsa volume module you need libalsa!"
+                        exit -1
+                        ])
                 MODULES="$MODULES volume"
         fi
 else
