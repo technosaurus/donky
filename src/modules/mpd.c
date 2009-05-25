@@ -45,7 +45,7 @@ FILE *sockin, *sockout;
 char *mpd_host = NULL;
 char *mpd_port = NULL;
 struct addrinfo hints;
-struct addrinfo *result;
+struct addrinfo *result = NULL;
 struct addrinfo *rp;
 int initialized = 0;
 
@@ -119,7 +119,8 @@ void module_destroy(void)
                 close(mpd_sock);
         }
 
-        freeaddrinfo(result);
+        if (result != NULL)
+                freeaddrinfo(result);
 }
 
 /**
