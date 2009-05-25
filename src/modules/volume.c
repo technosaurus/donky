@@ -16,7 +16,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <alsa/asoundlib.h>
 
 #include "../std/string.h"
