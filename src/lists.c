@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "c99.h"
 #include "lists.h"
 #include "util.h"
 

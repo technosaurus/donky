@@ -1,6 +1,6 @@
 AM_CFLAGS = -DLIBDIR=\"$(libdir)/donky\" \
             -DSYSCONFDIR=\"$(sysconfdir)/donky\" \
-            $(LIBDL) -lpthread -lm -Wall
+            $(LIBDL) -lpthread -lm -Wall --std=c89
 SUBDIRS = modules
 
 bin_PROGRAMS = donky
@@ -15,9 +15,7 @@ donky_SOURCES = \
 	daemon.c daemon.h \
 	protocol.c protocol.h \
 	request.c request.h \
-	c99.c c99.h \
-	std/string.h \
-	std/string/strlcpy.c std/string/strlcpy.h \
-	std/string/strlcat.c std/string/strlcat.h
+	std/string.c std/string.h \
+	std/stdbool.h
 INCLUDES = $(DEPS_CFLAGS)
 LIBS = $(DEPS_LIBS)

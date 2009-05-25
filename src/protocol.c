@@ -16,10 +16,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/socket.h>
 
-#include "c99.h"
+#include "std/string.h"
 #include "cfg.h"
 #include "daemon.h"
 #include "protocol.h"

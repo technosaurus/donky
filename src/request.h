@@ -17,6 +17,8 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
+#include "std/stdbool.h"
+
 struct request_list {
         char *id;
         const donky_conn *conn;

@@ -21,7 +21,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "c99.h"
+#include "std/stdbool.h"
+
 #include "cfg.h"
 #include "daemon.h"
 #include "default_settings.h"

@@ -17,7 +17,7 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include <stdbool.h>
+#include "std/stdbool.h"
 
 struct donky_conn_node {
         int sock;

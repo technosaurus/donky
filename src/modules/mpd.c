@@ -24,7 +24,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "../c99.h"
 #include "../cfg.h"
 #include "../mem.h"
 #include "../module.h"

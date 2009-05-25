@@ -1,6 +1,6 @@
 moduledir = $(libdir)/donky
 
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall --std=c89
 module_LTLIBRARIES = 
 
 if ENABLE_DATE

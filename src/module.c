@@ -18,10 +18,9 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/param.h>
 
-#include "c99.h"
+#include "std/string.h"
 #include "cfg.h"
 #include "module.h"
 #include "util.h"

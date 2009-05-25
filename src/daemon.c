@@ -21,7 +21,6 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 
-#include "c99.h"
 #include "cfg.h"
 #include "daemon.h"
 #include "lists.h"

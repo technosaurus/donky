@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../c99.h"
 #include "../lists.h"
 #include "../mem.h"
 #include "../module.h"

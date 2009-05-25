@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "std/stdbool.h"
 #include "std/string.h"
-#include "c99.h"
 
 #include "cfg.h"
 #include "default_settings.h"

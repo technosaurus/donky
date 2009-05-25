@@ -16,9 +16,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
-#include "../c99.h"
 #include "../mem.h"
 #include "../module.h"
 #include "../util.h"

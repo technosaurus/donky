@@ -17,7 +17,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <stdbool.h>
+#include "std/stdbool.h"
 
 #include "lists.h"
 

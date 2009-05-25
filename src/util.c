@@ -27,7 +27,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "c99.h"
+#include "std/stdbool.h"
+
 #include "util.h"
 
 /*extern void freenull(const void *ptr);*/
