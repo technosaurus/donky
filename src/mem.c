@@ -137,7 +137,7 @@ static void mem_list_add(void *ptr)
  */
 static void mem_list_clear_cb(struct mem_data *cur)
 {
-        free(cur->ptr);
+        freenull(cur->ptr);
 }
 
 /**
