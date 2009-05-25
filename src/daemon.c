@@ -279,13 +279,12 @@ static void donky_conn_clear(void)
  */
 static int donky_listen(void)
 {
-        char *host = get_char_key("daemon", "host", NULL);
-        char *port = get_char_key("daemon", "port", "7000");
+        char *host = get_char_key("daemon", "host", "0.0.0.0");
+        int port = get_int_key("daemon", "port", 7000);
         
         donky_sock = create_tcp_listener(host, port);
 
         free(host);
-        free(port);
 
         return donky_sock;
 }

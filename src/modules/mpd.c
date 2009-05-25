@@ -14,15 +14,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <errno.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
 
 #include "../cfg.h"
 #include "../mem.h"
@@ -40,12 +40,10 @@ static void init_settings(void);
 
 /* Globals. */
 int mpd_sock = -1;
-FILE *sockin, *sockout;
 char *mpd_host = NULL;
-char *mpd_port = NULL;
-struct addrinfo hints;
-struct addrinfo *result = NULL;
-struct addrinfo *rp;
+int mpd_port;
+struct sockaddr_in server;
+struct hostent *hptr;
 int initialized = 0;
 
 struct mpd_info {
@@ -110,16 +108,9 @@ void module_init(const struct module *mod)
 void module_destroy(void)
 {
         if (mpd_sock != -1) {
-                fprintf(sockout, "close\r\n");
-                fflush(sockout);
-                fflush(sockin);
-                fclose(sockout);
-                fclose(sockin);
+                sendcrlf(mpd_sock, "close");
                 close(mpd_sock);
         }
-
-        if (result != NULL)
-                freeaddrinfo(result);
 }
 
 /**
@@ -164,8 +155,11 @@ void run_cron(void)
                 start_connection();
 
         mpd_free_everythang();
-        pop_currentsong();
-        pop_status();
+        
+        if (mpd_sock != -1) {
+                pop_currentsong();
+                pop_status();
+        }
 }
 
 /**
@@ -173,33 +167,40 @@ void run_cron(void)
  */
 static void pop_status(void)
 {
-        char buffer[128];
+        char buffer[1024];
+        char *line;
         int i;
 
         /* currentsong */
         for (i = 0; i < 3; i++) {
-                if (fprintf(sockout, "status\r\n") == -1)
+                if (sendcrlf(mpd_sock, "status") <= 0)
                         start_connection();
                 else
                         break;
         }
 
-        fflush(sockout);
+        i = recv(mpd_sock, buffer, sizeof(buffer), 0);
+        if (i <= 0) {
+                fprintf(stderr, "Motha effin' prob reading from mpd!\n");
+                return;
+        }
 
-        while (fgets(buffer, sizeof(buffer), sockin)) {
-                if (!strcmp(buffer, "OK\n"))
+        buffer[i] = '\0';
+
+        for (line = strtok(buffer, "\n"); line; line = strtok(NULL, "\n")) {
+                if (!strcmp(line, "OK\n"))
                         break;
-                else if (sscanf(buffer, "volume: %7[^\n]", mpdinfo.volume) == 1) { }
-                else if (sscanf(buffer, "repeat: %7[^\n]", mpdinfo.repeat) == 1) { }
-                else if (sscanf(buffer, "random: %7[^\n]", mpdinfo.random) == 1) { }
-                else if (sscanf(buffer, "playlist: %15[^\n]", mpdinfo.playlist) == 1) { }
-                else if (sscanf(buffer, "playlistlength: %15[^\n]", mpdinfo.playlistlength) == 1) { }
-                else if (sscanf(buffer, "xfade: %7[^\n]", mpdinfo.xfade) == 1) { }
-                else if (sscanf(buffer, "state: %7[^\n]", mpdinfo.state) == 1) { }
-                else if (sscanf(buffer, "song: %7[^\n]", mpdinfo.song) == 1) { }
-                else if (sscanf(buffer, "time: %d:%d", &mpdinfo.etime, &mpdinfo.ttime) == 2) { }
-                else if (sscanf(buffer, "bitrate: %15[^\n]", mpdinfo.bitrate) == 1) { }
-                else if (sscanf(buffer, "audio: %15[^\n]", mpdinfo.audio) == 1) { }
+                else if (sscanf(line, "volume: %7[^\n]", mpdinfo.volume) == 1) { }
+                else if (sscanf(line, "repeat: %7[^\n]", mpdinfo.repeat) == 1) { }
+                else if (sscanf(line, "random: %7[^\n]", mpdinfo.random) == 1) { }
+                else if (sscanf(line, "playlist: %15[^\n]", mpdinfo.playlist) == 1) { }
+                else if (sscanf(line, "playlistlength: %15[^\n]", mpdinfo.playlistlength) == 1) { }
+                else if (sscanf(line, "xfade: %7[^\n]", mpdinfo.xfade) == 1) { }
+                else if (sscanf(line, "state: %7[^\n]", mpdinfo.state) == 1) { }
+                else if (sscanf(line, "song: %7[^\n]", mpdinfo.song) == 1) { }
+                else if (sscanf(line, "time: %d:%d", &mpdinfo.etime, &mpdinfo.ttime) == 2) { }
+                else if (sscanf(line, "bitrate: %15[^\n]", mpdinfo.bitrate) == 1) { }
+                else if (sscanf(line, "audio: %15[^\n]", mpdinfo.audio) == 1) { }
         }
 }
 
@@ -209,28 +210,35 @@ static void pop_status(void)
 static void pop_currentsong(void)
 {
         char buffer[128];
+        char *line;
         int i;
 
         /* currentsong */
         for (i = 0; i < 3; i++) {
-                if (fprintf(sockout, "currentsong\r\n") == -1)
+                if (sendcrlf(mpd_sock, "currentsong") <= 0)
                         start_connection();
                 else
                         break;
         }
 
-        fflush(sockout);
+        i = recv(mpd_sock, buffer, sizeof(buffer), 0);
+        if (i <= 0) {
+                fprintf(stderr, "Motha effin' prob reading from mpd!\n");
+                return;
+        }
 
-        while (fgets(buffer, sizeof(buffer), sockin)) {
-                if (!strcmp(buffer, "OK\n"))
+        buffer[i] = '\0';
+
+        for (line = strtok(buffer, "\n"); line; line = strtok(NULL, "\n")) {
+                if (!strcmp(line, "OK\n"))
                         break;
-                else if (sscanf(buffer, "file: %255[^\n]", mpdinfo.file) == 1) { }
-                else if (sscanf(buffer, "Artist: %127[^\n]", mpdinfo.artist) == 1) { }
-                else if (sscanf(buffer, "Title: %127[^\n]", mpdinfo.title) == 1) { }
-                else if (sscanf(buffer, "Album: %127[^\n]", mpdinfo.album) == 1) { }
-                else if (sscanf(buffer, "Track: %15[^\n]", mpdinfo.track) == 1) { }
-                else if (sscanf(buffer, "Date: %15[^\n]", mpdinfo.date) == 1) { }
-                else if (sscanf(buffer, "Genre: %63[^\n]", mpdinfo.genre) == 1) { }
+                else if (sscanf(line, "file: %255[^\n]", mpdinfo.file) == 1) { }
+                else if (sscanf(line, "Artist: %127[^\n]", mpdinfo.artist) == 1) { }
+                else if (sscanf(line, "Title: %127[^\n]", mpdinfo.title) == 1) { }
+                else if (sscanf(line, "Album: %127[^\n]", mpdinfo.album) == 1) { }
+                else if (sscanf(line, "Track: %15[^\n]", mpdinfo.track) == 1) { }
+                else if (sscanf(line, "Date: %15[^\n]", mpdinfo.date) == 1) { }
+                else if (sscanf(line, "Genre: %63[^\n]", mpdinfo.genre) == 1) { }
         }
 }
 
@@ -302,31 +310,23 @@ unsigned int get_volume_bar(char *args) {
  */
 static void init_settings(void)
 {
-        int s;
-
+        printf("Initializing MPD connection stuff.\n");
+        
         /* Read configuration settings, if none exist, use some defaults. */
         mpd_host = get_char_key(module_name, "host", "localhost");
-        mpd_port = get_char_key(module_name, "port", "6600");
+        mpd_port = get_int_key(module_name, "port", 6600);
 
-        /* Get address information. */
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = 0;
-        hints.ai_protocol = 0;
-
-        if ((s = getaddrinfo(mpd_host, mpd_port, &hints, &result)) != 0) {
-                fprintf(stderr,
-                        "mpd: Could not get host [%s] by name: %s",
-                        mpd_host,
-                        gai_strerror(s));
+        if ((hptr = gethostbyname(mpd_host)) == NULL) {
+                fprintf(stderr, "Could not gethostbyname(%s)\n", mpd_host);
                 free(mpd_host);
-                free(mpd_port);
                 return;
         }
+        memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
+
+        server.sin_family = AF_INET;
+        server.sin_port = htons((short) mpd_port);
 
         free(mpd_host);
-        free(mpd_port);
 }
 
 /**
@@ -337,20 +337,17 @@ int start_connection(void)
         int bytes;
         char data[32];
 
-        for (rp = result; rp != NULL; rp = rp->ai_next) {
-                mpd_sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-
-                if (mpd_sock == -1)
-                        continue;
-
-                if (connect(mpd_sock, rp->ai_addr, rp->ai_addrlen) != -1)
-                        break;
-
-                close(mpd_sock);
+        if ((mpd_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+                fprintf(stderr, "Could not create mpd socket: %s\n",
+                        strerror(errno));
+                return 0;
         }
 
-        if (rp == NULL) {
-                fprintf(stderr, "Could not connect to mpd server!\n");
+        if ((connect(mpd_sock, (struct sockaddr *) &server, sizeof(server)) == -1)) {
+                fprintf(stderr, "Could not connect to mpd socket: %s\n",
+                        strerror(errno));
+                close(mpd_sock);
+                mpd_sock = -1;
                 return 0;
         }
 
@@ -358,11 +355,8 @@ int start_connection(void)
         bytes = recv(mpd_sock, data, 32, 0);
         data[bytes] = '\0';
 
-        if (strstr(data, "OK MPD")) {
-                sockin = fdopen(mpd_sock, "r");
-                sockout = fdopen(mpd_sock, "w");
+        if (strstr(data, "OK MPD"))
                 return 1;
-        }
 
         return 0;
 }

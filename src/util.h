@@ -40,9 +40,10 @@ char *d_strcpy(const char *str);
 char *d_strncpy(const char *str, size_t n);
 char *bytes_to_bigger(unsigned long bytes);
 int random_range(int min, int max);
-int create_tcp_listener(char *host, char *port);
+int create_tcp_listener(char *host, int port);
 int sendcrlf(int sock, const char *format, ...);
 unsigned int get_str_sum(const char *str);
+double pown(double x, double y);
 
 /*
 inline void freenull(const void *ptr)

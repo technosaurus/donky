@@ -17,10 +17,6 @@ dnl Set macro directory
 AC_CONFIG_MACRO_DIR([m4])
 
 dnl Checks for libraries.
-AC_CHECK_LIB([m], [pow], [], [
-        echo "You don't have the math library! Later nub."
-        exit -1
-        ])
 AC_CHECK_LIB([pthread], [pthread_create], [], [
         echo "You don't have pthreads support! You suck!"
         exit -1

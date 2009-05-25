@@ -15,7 +15,6 @@
  */
 
 #include <ctype.h>
-#include <math.h>
 #include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -219,9 +218,9 @@ char *bytes_to_bigger(unsigned long bytes)
 {
         char str[16];
         char label[4];
-        double tera = pow(1024, 4);
-        double giga = pow(1024, 3);
-        double mega = pow(1024, 2);
+        double tera = pown(1024, 4);
+        double giga = pown(1024, 3);
+        double mega = pown(1024, 2);
         double kilo = 1024;
         double recalc = 0.0;
 
@@ -279,54 +278,33 @@ int random_range(int min, int max)
  *
  * @return Socket!
  */
-int create_tcp_listener(char *host, char *port)
+int create_tcp_listener(char *host, int port)
 {
-        /* Code taken pretty much straight from the man page of getaddrinfo. */
-        
-        struct addrinfo hints;
-        struct addrinfo *result, *rp;
         int sfd;
-        int s;
+        struct sockaddr_in server;
+        struct hostent *hptr;
         int opt = 1;
 
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
-        hints.ai_socktype = SOCK_STREAM; /* TCP socket */
-        hints.ai_flags = AI_PASSIVE;     /* For wildcard IP address */
-        hints.ai_protocol = 0;           /* Any protocol */
-        hints.ai_canonname = NULL;
-        hints.ai_addr = NULL;
-        hints.ai_next = NULL;
-
-        s = getaddrinfo(host, port, &hints, &result);
-        if (s != 0) {
-                fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+        if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+                perror("socket");
                 return -1;
         }
 
-        /* getaddrinfo() returns a list of address structures.
-         * Try each address until we successfully bind(2).
-         * If socket(2) (or bind(2)) fails, we (close the socket
-         * and) try the next address. */
+        if ((hptr = gethostbyname(host)) == NULL) {
+                fprintf(stderr, "Could not gethostbyname(%s)\n", host);
+                return -1;
+        }
+        memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
 
-        for (rp = result; rp != NULL; rp = rp->ai_next) {
-                sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        server.sin_family = AF_INET;
+        server.sin_port = htons((short) port);
+        server.sin_addr.s_addr = INADDR_ANY;
 
-                if (sfd == -1)
-                        continue;
-
-                if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0)
-                        break;
-
+        if ((bind(sfd, (struct sockaddr *) &server, sizeof(server)) == -1)) {
+                perror("bind");
                 close(sfd);
-        }
-
-        if (rp == NULL) {
-                fprintf(stderr, "Could not bind\n");
                 return -1;
         }
-
-        freeaddrinfo(result);
 
         /* Allow this to be reused (needed for reloads and such) */
         if ((setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
@@ -386,4 +364,26 @@ unsigned int get_str_sum(const char *str)
                 sum += *str;
 
         return sum;
+}
+
+/**
+ * @brief This is just a rewrite of <math.h>'s pow function, which I'd like to
+ *        stop using because of how I have to link in that stupid library.
+ *
+ * @param x Number
+ * @param y Power
+ *
+ * @return Result
+ */
+double pown(double x, double y)
+{
+        double result;
+        double i;
+
+        result = 1.0;
+
+        for (i = 0.0; i < y; i += 1.0)
+                result *= x;
+
+        return result;
 }
