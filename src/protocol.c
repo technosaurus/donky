@@ -99,6 +99,7 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
         char *args = NULL;
         int i;
         void *(*func)(donky_conn *, const char *);
+        bool did = false;
 
         args = strchr(buf, ' ');
 
@@ -113,11 +114,16 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
         /* Look for this command. */
         for (i = 0; commands[i].alias != NULL; i++) {
                 if (!strcasecmp(commands[i].alias, buf)) {
+                        did = true;
                         func = commands[i].func;
                         func(cur, args);
                         break;
                 }
         }
+
+        /* Send some sort of NACK if they used an unknown command. */
+        if (!did)
+                sendcrlf(cur->sock, PROTO_ERROR);
 }
 
 /**
