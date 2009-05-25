@@ -15,5 +15,5 @@
  */
 
 #define DEFAULT_GLOBAL_SLEEP 1.0
-#define DEFAULT_CONF ".donkyrcx"
+#define DEFAULT_CONF ".donkyrc"
 #define DEFAULT_CONF_GLOBAL "donky.conf"
