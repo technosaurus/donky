@@ -167,7 +167,7 @@ void run_cron(void)
  */
 static void pop_status(void)
 {
-        char buffer[1024];
+        char buffer[2048];
         char *line;
         int i;
 
@@ -209,7 +209,7 @@ static void pop_status(void)
  */
 static void pop_currentsong(void)
 {
-        char buffer[128];
+        char buffer[2048];
         char *line;
         int i;
 
