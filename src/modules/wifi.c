@@ -19,7 +19,6 @@
 #include <string.h>
 #include <iwlib.h>
 
-#include "../c99.h"
 #include "../cfg.h"
 #include "../mem.h"
 #include "../module.h"

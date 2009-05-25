@@ -19,7 +19,8 @@
 #include <string.h>
 #include <alsa/asoundlib.h>
 
-#include "../c99.h"
+#include "../std/string.h"
+
 #include "../mem.h"
 #include "../module.h"
 
