@@ -21,6 +21,7 @@
 #include <sys/param.h>
 
 #include "std/string.h"
+
 #include "cfg.h"
 #include "module.h"
 #include "util.h"
@@ -373,11 +374,11 @@ void module_load_all(void)
  */
 void *module_get_sym(void *handle, char *name)
 {
-        /* Clear any existing errors. */
-        dlerror();
-
         void *location = dlsym(handle, name);
         const char *error;
+
+        /* Clear any existing errors. */
+        dlerror();
 
         if ((error = dlerror())) {
                 fprintf(stderr, "module_get_sym: problem finding %s: %s\n", name, error);

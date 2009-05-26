@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/param.h>
 
 #include "../mem.h"
 #include "../module.h"
@@ -30,13 +29,13 @@ char module_name[] = "moc";
 char *get_moc(char *args);
 
 /* Globals */
-char home[MAXPATHLEN + 1];
+char home[DMAXPATHLEN];
 
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
         module_var_add(mod, "moc", "get_moc", 10.0, VARIABLE_STR);
-        snprintf(home, MAXPATHLEN, "%s", getenv("HOME"));
+        snprintf(home, sizeof(home), "%s", getenv("HOME"));
 }
 
 /* These run on module unload */
@@ -48,11 +47,12 @@ void module_destroy(void)
 char *get_moc(char *args)
 {
         FILE *mocp;
-        
         char pipe[160];
-        
-        size_t size = strlen(args) + strlen(home) + (sizeof(char) * 19);
-        char mocp_line[size];
+        size_t size;
+        char *mocp_line;
+
+        size = strlen(args) + strlen(home) + (sizeof(char) * 19);
+        mocp_line = malloc(size);
 
         snprintf(mocp_line,
                  size,
@@ -60,10 +60,11 @@ char *get_moc(char *args)
                  home, args);
 
         mocp = popen(mocp_line, "r");
+        free(mocp_line);
         if (mocp == NULL)
                 return "Could not query moc.";
 
-        if (fgets(pipe, 160, mocp) == NULL) {
+        if (fgets(pipe, sizeof(pipe), mocp) == NULL) {
                 pclose(mocp);
                 return "No music playing.";
         }

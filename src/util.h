@@ -44,16 +44,8 @@ int create_tcp_listener(char *host, int port);
 int sendcrlf(int sock, const char *format, ...);
 unsigned int get_str_sum(const char *str);
 double pown(double x, double y);
-
-/*
-inline void freenull(const void *ptr)
-{
-        void **vptr = (void **)ptr;
-
-        free(*vptr);
-        *vptr = NULL;
-}
-*/
+char *uint_to_str(char *dst, unsigned long int src, size_t siz);
+char *float_to_str(char *dst, long double src, int precision, size_t siz);
 
 #endif /* UTIL_H */
 

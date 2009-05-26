@@ -86,7 +86,6 @@ void request_handler_stop(void)
 static void *request_handler_exec(void *arg)
 {
         struct timespec tspec;
-        request_handler_sleep_setup(&tspec);
         struct request_list *cur;
         struct request_list *next;
         double timeout;
@@ -97,6 +96,8 @@ static void *request_handler_exec(void *arg)
         unsigned int ret_int;
         unsigned int sum;
         int n;
+
+        request_handler_sleep_setup(&tspec);
 
         /* Infinite Spewns Nerdiness Loop (tm) */
         while (1) {

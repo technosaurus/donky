@@ -27,10 +27,9 @@
 #include <sys/types.h>
 
 #include "std/stdbool.h"
+#include "std/string.h"
 
 #include "util.h"
-
-/*extern void freenull(const void *ptr);*/
 
 /**
  * @brief Trim leading and trailing whitespace from a string.
@@ -104,7 +103,7 @@ bool is_comment(char *str)
  */
 bool is_all_spaces(char *str)
 {
-        int i;
+        unsigned int i;
 
         for (i = 0; i < strlen(str); i++)
                 if (!isspace(str[i]))
@@ -155,6 +154,7 @@ char *chomp(char *str)
 char *substr(char *str, int offset, int length)
 {
         /* EFFICIENCY TESTED TO THE FUCKING MAXIMUM BY A MAN IN A LAB COAT */
+        /* lol */
         char *dup = malloc(length + 1);
         str += offset;
         strncpy(dup, str, length);
@@ -217,32 +217,27 @@ char *d_strncpy(const char *str, size_t n)
 char *bytes_to_bigger(unsigned long bytes)
 {
         char str[16];
-        char label[4];
         double tera = pown(1024, 4);
         double giga = pown(1024, 3);
         double mega = pown(1024, 2);
         double kilo = 1024;
-        double recalc = 0.0;
 
         if (bytes >= tera) {
-                recalc = bytes / tera;
-                strncpy(label, "TiB", sizeof(label) - 1);
+                float_to_str(str, bytes / tera, 2, sizeof(str));
+                strlcat(str, "TiB", sizeof(str));
         } else if (bytes >= giga) {
-                recalc = bytes / giga;
-                strncpy(label, "GiB", sizeof(label) - 1);
+                float_to_str(str, bytes / giga, 2, sizeof(str));
+                strlcat(str, "GiB", sizeof(str));
         } else if (bytes >= mega) {
-                recalc = bytes / mega;
-                strncpy(label, "MiB", sizeof(label) - 1);
+                float_to_str(str, bytes / mega, 2, sizeof(str));
+                strlcat(str, "MiB", sizeof(str));
         } else if (bytes >= kilo) {
-                recalc = bytes / kilo;
-                strncpy(label, "KiB", sizeof(label) - 1);
+                float_to_str(str, bytes / kilo, 2, sizeof(str));
+                strlcat(str, "KiB", sizeof(str));
         } else {
-                recalc = bytes;
-                strncpy(label, "B", sizeof(label) - 1);
+                uint_to_str(str, bytes, sizeof(str));
+                strlcat(str, "B", sizeof(str));
         }
-
-        label[3] = '\0';
-        snprintf(str, sizeof(str), "%.2f%s", recalc, label);
 
         return d_strcpy(str);
 }
@@ -387,3 +382,103 @@ double pown(double x, double y)
 
         return result;
 }
+
+/** 
+ * @brief Converts an unsigned int into a string. String is guaranteed
+ *        to be null terminated.
+ * 
+ * @param dst Char pointer/array to fill
+ * @param src The number to convert
+ * @param siz Size of dst
+ * 
+ * @return Pointer to the new string
+ */
+char *uint_to_str(char *dst, unsigned long int src, size_t siz)
+{
+        char *str;
+        unsigned long int cpy;
+        int i;
+        unsigned int len;
+        char rev;
+
+        if ((dst == NULL) || (siz <= 1))
+                return NULL;
+
+        /* calculate how many digits src is by dividing it by increasing
+         * powers of 10 until it equals 0 */
+        for (i = 10, len = 0, cpy = src; cpy != 0; i *= 10, len++)
+                cpy = src / i;
+
+        /* if dst is smaller than the number of digits in src, start
+         * dropping digits off the end of src until it would fit.
+         * after this, len should == siz - 1 which will leave room for a
+         * '\0' at the end of dst */
+        while (len >= siz) {
+                src /= 10;
+                len--;
+        }
+
+        /* convert the digits */
+        str = dst;
+        do {
+                *str++ = 48 + (src % 10);
+                src /= 10;
+        } while (--len != 0);
+
+        /* null terminate */
+        *str = '\0';
+
+        /* reverse the string, because it's backwards! */
+        str--; /* so we don't move the '\0' */
+        while (str > dst) {
+                rev = *str;
+                *str-- = *dst;
+                *dst++ = rev;
+        }
+
+        /* finally correct the offset of the pointer to the string and return
+         * that summabish */
+        return --str;
+}
+
+/** 
+ * @brief Converts a float into a string, deciminal places and all.
+ *        String is guaranteed to be null terminated.
+ * 
+ * @param dst Char array/string to fill.
+ * @param src Number to convert
+ * @param precision Number of decimal places to write
+ * @param siz Size of dst
+ * 
+ * @return Pointer to the new string
+ */
+char *float_to_str(char *dst, long double src, int precision, size_t siz)
+{
+        long int pre = src;
+        long int pst = (src - pre) * pown(10, precision);
+        int i;
+        int precpy, pstcpy;
+        int prelen, pstlen;
+        char *pre_str, *pst_str;
+
+        for (i = 10, prelen = 0, precpy = pre; precpy != 0; i *= 10, prelen++)
+                precpy = pre / i;
+        for (i = 10, pstlen = 0, pstcpy = pst; pstcpy != 0; i *= 10, pstlen++)
+                pstcpy = pst / i;
+
+        pre_str = malloc(prelen + 1); /* +1 for '\0'         */
+        pst_str = malloc(pstlen + 2); /* +2 for '.' and '\0' */
+        *pst_str = '.'; /* <---------------------^           */
+
+        uint_to_str(pre_str, pre, prelen + 1);
+        uint_to_str(++pst_str, pst, pstlen + 1);
+
+        strlcpy(dst, pre_str, siz);
+        strlcat(dst, --pst_str, siz);
+
+        free(pre_str);
+        free(pst_str);
+
+        return dst;
+}
+

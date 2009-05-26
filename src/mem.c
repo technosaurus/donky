@@ -73,10 +73,12 @@ void *m_calloc(size_t nelem, size_t size)
  */
 char *m_strdup(char *str)
 {
+        char *ret;
+
         if (str == NULL)
                 return NULL;
-        
-        char *ret = d_strcpy(str);
+
+        ret = d_strcpy(str);
         mem_list_add(ret);
         return ret;
 }
@@ -91,10 +93,12 @@ char *m_strdup(char *str)
  */
 char *m_strndup(char *str, size_t size)
 {
+        char *ret;
+
         if (str == NULL)
                 return NULL;
-        
-        char *ret = d_strncpy(str, size);
+
+        ret = d_strncpy(str, size);
         mem_list_add(ret);
         return ret;
 }

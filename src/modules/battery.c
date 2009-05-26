@@ -48,7 +48,7 @@ struct batt *add_batt(char *args);
 char *get_remaining_charge(char *args);
 char *get_maximum_charge(char *args);
 
-void clear_batt(struct batt *cur);
+void clear_batt(void *cur);
 
 /* Globals */
 struct list *batt_ls = NULL;
@@ -224,9 +224,9 @@ struct batt *add_batt(char *batt_number)
  * 
  * @return 1 if match succeeds, 0 if fails
  */
-int find_batt(struct batt *batt, char *match)
+int find_batt(struct batt *cur, char *match)
 {
-        if (!strcmp(batt->number, match))
+        if (!strcmp(cur->number, match))
                 return 1;
 
         return 0;
@@ -313,8 +313,10 @@ char *get_maximum_charge(char *args)
  * 
  * @param batt Battery node to clear.
  */
-void clear_batt(struct batt *batt)
+void clear_batt(void *cur)
 {
+        struct batt *batt = cur;
+
         free(batt->number);
         free(batt->remaining);
         free(batt->maximum);

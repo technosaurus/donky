@@ -48,7 +48,7 @@ void *add_node(struct list *ls, void *data)
 {
         struct list_item *new;
 
-        if (!ls)
+        if (ls == NULL)
                 return NULL;
 
         new = malloc(sizeof(struct list_item));
@@ -82,19 +82,13 @@ void *add_node(struct list *ls, void *data)
  * @return The requested node.
  */
 void *get_node(struct list *ls,
-               void *match_callback,
+               int (*m)(void *data, void *match),
                void *match,
-               void *add_callback)
+               void *(*a)(void *match))
 {
         struct list_item *cur;
-        int (*m)(void *data, void *match);
-        void *(*a)(void *match);
 
-        if (!ls || !match)
-                return NULL;
-
-        m = match_callback;
-        if (!m)
+        if ((ls == NULL) || (match == NULL) || (m == NULL))
                 return NULL;
 
         cur = ls->first;
@@ -104,8 +98,7 @@ void *get_node(struct list *ls,
                 cur = cur->next;
         }
 
-        a = add_callback;
-        if (a)
+        if (a != NULL)
                 return a(match);
 
         return NULL;
@@ -121,9 +114,11 @@ void *get_node(struct list *ls,
  * 
  * @return The requested node if it exists, else NULL.
  */
-void *find_node(struct list *ls, void *match_callback, void *match)
+void *find_node(struct list *ls,
+                int (*m)(void *data, void *match),
+                void *match)
 {
-        return get_node(ls, match_callback, match, NULL);
+        return get_node(ls, m, match, NULL);
 }
 
 /** 
@@ -137,19 +132,16 @@ void *find_node(struct list *ls, void *match_callback, void *match)
  *                      struct has nothing malloc'd in it. (Memory leaks = bad)
  */
 void del_node(struct list *ls,
-              void *match_callback,
+              int (*m)(void *data, void *match),
               void *match,
-              void *free_external)
+              void (*f)(void *data))
 {
         void *result;
         struct list_item *cur;
-        void (*f)(void *data);
 
-        result = find_node(ls, match_callback, match);
-        if (!result)
+        result = get_node(ls, m, match, NULL);
+        if (result == NULL)
                 return;
-
-        f = free_external;
 
         cur = ls->first;
         while (cur) {
@@ -187,22 +179,19 @@ void del_node(struct list *ls,
 void del_nodes(struct list *ls,
                void *match_callback,
                void *match,
-               void *free_external)
+               void (*f)(void *data))
 {
         struct list_item *cur;
         struct list_item *next;
         void *result;
-        void (*f)(void *data);
 
-        if (!ls)
+        if (ls == NULL)
                 return;
-
-        f = free_external;
 
         cur = ls->first;
         while (cur) {
-                result = find_node(ls, match_callback, match);
-                if (!result)
+                result = get_node(ls, match_callback, match, NULL);
+                if (result == NULL)
                         return;
 
                 next = cur->next;
@@ -234,16 +223,13 @@ void del_nodes(struct list *ls,
  * @param ls The list struct of the list you wish to delete.
  * @param free_external See del_node() just above.
  */
-void del_list(struct list *ls, void *free_external)
+void del_list(struct list *ls, void (*f)(void *data))
 {
         struct list_item *cur;
         struct list_item *next;
-        void (*f)(void *data);
 
-        if (!ls)
+        if (ls == NULL)
                 return;
-        
-        f = free_external;
 
         cur = ls->first;
         while (cur) {
@@ -268,16 +254,11 @@ void del_list(struct list *ls, void *free_external)
  * @param execute_callback Pointer to a function you wish to run on the contents
  *                of all nodes in a list.
  */
-void act_on_list(struct list *ls, void *execute_callback)
+void act_on_list(struct list *ls, void (*e)(void *data))
 {
         struct list_item *cur;
-        void (*e)(void *data);
 
-        if (!ls)
-                return;
-
-        e = execute_callback;
-        if (!e)
+        if ((ls == NULL) || (e == NULL))
                 return;
 
         cur = ls->first;

@@ -29,22 +29,24 @@ struct list {
 };
 
 struct list *init_list(void);
-void *add_node(struct list *fl, void *data);
-void *get_node(struct list *fl,
-               void *match_callback,
+void *add_node(struct list *ls, void *data);
+void *get_node(struct list *ls,
+               int (*m)(void *data, void *match),
                void *match,
-               void *fallback);
-void *find_node(struct list *fl, void *match_callback, void *match);
-void del_node(struct list *fl,
-              void *match_callback,
+               void *(*a)(void *match));
+void *find_node(struct list *ls,
+                int (*m)(void *data, void *match),
+                void *match);
+void del_node(struct list *ls,
+              int (*m)(void *data, void *match),
               void *match,
-              void *free_external);
-void del_nodes(struct list *fl,
+              void (*f)(void *data));
+void del_nodes(struct list *ls,
                void *match_callback,
                void *match,
-               void *free_external);
-void del_list(struct list *fl, void *free_external);
-void act_on_list(struct list *fl, void *execute);
+               void (*f)(void *data));
+void del_list(struct list *ls, void (*f)(void *data));
+void act_on_list(struct list *ls, void (*e)(void *data));
 
 #endif /* LISTS_H */
 

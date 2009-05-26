@@ -77,20 +77,26 @@ void module_destroy(void)
 
 char *get_uptime(char *args)
 {
+        unsigned long cur_up;
+        int days, hours, mins, secs;
+
+        cur_up = info.uptime;
+        days = cur_up / 86400;
+
+        cur_up -= days * 86400;
+        hours = cur_up / 3600;
+
+        cur_up -= hours * 3600;
+        mins = cur_up / 60;
+
+        cur_up -= mins * 60;
+        secs = cur_up;
+
         if (sysinfo(&info) == -1)
                 return "n/a";
 
-        unsigned long cur_up = info.uptime;
-        unsigned long days = cur_up / 86400;
-        cur_up -= days * 86400;
-        int hours = cur_up / 3600;
-        cur_up -= hours * 3600;
-        int mins = cur_up / 60;
-        cur_up -= mins * 60;
-        int secs = cur_up;
-
         ret = m_malloc(32 * sizeof(char));
-        snprintf(ret, 32, "%ld day%s, %02d:%02d:%02d",
+        snprintf(ret, 32, "%d day%s, %02d:%02d:%02d",
                  days, (days != 1) ? "s" : "",
                  hours, mins, secs);
 
@@ -100,10 +106,11 @@ char *get_uptime(char *args)
 
 char *get_loadavg(char *args)
 {
+        float load0, load1, load2;
+
         if (sysinfo(&info) == -1)
                 return "n/a";
 
-        float load0, load1, load2;
         load0 = info.loads[0] / 65536.0;
         load1 = info.loads[1] / 65536.0;
         load2 = info.loads[2] / 65536.0;

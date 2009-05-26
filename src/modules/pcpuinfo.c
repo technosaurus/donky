@@ -52,18 +52,16 @@ void module_destroy(void)
 char *get_pcpufreq(char *args)
 {
         FILE *pcpuinfo = fopen("/proc/cpuinfo", "r");
-
+        char str[16];
+        char core;
+        int found = 0;
+        char *p;
+ 
         ret_pcpufreq = NULL;
 
         if (pcpuinfo == NULL)
                 return "Can't open /proc/cpuinfo";
-
-        char str[16];
-
-        char core;
-        int found = 0;
-        char *p;
-        
+       
         if (args == NULL)
                 core = '0';
         else
@@ -94,16 +92,14 @@ char *get_pcpufreq(char *args)
 char *get_pcpuname(char *args)
 {
         FILE *pcpuinfo = fopen("/proc/cpuinfo", "r");
+        char str[64];
+        char core;
+        int found = 0;
 
         ret_pcpuname = NULL;
 
         if (pcpuinfo == NULL)
                 return "Can't open /proc/cpuinfo";
-
-        char str[64];
-
-        char core;
-        int found = 0;
 
         if (args == NULL)
                 core = '0';
@@ -131,16 +127,14 @@ char *get_pcpuname(char *args)
 char *get_pcpucache(char *args)
 {
         FILE *pcpuinfo = fopen("/proc/cpuinfo", "r");
+        char str[16];
+        char core;
+        int found = 0;
 
         ret_pcpucache = NULL;
 
         if (pcpuinfo == NULL)
                 return "Can't open /proc/cpuinfo";
-
-        char str[16];
-
-        char core;
-        int found = 0;
 
         if (args == NULL)
                 core = '0';

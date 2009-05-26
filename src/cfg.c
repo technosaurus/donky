@@ -290,7 +290,7 @@ handle_key:
                         strlcpy(value, "False", sizeof(value));
 
                 add_key(mod, key, value);
-
+                /*
                 char *char_key = get_char_key(mod, key, "ERROR");
                 printf("added-> mod [%s] key [%s] value [%s]\n",
                        mod, key, value);
@@ -300,6 +300,7 @@ handle_key:
                        get_double_key(mod, key, -1),
                        get_bool_key(mod, key, -1));
                 free(char_key);
+                */
         }
 
         fclose(cfg_file);
@@ -317,15 +318,16 @@ static FILE *get_cfg_file(void)
         char cfg_file_path[DMAXPATHLEN];
         FILE *cfg_file;
 
-        snprintf(cfg_file_path, sizeof(cfg_file_path),
-                 "%s/%s", getenv("HOME"), DEFAULT_CONF);
+        strlcpy(cfg_file_path, getenv("HOME"), sizeof(cfg_file_path));
+        strlcat(cfg_file_path, "/" DEFAULT_CONF, sizeof(cfg_file_path));
 
         cfg_file = fopen(cfg_file_path, "r");
         if (!cfg_file) {
                 printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
 
-                snprintf(cfg_file_path, sizeof(cfg_file_path),
-                         "%s/%s", SYSCONFDIR, DEFAULT_CONF_GLOBAL);
+                strlcpy(cfg_file_path,
+                        SYSCONFDIR "/" DEFAULT_CONF_GLOBAL,
+                        sizeof(cfg_file_path));
 
                 cfg_file = fopen(cfg_file_path, "r");
                 if (!cfg_file) {
