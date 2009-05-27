@@ -397,28 +397,27 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
 {
         char *str;
         unsigned long int cpy;
-        int i;
-        unsigned int len;
+        unsigned int i;
+        size_t len;
         char rev;
 
         if ((dst == NULL) || (siz <= 1))
                 return NULL;
 
-        /* calculate how many digits src is by dividing it by increasing
-         * powers of 10 until it equals 0 */
+        /* count how many digits src contains by dividing
+         * it by increasing powers of 10 until it equals 0 */
         for (i = 10, len = 0, cpy = src; cpy != 0; i *= 10, len++)
                 cpy = src / i;
 
-        /* if dst is smaller than the number of digits in src, start
-         * dropping digits off the end of src until it would fit.
-         * after this, len should == siz - 1 which will leave room for a
-         * '\0' at the end of dst */
+        /* if dst is smaller than the number of digits in src, start dropping
+         * digits off the end of src until it fits. afterward, len should equal
+         * siz - 1 which will leave room for a '\0' at the end of dst */
         while (len >= siz) {
                 src /= 10;
                 len--;
         }
 
-        /* convert the digits */
+        /* convert the digits, one at a time */
         str = dst;
         do {
                 *str++ = 48 + (src % 10);
@@ -428,16 +427,16 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
         /* null terminate */
         *str = '\0';
 
-        /* reverse the string, because it's backwards! */
-        str--; /* so we don't move the '\0' */
+        /* reverse the string, because it's backward! shift str back
+         * by 1 byte first so we don't move the terminating '\0' */
+        str--;
         while (str > dst) {
                 rev = *str;
                 *str-- = *dst;
                 *dst++ = rev;
         }
 
-        /* finally correct the offset of the pointer to the string and return
-         * that summabish */
+        /* correct the offset of the pointer and return it */
         return --str;
 }
 

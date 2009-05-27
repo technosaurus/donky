@@ -1,6 +1,6 @@
 moduledir = $(libdir)/donky
 
-AM_CFLAGS = -Wall -Wextra -pedantic
+AM_CFLAGS = -Wall -pedantic
 module_LTLIBRARIES = 
 
 if ENABLE_DATE
@@ -46,7 +46,7 @@ module_LTLIBRARIES += battery.la
 endif
 
 if ENABLE_EXEC
-exec_la_LDFLAGS     = -module -avoid-version
+exec_la_LDFLAGS     = -module -avoid-version --std=gnu89
 exec_la_SOURCES     = exec.c
 exec_la_LIBADD      = $(DEPS_LIBS)
 module_LTLIBRARIES += exec.la
@@ -74,7 +74,7 @@ module_LTLIBRARIES += eeebl.la
 endif
 
 if ENABLE_WIFI
-wifi_la_LDFLAGS     = -module -avoid-version
+wifi_la_LDFLAGS     = -module -avoid-version --std=gnu89
 wifi_la_SOURCES     = wifi.c
 wifi_la_LIBADD      = $(DEPS_LIBS) -liw
 module_LTLIBRARIES += wifi.la
