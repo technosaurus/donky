@@ -137,14 +137,13 @@ struct module_var *module_var_find_by_name(const char *name)
  */
 void module_var_cron_exec(void)
 {
-        void *(*sym)(void);
         struct module_var *cur = mv_start;
 
         while (cur) {
                 if (cur->type == VARIABLE_CRON &&
                     (get_time() - cur->last_update) >= cur->timeout) {
-                        if ((sym = cur->sym) != NULL) {
-                                sym();
+                        if (cur->sym != NULL) {
+                                cur->sym(NULL);
                                 cur->last_update = get_time();
                         }
                 }

@@ -8,6 +8,8 @@
 #ifndef DSTDBOOL_H
 #define DSTDBOOL_H
 
+#include "../../config.h"
+
 #ifndef HAVE_STDBOOL_H
 
 #ifndef	_STDBOOL_H_

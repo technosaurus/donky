@@ -17,8 +17,6 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-#include "../config.h"
-
 #define PROTO_CONN_ACK  "donky " VERSION
 #define PROTO_PASS_REQ  "pass: %63s[^\r\n]"
 #define PROTO_PASS_ACK  "SUP"
@@ -29,7 +27,7 @@
 
 typedef struct {
         char *alias;
-        void *func;
+        void (*func)(donky_conn *, const char *);
 } donky_cmd;
 
 void protocol_handle(donky_conn *cur, const char *buf);

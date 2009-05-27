@@ -42,7 +42,7 @@ void del_node(struct list *ls,
               void *match,
               void (*f)(void *data));
 void del_nodes(struct list *ls,
-               void *match_callback,
+               int (*m)(void *data, void *match),
                void *match,
                void (*f)(void *data));
 void del_list(struct list *ls, void (*f)(void *data));

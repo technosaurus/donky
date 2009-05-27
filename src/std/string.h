@@ -35,6 +35,8 @@
 #ifndef DSTRING_H
 #define DSTRING_H
 
+#include "../../config.h"
+
 #include <string.h>
 
 #ifndef HAVE_STRLCAT

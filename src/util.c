@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>

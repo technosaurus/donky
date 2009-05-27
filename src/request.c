@@ -90,8 +90,6 @@ static void *request_handler_exec(void *arg)
         struct request_list *next;
         double timeout;
         double last_update;
-        char *(*func_str)(char *);
-        unsigned int (*func_int)(char *);
         char *ret_str;
         unsigned int ret_int;
         unsigned int sum;
@@ -131,8 +129,8 @@ static void *request_handler_exec(void *arg)
                         /* Figure out what type of variable this is. */
                         switch (cur->var->type) {
                         case VARIABLE_STR:
-                                if ((func_str = cur->var->sym)) {
-                                        ret_str = func_str(cur->args);
+                                if (cur->var->sym) {
+                                        ret_str = cur->var->sym(cur->args);
                                         sum = get_str_sum(ret_str);
 
                                         if (sum != cur->var->sum || cur->remove) {
@@ -153,8 +151,8 @@ static void *request_handler_exec(void *arg)
                                 break;
                         case VARIABLE_BAR:
                         case VARIABLE_GRAPH:
-                                if ((func_int = cur->var->sym)) {
-                                        ret_int = func_int(cur->args);
+                                if (cur->var->sym) {
+                                        ret_int = (int)cur->var->sym(cur->args);
                                         sum = ret_int;
 
                                         if (sum != cur->var->sum || cur->remove) {

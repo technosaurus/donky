@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "../config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -97,7 +99,6 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
 {
         char *args = NULL;
         int i;
-        void *(*func)(donky_conn *, const char *);
         bool did = false;
 
         args = strchr(buf, ' ');
@@ -114,8 +115,7 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
         for (i = 0; commands[i].alias != NULL; i++) {
                 if (!strcasecmp(commands[i].alias, buf)) {
                         did = true;
-                        func = commands[i].func;
-                        func(cur, args);
+                        commands[i].func(cur, args);
                         break;
                 }
         }

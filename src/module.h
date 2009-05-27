@@ -35,10 +35,21 @@ struct module {
         struct module *prev;
 };
 
+/* we're going to have to do something like this if we want -pedantic to shutup */
+/*
+union module_funcs {
+        char *(*c)(char *);
+        char *(*cv)(void);
+        int (*i)(char *);
+        int (*iv)(void);
+};
+*/
+
 struct module_var {
         char name[64];           /* Name of the variable. */
         char method[64];         /* Method name to call. */
-        void *sym;               /* Link to method symbol. */
+        /*union module_funcs syms;*/
+        char *(*sym)(char *);    /* Link to method symbol. */
         enum variable_type type; /* Type of method.  See the enum above. */
 
         double timeout;          /* Used for cron jobs */

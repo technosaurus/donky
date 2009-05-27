@@ -177,7 +177,7 @@ void del_node(struct list *ls,
  * @param free_external
  */
 void del_nodes(struct list *ls,
-               void *match_callback,
+               int (*m)(void *data, void *match),
                void *match,
                void (*f)(void *data))
 {
@@ -190,7 +190,7 @@ void del_nodes(struct list *ls,
 
         cur = ls->first;
         while (cur) {
-                result = get_node(ls, match_callback, match, NULL);
+                result = get_node(ls, m, match, NULL);
                 if (result == NULL)
                         return;
 

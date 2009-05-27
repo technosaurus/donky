@@ -48,6 +48,8 @@
  * SUCH DAMAGE.
  */
 
+#include "../../config.h"
+
 #if (!defined(HAVE_STRLCAT)    || !defined(HAVE_STRLCPY)      || \
      !defined(HAVE_STRCASECMP) || !defined(HAVE_STRNCASECMP))
 #include <sys/types.h>
