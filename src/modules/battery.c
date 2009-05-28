@@ -266,7 +266,7 @@ char *get_remaining_charge(char *args)
 
         chomp(remaining);
 
-        return m_strdup(remaining);
+        return d_strcpy(remaining);
 }
 
 /** 
@@ -305,7 +305,7 @@ char *get_maximum_charge(char *args)
 
         chomp(maximum);
 
-        return m_strdup(maximum);
+        return d_strcpy(maximum);
 }
 
 /** 
