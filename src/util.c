@@ -400,7 +400,6 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
         unsigned long int tmp;
         unsigned int i;
         size_t len;
-        char rev;
 
         if ((dst == NULL) || (siz <= 1))
                 return NULL;
@@ -459,7 +458,6 @@ char *float_to_str(char *dst,
         long int num, tmp;
         unsigned int precision_check;
         size_t len;
-        char rev;
 
         if ((dst == NULL) || (siz <= 3) || (precision == 0))
                 return NULL;
