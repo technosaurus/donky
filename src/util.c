@@ -376,9 +376,9 @@ double pown(double x, double y)
         double result;
         double i;
 
-        result = 1.0;
+        result = x;
 
-        for (i = 0.0; i < y; i += 1.0)
+        for (i = 1.0; i < y; i += 1.0)
                 result *= x;
 
         return result;
@@ -397,7 +397,7 @@ double pown(double x, double y)
 char *uint_to_str(char *dst, unsigned long int src, size_t siz)
 {
         char *str;
-        unsigned long int cpy;
+        unsigned long int tmp;
         unsigned int i;
         size_t len;
         char rev;
@@ -405,40 +405,37 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
         if ((dst == NULL) || (siz <= 1))
                 return NULL;
 
+        str = dst;
+        len = 0;
+
         /* count how many digits src contains by dividing
          * it by increasing powers of 10 until it equals 0 */
-        for (i = 10, len = 0, cpy = src; cpy != 0; i *= 10, len++)
-                cpy = src / i;
+        for (i = 10, tmp = src; tmp != 0; i *= 10, len++)
+                tmp = src / i;
 
         /* if dst is smaller than the number of digits in src, start dropping
          * digits off the end of src until it fits. afterward, len should equal
          * siz - 1 which will leave room for a '\0' at the end of dst */
-        while (len >= siz) {
-                src /= 10;
-                len--;
-        }
+        if (len >= siz)
+                while (len >= siz) {
+                        src /= 10;
+                        len--;
+                }
+        else
+                len++;
 
         /* convert the digits, one at a time */
-        str = dst;
         do {
                 *str++ = 48 + (src % 10);
                 src /= 10;
-        } while (--len != 0);
+        } while (--len != 1); /* 1 byte left for terminating '\0' */
 
         /* null terminate */
         *str = '\0';
 
         /* reverse the string, because it's backward! shift str back
          * by 1 byte first so we don't move the terminating '\0' */
-        str--;
-        while (str > dst) {
-                rev = *str;
-                *str-- = *dst;
-                *dst++ = rev;
-        }
-
-        /* correct the offset of the pointer and return it */
-        return --str;
+        return reverse_string(dst, --str);
 }
 
 /** 
@@ -452,33 +449,88 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
  * 
  * @return Pointer to the new string
  */
-char *float_to_str(char *dst, long double src, int precision, size_t siz)
+char *float_to_str(char *dst,
+                   long double src,
+                   unsigned int precision,
+                   size_t siz)
 {
-        long int pre = src;
-        long int pst = (src - pre) * pown(10, precision);
-        int i;
-        int precpy, pstcpy;
-        int prelen, pstlen;
-        char *pre_str, *pst_str;
+        char *str;
+        unsigned int i;
+        long int num, tmp;
+        unsigned int precision_check;
+        size_t len;
+        char rev;
 
-        for (i = 10, prelen = 0, precpy = pre; precpy != 0; i *= 10, prelen++)
-                precpy = pre / i;
-        for (i = 10, pstlen = 0, pstcpy = pst; pstcpy != 0; i *= 10, pstlen++)
-                pstcpy = pst / i;
+        if ((dst == NULL) || (siz <= 3) || (precision == 0))
+                return NULL;
 
-        pre_str = malloc(prelen + 1); /* +1 for '\0'         */
-        pst_str = malloc(pstlen + 2); /* +2 for '.' and '\0' */
-        *pst_str = '.'; /* <---------------------^           */
+        str = dst;
+        num = src * pown(10, precision);
+        precision_check = 0;
+        len = 0;
 
-        uint_to_str(pre_str, pre, prelen + 1);
-        uint_to_str(++pst_str, pst, pstlen + 1);
+        /* count how many digits src contains by dividing
+         * it by increasing powers of 10 until it equals 0 */
+        for (i = 10, tmp = num; tmp != 0; i *= 10, len++)
+                tmp = num / i;
 
-        strlcpy(dst, pre_str, siz);
-        strlcat(dst, --pst_str, siz);
+        /* if dst is smaller than the number of digits in src, start dropping
+         * digits off the end of src until it fits. afterward, len should equal
+         * siz - 2 which leaves room for the decimal '.' and terminating '\0' */
+        siz -= 2;
+        if (len > siz)
+                while (len > siz) {
+                        num /= 10;
+                        len--;
+                }
+        else
+                len += 2;
 
-        free(pre_str);
-        free(pst_str);
+        /* convert the digits, one at a time */
+        do {
+                /* have we added enough decimal places yet? */
+                if (precision_check == precision) {
+                        /* we don't add a decimal if it'd be the
+                         * last char before the terminating '\0' */
+                        if (len != 2) {
+                                *str++ = '.';
+                                precision_check++;
+                        }
+                        continue;
+                } else if (precision_check < precision) {
+                        precision_check++;
+                }
+                *str++ = 48 + (num % 10);
+                num /= 10;
+        } while (--len > 1); /* 1 byte left for terminating '\0' */
 
-        return dst;
+        /* null terminate */
+        *str = '\0';
+
+        /* reverse the string, because it's backward! shift str back
+         * by 1 byte first so we don't move the terminating '\0' */
+        return reverse_string(dst, --str);
+}
+
+/** 
+ * @brief Reverses a string
+ * 
+ * @param start Pointer to the beginning of the string
+ * @param end Pointer to the byte BEFORE the terminating '\0' of the string
+ * 
+ * @return Pointer to the beginning of the reversed string
+ */
+char *reverse_string(char *start, char *end)
+{
+        char rev;
+
+        while (end > start) {
+                rev = *end;
+                *end-- = *start;
+                *start++ = rev;
+        }
+
+        /* end is now 1 byte after the start of the string, so... */
+        return (end - 1);
 }
 

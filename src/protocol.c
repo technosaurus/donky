@@ -109,6 +109,11 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
                 args++;
         }
 
+        if (args == NULL) {
+                sendcrlf(cur->sock, PROTO_ERROR);
+                return;
+        }
+
         printf("cmd[%s]args[%s]\n", buf, args);
 
         /* Look for this command. */

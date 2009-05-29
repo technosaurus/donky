@@ -45,7 +45,10 @@ int sendcrlf(int sock, const char *format, ...);
 unsigned int get_str_sum(const char *str);
 double pown(double x, double y);
 char *uint_to_str(char *dst, unsigned long int src, size_t siz);
-char *float_to_str(char *dst, long double src, int precision, size_t siz);
-
+char *float_to_str(char *dst,
+                   long double src,
+                   unsigned int precision,
+                   size_t siz);
+char *reverse_string(char *start, char *end);
 #endif /* UTIL_H */
 
