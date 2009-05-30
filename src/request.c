@@ -152,7 +152,8 @@ static void *request_handler_exec(void *arg)
                         case VARIABLE_BAR:
                         case VARIABLE_GRAPH:
                                 if (cur->var->sym) {
-                                        ret_int = (int)cur->var->sym(cur->args);
+                                        ret_int = (unsigned int)
+                                                  cur->var->sym(cur->args);
                                         sum = ret_int;
 
                                         if (sum != cur->var->sum || cur->remove) {
