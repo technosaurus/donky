@@ -25,17 +25,12 @@
 char module_name[] = "eeebl";
 
 /* My function prototypes */
-char *get_eeeblper(char *args);
-char *get_eeeblcur(char *args);
-char *get_eeeblmax(char *args);
-unsigned int get_eeeblbar(char *args);
-
-void get_cur_bl(void);
-void get_max_bl(void);
+static void get_cur_bl(void);
+static void get_max_bl(void);
 
 /* Globals */
-char *cur_bl = NULL;
-char *max_bl = NULL;
+static char *cur_bl = NULL;
+static char *max_bl = NULL;
 
 /* These run on module startup */
 void module_init(const struct module *mod)
@@ -130,7 +125,7 @@ unsigned int get_eeeblbar(char *args)
 /**
  * @brief Updates cur_bl with the current backlight level from /sys.
  */
-void get_cur_bl(void)
+static void get_cur_bl(void)
 {
         char *path;
         FILE *cur_bl_file;
@@ -153,7 +148,7 @@ void get_cur_bl(void)
  * @brief Updates max_bl with the maximum backlight level from /sys. This only
  *        needs to be run once and never again, because it doesn't change.
  */
-void get_max_bl(void)
+static void get_max_bl(void)
 {
         char *path;
         FILE *max_bl_file;

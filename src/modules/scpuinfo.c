@@ -24,9 +24,6 @@
 /* Module name */
 char module_name[] = "scpuinfo";
 
-/* My function prototypes */
-char *get_scpufreq(char *args);
-
 /* These run on module startup */
 void module_init(const struct module *mod)
 {

@@ -25,15 +25,10 @@
 /* Module name */
 char module_name[] = "pcpuinfo";
 
-/* My function prototypes */
-char *get_pcpufreq(char *args);
-char *get_pcpuname(char *args);
-char *get_pcpucache(char *args);
-
 /* Globals */
-char *ret_pcpufreq = NULL;
-char *ret_pcpuname = NULL;
-char *ret_pcpucache = NULL;
+static char *ret_pcpufreq = NULL;
+static char *ret_pcpuname = NULL;
+static char *ret_pcpucache = NULL;
 
 /* These run on module startup */
 void module_init(const struct module *mod)

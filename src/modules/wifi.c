@@ -27,9 +27,9 @@
 char module_name[] = "wifi_pwn_edition";
 
 /* Globals */
-char *interface;
+static char *interface;
 
-struct wifi_info {
+static struct wifi_info {
         char essid[64];
         char mode[32];
         char bitrate[16];

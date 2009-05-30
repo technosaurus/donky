@@ -39,14 +39,14 @@ static void pop_status(void);
 static void init_settings(void);
 
 /* Globals. */
-int mpd_sock = -1;
-char *mpd_host = NULL;
-int mpd_port;
-struct sockaddr_in server;
-struct hostent *hptr;
-int initialized = 0;
+static int mpd_sock = -1;
+static char *mpd_host = NULL;
+static int mpd_port;
+static struct sockaddr_in server;
+static struct hostent *hptr;
+static int initialized = 0;
 
-struct mpd_info {
+static struct mpd_info {
         /* currentsong */
         char file[256];
         char artist[128];
@@ -332,7 +332,7 @@ static void init_settings(void)
 /**
  * @brief Connect to MPD host.
  */
-int start_connection(void)
+static int start_connection(void)
 {
         int bytes;
         char data[32];

@@ -25,11 +25,8 @@
 /* Module name */
 char module_name[] = "moc";
 
-/* My function prototypes */
-char *get_moc(char *args);
-
 /* Globals */
-char home[DMAXPATHLEN];
+static char home[DMAXPATHLEN];
 
 /* These run on module startup */
 void module_init(const struct module *mod)

@@ -27,28 +27,22 @@
 char module_name[] = "battery";
 
 /* My function data structures and prototypes */
-struct batt {
+static struct batt {
         char *number;           /* battery number ("0" for BATT0) */
 
         char *remaining; /* remaining charge in mAh */
         char *maximum;   /* maximum charge capacity in mAh */
 };
 
-char *get_battper(char *args);
-char *get_battrem(char *args);
-char *get_battmax(char *args);
-unsigned int get_battbar(char *args);
+static void clear_remaining(struct batt *batt);
 
-void batt_cron(void);
-void clear_remaining(struct batt *batt);
+static struct batt *prepare_batt(char *args);
+static int find_batt(struct batt *cur, char *args);
+static struct batt *add_batt(char *args);
+static char *get_remaining_charge(char *args);
+static char *get_maximum_charge(char *args);
 
-struct batt *prepare_batt(char *args);
-int find_batt(struct batt *cur, char *args);
-struct batt *add_batt(char *args);
-char *get_remaining_charge(char *args);
-char *get_maximum_charge(char *args);
-
-void clear_batt(void *cur);
+static void clear_batt(void *cur);
 
 /* Globals */
 struct list *batt_ls = NULL;
@@ -88,7 +82,7 @@ void batt_cron(void)
  * 
  * @param batt Battery node to act upon.
  */
-void clear_remaining(struct batt *batt)
+static void clear_remaining(struct batt *batt)
 {
         freenull(batt->remaining);
 }
@@ -185,7 +179,7 @@ unsigned int get_battbar(char *args)
  * @return NULL if a battery's remaining or maximum charge could not be
  *         determined. Otherwise, a pointer to the battery is returned.
  */
-struct batt *prepare_batt(char *batt_number)
+static struct batt *prepare_batt(char *batt_number)
 {
         struct batt *batt;
 
@@ -203,7 +197,7 @@ struct batt *prepare_batt(char *batt_number)
  * 
  * @return Pointer to the new node.
  */
-struct batt *add_batt(char *batt_number)
+static struct batt *add_batt(char *batt_number)
 {
         struct batt *new;
 
@@ -224,7 +218,7 @@ struct batt *add_batt(char *batt_number)
  * 
  * @return 1 if match succeeds, 0 if fails
  */
-int find_batt(struct batt *cur, char *match)
+static int find_batt(struct batt *cur, char *match)
 {
         if (!strcmp(cur->number, match))
                 return 1;
@@ -239,7 +233,7 @@ int find_batt(struct batt *cur, char *match)
  * 
  * @return Remaining mAh charge in string format.
  */
-char *get_remaining_charge(char *args)
+static char *get_remaining_charge(char *args)
 {
         char path[DMAXPATHLEN];
         int read;
@@ -278,7 +272,7 @@ char *get_remaining_charge(char *args)
  * 
  * @return Maximum mAh charge in string format.
  */
-char *get_maximum_charge(char *args)
+static char *get_maximum_charge(char *args)
 {
         char path[DMAXPATHLEN];
         int read;
@@ -313,7 +307,7 @@ char *get_maximum_charge(char *args)
  * 
  * @param batt Battery node to clear.
  */
-void clear_batt(void *cur)
+static void clear_batt(void *cur)
 {
         struct batt *batt = cur;
 

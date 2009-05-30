@@ -27,17 +27,16 @@
 char module_name[] = "volume";
 
 /* My function prototypes */
-char *get_volume(char *args);
-int prep_alsa_get_level(long *level, char *args);
-void close_alsa_mixer(void);
-int prep_alsa_mixer(const char *card, char *args);
+static int prep_alsa_get_level(long *level, char *args);
+static void close_alsa_mixer(void);
+static int prep_alsa_mixer(const char *card, char *args);
 
 /* Globals */
-char *ret_volume = NULL;
-snd_mixer_t *volume_alsaMixerHandle;
-snd_mixer_elem_t *volume_alsaElem;
-long volume_alsaMin;
-long volume_alsaMax;
+static char *ret_volume = NULL;
+static snd_mixer_t *volume_alsaMixerHandle;
+static snd_mixer_elem_t *volume_alsaElem;
+static long volume_alsaMin;
+static long volume_alsaMax;
 
 /* These run on module startup */
 void module_init(struct module *mod)
@@ -82,7 +81,7 @@ char *get_volume(char *args)
 	return ret_volume;
 }
 
-int prep_alsa_get_level(long *level, char *args)
+static int prep_alsa_get_level(long *level, char *args)
 {
         const char *volume_mixerDevice = "default";
 
@@ -102,13 +101,13 @@ int prep_alsa_get_level(long *level, char *args)
 	return 0;
 }
 
-void close_alsa_mixer(void)
+static void close_alsa_mixer(void)
 {
 	snd_mixer_close(volume_alsaMixerHandle);
 	volume_alsaMixerHandle = NULL;
 }
 
-int prep_alsa_mixer(const char *card, char *args)
+static int prep_alsa_mixer(const char *card, char *args)
 {
 	int err;
 	snd_mixer_elem_t *elem;

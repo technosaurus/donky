@@ -26,9 +26,6 @@ char module_name[] = "date_shet"; /* Up to 63 characters, any more and it will
                                      be truncated!  Doesn't matter though, just
                                      needs to be a some-what unique name. */
 
-/* My function prototypes. */
-char *get_date(char *args);
-
 /**
  * @brief This is run on module initialization.
  */

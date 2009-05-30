@@ -26,25 +26,9 @@ char module_name[] = "sysinfo"; /* Up to 63 characters, any more and it will
                                    be truncated!  Doesn't matter though, just
                                    needs to be a some-what unique name. */
 
-/* My function prototypes. */
-char *get_uptime(char *args);
-char *get_loadavg(char *args);
-char *get_totalram(char *args);
-char *get_freeram(char *args);
-char *get_usedram(char *args);
-char *get_sharedram(char *args);
-char *get_bufferram(char *args);
-char *get_totalswap(char *args);
-char *get_freeswap(char *args);
-char *get_usedswap(char *args);
-char *get_procs(char *args);
-char *get_totalhigh(char *args);
-char *get_freehigh(char *args);
-char *get_usedhigh(char *args);
-
 /* Globals. */
-char *ret = NULL;
-struct sysinfo info;
+static char *ret = NULL;
+static struct sysinfo info;
 
 /**
  * @brief This is run on module initialization.
