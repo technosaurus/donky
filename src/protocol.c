@@ -109,11 +109,6 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
                 args++;
         }
 
-        if (args == NULL) {
-                sendcrlf(cur->sock, PROTO_ERROR);
-                return;
-        }
-
         printf("cmd[%s]args[%s]\n", buf, args);
 
         /* Look for this command. */
@@ -138,6 +133,11 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
  */
 static void protocol_command_var(donky_conn *cur, const char *args)
 {
+        if (args == NULL) {
+                sendcrlf(cur->sock, PROTO_ERROR);
+                return;
+        }
+        
         if ((request_list_add(cur, args, false)))
                 sendcrlf(cur->sock, PROTO_GOOD);
         else
@@ -152,6 +152,11 @@ static void protocol_command_var(donky_conn *cur, const char *args)
  */
 static void protocol_command_varonce(donky_conn *cur, const char *args)
 {
+        if (args == NULL) {
+                sendcrlf(cur->sock, PROTO_ERROR);
+                return;
+        }
+        
         if ((request_list_add(cur, args, true)))
                 sendcrlf(cur->sock, PROTO_GOOD);
         else

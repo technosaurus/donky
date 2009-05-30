@@ -55,6 +55,9 @@ endif
 if ENABLE_MPD
 mpd_la_LDFLAGS      = -module -avoid-version --std=c89
 mpd_la_SOURCES      = mpd.c
+if ENABLE_MPDSCROB
+mpd_la_SOURCES     += mpdscrob.c
+endif
 mpd_la_LIBADD       = $(DEPS_LIBS)
 module_LTLIBRARIES += mpd.la
 endif

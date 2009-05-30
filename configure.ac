@@ -170,6 +170,26 @@ else
         AC_MSG_RESULT([no])
 fi
 
+dnl MPD scrobbler support...
+AC_MSG_CHECKING([whether to enable scrobbler support for mpd module])
+AC_ARG_ENABLE(mpdscrob,
+              AC_HELP_STRING([--enable-mpdscrob],
+                             [enable scrobbler support for the mpd module [default=yes]]), ,
+              [enable_mpdscrob=yes])
+if test "x$enable_mpdscrob" = "xyes"; then
+        if test "x$enable_mpd" != "xyes"; then
+                AC_MSG_RESULT([no])
+                AC_MSG_NOTICE([mpd module must be enabled for this, disabling])
+                enable_mpd="no"
+        else
+                AC_MSG_RESULT([yes])
+                MODULES="$MODULES *mpdscrob"
+                AC_DEFINE([HAVE_MPDSCROB], [1], [mpdscrob])
+        fi
+else
+        AC_MSG_RESULT([no])
+fi
+
 dnl pcpuinfo support...
 AC_MSG_CHECKING([whether to build the pcpuinfo module])
 AC_ARG_ENABLE(pcpuinfo,
@@ -247,6 +267,7 @@ AM_CONDITIONAL(ENABLE_EEEBL, test "x$enable_eeebl" = "xyes")
 AM_CONDITIONAL(ENABLE_EXEC, test "x$enable_exec" = "xyes")
 AM_CONDITIONAL(ENABLE_MOC, test "x$enable_moc" = "xyes")
 AM_CONDITIONAL(ENABLE_MPD, test "x$enable_mpd" = "xyes")
+AM_CONDITIONAL(ENABLE_MPDSCROB, test "x$enable_mpdscrob" = "xyes")
 AM_CONDITIONAL(ENABLE_PCPUINFO, test "x$enable_pcpuinfo" = "xyes")
 AM_CONDITIONAL(ENABLE_SCPUINFO, test "x$enable_scpuinfo" = "xyes")
 AM_CONDITIONAL(ENABLE_SYSINFO, test "x$enable_sysinfo" = "xyes")
