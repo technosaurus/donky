@@ -398,7 +398,6 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
 {
         char *str;
         unsigned long int tmp;
-        unsigned int i;
         size_t len;
 
         if ((dst == NULL) || (siz <= 1))
@@ -409,8 +408,8 @@ char *uint_to_str(char *dst, unsigned long int src, size_t siz)
 
         /* count how many digits src contains by dividing
          * it by increasing powers of 10 until it equals 0 */
-        for (i = 10, tmp = src; tmp != 0; i *= 10, len++)
-                tmp = src / i;
+        for (tmp = src; tmp != 0; len++)
+                tmp /= 10;
 
         /* if dst is smaller than the number of digits in src, start dropping
          * digits off the end of src until it fits. afterward, len should equal
@@ -454,7 +453,6 @@ char *float_to_str(char *dst,
                    size_t siz)
 {
         char *str;
-        unsigned int i;
         long int num, tmp;
         unsigned int precision_check;
         size_t len;
@@ -469,8 +467,8 @@ char *float_to_str(char *dst,
 
         /* count how many digits src contains by dividing
          * it by increasing powers of 10 until it equals 0 */
-        for (i = 10, tmp = num; tmp != 0; i *= 10, len++)
-                tmp = num / i;
+        for (tmp = num; tmp != 0; len++)
+                tmp /= 10;
 
         /* if dst is smaller than the number of digits in src, start dropping
          * digits off the end of src until it fits. afterward, len should equal
