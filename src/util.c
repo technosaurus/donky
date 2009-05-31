@@ -331,18 +331,36 @@ int create_tcp_listener(char *host, int port)
  */
 int sendcrlf(int sock, const char *format, ...)
 {
-        char buffer[1024];
+        char buffer[2048];
+	va_list ap;
+	
+	va_start(ap, format);
+	vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
+	va_end(ap);
+
+        return sendx(sock, "%s\r\n", buffer);
+}
+
+/**
+ * @brief Send sprintf formatted string to socket
+ *
+ * @param sock Socket
+ * @param format Format string
+ * @param ... Format arguments
+ *
+ * @return Bytes written to socket
+ */
+int sendx(int sock, const char *format, ...)
+{
+        char buffer[2048];
 	va_list ap;
         int n;
 	
 	va_start(ap, format);
-	n = vsnprintf(buffer, sizeof(buffer) - 2, format, ap);
+	n = vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
 	va_end(ap);
 
-	buffer[n] = '\r';
-        buffer[n + 1] = '\n';
-
-        return send(sock, buffer, n + 2, 0);
+        return send(sock, buffer, n, 0);
 }
 
 /**

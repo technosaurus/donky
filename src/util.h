@@ -42,6 +42,7 @@ char *bytes_to_bigger(unsigned long bytes);
 int random_range(int min, int max);
 int create_tcp_listener(char *host, int port);
 int sendcrlf(int sock, const char *format, ...);
+int sendx(int sock, const char *format, ...);
 unsigned int get_str_sum(const char *str);
 double pown(double x, double y);
 char *uint_to_str(char *dst, unsigned long int src, size_t siz);

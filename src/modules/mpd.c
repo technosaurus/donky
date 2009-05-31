@@ -24,10 +24,15 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "../../config.h"
 #include "../cfg.h"
 #include "../mem.h"
 #include "../module.h"
 #include "../util.h"
+
+#ifdef HAVE_MPDSCROB
+#include "mpdscrob.h"
+#endif
 
 char module_name[] = "mpd";
 
@@ -44,7 +49,7 @@ static char *mpd_host = NULL;
 static int mpd_port;
 static struct sockaddr_in server;
 static struct hostent *hptr;
-static int initialized = 0;
+static int initialized;
 
 static struct mpd_info {
         /* currentsong */
@@ -99,6 +104,8 @@ void module_init(const struct module *mod)
         module_var_add(mod, "mpd_volume_bar", "get_volume_bar", 10.0, VARIABLE_BAR);
 
         module_var_add(mod, "mpd_cron", "run_cron", 1.0, VARIABLE_CRON);
+
+        initialized = 0;
 }
 
 /**
@@ -159,6 +166,13 @@ void run_cron(void)
         if (mpd_sock != -1) {
                 pop_currentsong();
                 pop_status();
+
+#ifdef HAVE_MPDSCROB
+                if (scrob_enabled)
+                        scrob_urself(mpdinfo.artist, mpdinfo.title,
+                                     mpdinfo.album, mpdinfo.track,
+                                     mpdinfo.etime, mpdinfo.ttime);
+#endif
         }
 }
 
@@ -321,12 +335,16 @@ static void init_settings(void)
                 free(mpd_host);
                 return;
         }
+        
         memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
-
         server.sin_family = AF_INET;
         server.sin_port = htons((short) mpd_port);
 
         free(mpd_host);
+
+#ifdef HAVE_MPDSCROB
+        scrob_init();
+#endif
 }
 
 /**
