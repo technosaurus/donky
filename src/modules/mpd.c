@@ -118,6 +118,11 @@ void module_destroy(void)
                 sendcrlf(mpd_sock, "close");
                 close(mpd_sock);
         }
+
+#ifdef HAVE_MPDSCROB
+        if (initialized)
+                scrob_die();
+#endif
 }
 
 /**
