@@ -335,7 +335,7 @@ int sendcrlf(int sock, const char *format, ...)
 	va_list ap;
 	
 	va_start(ap, format);
-	vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
+	vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
 
         return sendx(sock, "%s\r\n", buffer);
@@ -357,7 +357,7 @@ int sendx(int sock, const char *format, ...)
         int n;
 	
 	va_start(ap, format);
-	n = vsnprintf(buffer, sizeof(buffer) - 1, format, ap);
+	n = vsnprintf(buffer, sizeof(buffer), format, ap);
 	va_end(ap);
 
         return send(sock, buffer, n, 0);

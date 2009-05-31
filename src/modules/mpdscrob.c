@@ -36,6 +36,14 @@
 #define SCROB_CLIENT "dms"
 #define SCROB_VERSION "1.0"
 
+/* Reminder: try to find a portable strftime alternative for getting the UNIX
+ * timestamp.  I'm sure there is something I just do not know of it and haven't
+ * found it yet!  I'd like this module to be totally ANSI compliant. */
+
+/* Reminder: implement the caching feature while local/remote network connection
+ * is down.  Most clients seem to write to a cache file, might be better for
+ * us to simply store in a queue data structure. */
+
 /* Globals. */
 static char last_artist[128];
 static char last_title[128];
@@ -161,10 +169,10 @@ void scrob_urself(const char *artist, const char *title, const char *album,
                 scrob_nowplay(sock, artist, title, album, track, ttime);
 
         /* Update all the last_* stuff. */
-        strlcpy(last_artist, artist, sizeof(last_artist) - 1);
-        strlcpy(last_title, title, sizeof(last_title) - 1);
-        strlcpy(last_album, album, sizeof(last_album) - 1);
-        strlcpy(last_track, track, sizeof(last_track) - 1);
+        strlcpy(last_artist, artist, sizeof(last_artist));
+        strlcpy(last_title, title, sizeof(last_title));
+        strlcpy(last_album, album, sizeof(last_album));
+        strlcpy(last_track, track, sizeof(last_track));
         last_ttime = ttime;
 
         /* Close this maw faw. */
@@ -198,8 +206,8 @@ static int scrob_handshake(int sock)
                 return -1;
         }
 
-        strlcpy(utm_md5, scrob_pass, sizeof(utm_md5) - 1);
-        strlcat(utm_md5, utm, sizeof(utm_md5) - 1);
+        strlcpy(utm_md5, scrob_pass, sizeof(utm_md5));
+        strlcat(utm_md5, utm, sizeof(utm_md5));
 
         scrob_md5(utm_md5);
         
@@ -234,21 +242,21 @@ static int scrob_handshake(int sock)
         if (line == NULL)
                 return -1;
 
-        strlcpy(scrob_sessionid, line, sizeof(scrob_sessionid) - 1);
+        strlcpy(scrob_sessionid, line, sizeof(scrob_sessionid));
 
         /* Now playing URL */
         line = strtok(NULL, "\n");
         if (line == NULL)
                 return -1;
 
-        strlcpy(scrob_nowplayurl, line, sizeof(scrob_nowplayurl) - 1);
+        strlcpy(scrob_nowplayurl, line, sizeof(scrob_nowplayurl));
 
         /* Submit URL */
         line = strtok(NULL, "\n");
         if (line == NULL)
                 return -1;
 
-        strlcpy(scrob_submiturl, line, sizeof(scrob_submiturl) - 1);
+        strlcpy(scrob_submiturl, line, sizeof(scrob_submiturl));
 
         /* Success. */
         return 0;
@@ -257,7 +265,8 @@ static int scrob_handshake(int sock)
 /**
  * @brief Get the md5 hash of a string.
  *
- * @param str
+ * @param str String to motha effin hash (this will also be the storage, so
+ *            make sure it is at least 32 + 1 bytes long.)
  */
 static void scrob_md5(char *str)
 {
@@ -271,6 +280,8 @@ static void scrob_md5(char *str)
 
         for (i = 0; i < 16; i++)
                 sprintf(str + i * 2, "%02x", digest[i]);
+
+        str[32] = '\0';
 }
 
 /**
@@ -310,31 +321,31 @@ static void scrob_submit(int sock, const char *artist, const char *title,
                 return;
         }
 
-        uint_to_str(sttime, ttime, sizeof(sttime) - 1);
+        uint_to_str(sttime, ttime, sizeof(sttime));
 
         /* Assemble request string. */
-        strlcpy(snd, "s=", sizeof(snd) - 1);
-        strlcat(snd, scrob_sessionid, sizeof(snd) - 1);
+        strlcpy(snd, "s=", sizeof(snd));
+        strlcat(snd, scrob_sessionid, sizeof(snd));
         
-        strlcat(snd, "&a[0]=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(artist), sizeof(snd) - 1);
+        strlcat(snd, "&a[0]=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(artist), sizeof(snd));
         
-        strlcat(snd, "&t[0]=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(title), sizeof(snd) - 1);
+        strlcat(snd, "&t[0]=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(title), sizeof(snd));
 
-        strlcat(snd, "&i[0]=", sizeof(snd) - 1);
-        strlcat(snd, utm, sizeof(snd) - 1);
+        strlcat(snd, "&i[0]=", sizeof(snd));
+        strlcat(snd, utm, sizeof(snd));
 
-        strlcat(snd, "&o[0]=P&r[0]=&l[0]=", sizeof(snd) - 1);
-        strlcat(snd, sttime, sizeof(snd) - 1);
+        strlcat(snd, "&o[0]=P&r[0]=&l[0]=", sizeof(snd));
+        strlcat(snd, sttime, sizeof(snd));
 
-        strlcat(snd, "&b[0]=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(album), sizeof(snd) - 1);
+        strlcat(snd, "&b[0]=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(album), sizeof(snd));
 
-        strlcat(snd, "&n[0]=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(track), sizeof(snd) - 1);
+        strlcat(snd, "&n[0]=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(track), sizeof(snd));
 
-        strlcat(snd, "&m[0]=", sizeof(snd) - 1);
+        strlcat(snd, "&m[0]=", sizeof(snd));
 
         len = strlen(snd);
 
@@ -375,7 +386,11 @@ SUBMITPOST:
                 
                 /* We most likely need to redo the handshake. */
                 if ((scrob_handshake(sock) == -1)) {
-                        /* Add to cache. */
+                        /* TODO: Add to cache.  If server connectivity is ever
+                         * problematic, or our own internet connection goes
+                         * down, it would be nice to cache what we are playing,
+                         * and send it out later when network connectivity
+                         * is back. */
                         
                         scrob_shaked = false;
                         return;
@@ -413,28 +428,28 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
         tries = 0;
         ok = false;
 
-        uint_to_str(sttime, ttime, sizeof(sttime) - 1);
+        uint_to_str(sttime, ttime, sizeof(sttime));
 
         /* Assemble request string. */
-        strlcpy(snd, "s=", sizeof(snd) - 1);
-        strlcat(snd, scrob_sessionid, sizeof(snd) - 1);
+        strlcpy(snd, "s=", sizeof(snd));
+        strlcat(snd, scrob_sessionid, sizeof(snd));
 
-        strlcat(snd, "&a=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(artist), sizeof(snd) - 1);
+        strlcat(snd, "&a=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(artist), sizeof(snd));
 
-        strlcat(snd, "&t=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(title), sizeof(snd) - 1);
+        strlcat(snd, "&t=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(title), sizeof(snd));
 
-        strlcat(snd, "&b=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(album), sizeof(snd) - 1);
+        strlcat(snd, "&b=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(album), sizeof(snd));
 
-        strlcat(snd, "&l=", sizeof(snd) - 1);
-        strlcat(snd, sttime, sizeof(snd) - 1);
+        strlcat(snd, "&l=", sizeof(snd));
+        strlcat(snd, sttime, sizeof(snd));
 
-        strlcat(snd, "&n=", sizeof(snd) - 1);
-        strlcat(snd, scrob_urlenc(track), sizeof(snd) - 1);
+        strlcat(snd, "&n=", sizeof(snd));
+        strlcat(snd, scrob_urlenc(track), sizeof(snd));
 
-        strlcat(snd, "&m=", sizeof(snd) - 1);
+        strlcat(snd, "&m=", sizeof(snd));
 
         len = strlen(snd);
 
@@ -516,7 +531,7 @@ static char *scrob_urlenc(const char *str)
                 case '=':
                 case '%':
                 case '+':
-                        sprintf(buf, "%02x", *str);
+                        sprintf(buf, "%%%02x", *str);
                         strcat(n + pos, buf);
                         pos += 3;
                         break;
