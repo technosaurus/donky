@@ -25,7 +25,6 @@ struct request_list {
         struct module_var *var;
         char *args;
         bool remove;
-        bool remove_now;
         bool first;
         
         struct request_list *prev;
