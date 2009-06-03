@@ -134,7 +134,6 @@ static void *request_handler_exec(void *arg)
                                         sum = get_str_sum(ret_str);
 
                                         if (sum != cur->var->sum || cur->remove) {
-                                                printf("Sending str\n");
                                                 n = sendcrlf(cur->conn->sock,
                                                              "%s:%d:%s",
                                                              cur->id,
@@ -157,7 +156,6 @@ static void *request_handler_exec(void *arg)
                                         sum = ret_int;
 
                                         if (sum != cur->var->sum || cur->remove) {
-                                                printf("Sending bar or graph\n");
                                                 n = sendcrlf(cur->conn->sock,
                                                              "%s:%d:%d",
                                                              cur->id,
