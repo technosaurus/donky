@@ -102,7 +102,7 @@ void scrob_init(void)
                         scrob_enabled = false;
                         return;
                 }
-                
+
                 memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
                 server.sin_family = AF_INET;
                 server.sin_port = htons((short) scrob_port);
@@ -210,7 +210,7 @@ static int scrob_handshake(int sock)
         strlcat(utm_md5, utm, sizeof(utm_md5));
 
         scrob_md5(utm_md5);
-        
+
         sendcrlf(sock,
                  "GET http://%s/"
                  "?hs=true&p=1.2&c=%s&v=%s&u=%s&t=%s&a=%s",
@@ -271,7 +271,7 @@ static int scrob_handshake(int sock)
 static void scrob_md5(char *str)
 {
         md5_state_t state;
-	md5_byte_t digest[16];
+        md5_byte_t digest[16];
         int i;
 
         md5_init(&state);
@@ -326,10 +326,10 @@ static void scrob_submit(int sock, const char *artist, const char *title,
         /* Assemble request string. */
         strlcpy(snd, "s=", sizeof(snd));
         strlcat(snd, scrob_sessionid, sizeof(snd));
-        
+
         strlcat(snd, "&a[0]=", sizeof(snd));
         strlcat(snd, scrob_urlenc(artist), sizeof(snd));
-        
+
         strlcat(snd, "&t[0]=", sizeof(snd));
         strlcat(snd, scrob_urlenc(title), sizeof(snd));
 
@@ -383,7 +383,7 @@ SUBMITPOST:
                         printf("Could not connect to scrobbler server ;[\n");
                         return;
                 }
-                
+
                 /* We most likely need to redo the handshake. */
                 if ((scrob_handshake(sock) == -1)) {
                         /* TODO: Add to cache.  If server connectivity is ever
@@ -391,7 +391,7 @@ SUBMITPOST:
                          * down, it would be nice to cache what we are playing,
                          * and send it out later when network connectivity
                          * is back. */
-                        
+
                         scrob_shaked = false;
                         return;
                 }
@@ -487,7 +487,7 @@ NOWPLAYPOST:
                         printf("Could not connect to scrobbler server ;[\n");
                         return;
                 }
-                
+
                 /* We most likely need to redo the handshake. */
                 if ((scrob_handshake(sock) == -1)) {
                         scrob_shaked = false;
@@ -508,7 +508,7 @@ NOWPLAYPOST:
  */
 static char *scrob_urlenc(const char *str)
 {
-        
+
         char *n;
         int pos;
         int len;
@@ -554,7 +554,7 @@ static char *scrob_urlenc(const char *str)
 static int scrob_connect(void)
 {
         int sock;
-        
+
         if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 fprintf(stderr, "Could not create scrob socket: %s\n",
                         strerror(errno));
