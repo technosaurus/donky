@@ -236,13 +236,14 @@ static void donky_farewell(void)
  */
 static void print_random_message(const char **messages)
 {
-        int i;
-        int j;
+        int i, j;
 
-        for (i = 0; messages[i] != NULL; i++) { }
+        /* count the number of strings in the array */
+        for (i = 0; messages[i] != NULL; i++);
 
-        if (i) {
-                j = random_range(0, (i - 1));
+        /* --i since arrays obviously start at 0 */
+        if (--i >= 0) {
+                j = random_range(0, i);
                 printf(messages[j]);
         }
 }
