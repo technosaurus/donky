@@ -14,6 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "../config.h"
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -257,7 +259,9 @@ void parse_cfg(void)
 
         while ((fgets(str, MAX_LINE_SIZE, cfg_file)) != NULL) {
                 if (is_comment(str)) {
-                        /*printf("Skipping comment [%s]\n\n", chomp(str));*/
+#ifdef ENABLE_DEBUGGING
+                        printf("Skipping comment [%s]\n", str);
+#endif
                         continue;
                 }
 
@@ -290,7 +294,8 @@ handle_key:
                         strlcpy(value, "False", sizeof(value));
 
                 add_key(mod, key, value);
-                /*
+
+#ifdef ENABLE_DEBUGGING
                 char *char_key = get_char_key(mod, key, "ERROR");
                 printf("added-> mod [%s] key [%s] value [%s]\n",
                        mod, key, value);
@@ -300,7 +305,7 @@ handle_key:
                        get_double_key(mod, key, -1),
                        get_bool_key(mod, key, -1));
                 free(char_key);
-                */
+#endif
         }
 
         fclose(cfg_file);

@@ -258,6 +258,19 @@ else
         AC_MSG_RESULT([no])
 fi
 
+dnl donky debugging...
+AC_MSG_CHECKING([whether to enable donky debugging])
+AC_ARG_ENABLE(debugging,
+              AC_HELP_STRING([--enable-debugging],
+                             [enable donky debugging [default=no]]), ,
+              [enable_debugging=no])
+if test "x$enable_debugging" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        AC_DEFINE([ENABLE_DEBUGGING], [1], [donky debugging])
+else
+        AC_MSG_RESULT([no])
+fi
+
 dnl Am conditionals
 AM_CONDITIONAL(ENABLE_WIFI, test "x$enable_wifi" = "xyes")
 AM_CONDITIONAL(ENABLE_BATTERY, test "x$enable_battery" = "xyes")
