@@ -46,7 +46,7 @@ static donky_conn *donky_conn_add(int sock);
 static int donky_listen(void);
 static void clean_dis_shiz(void);
 static void donky_conn_set_fdmax(void);
-static int create_tcp_listener(char *host, int port);
+static int create_tcp_listener(const char *host, int port);
 
 /**
  * @brief Donky loop (tm)
@@ -282,12 +282,10 @@ static void donky_conn_clear(void)
  */
 static int donky_listen(void)
 {
-        char *host = get_char_key("daemon", "host", "0.0.0.0");
+        const char *host = get_char_key("daemon", "host", "0.0.0.0");
         int port = get_int_key("daemon", "port", 7000);
         
         donky_sock = create_tcp_listener(host, port);
-
-        free(host);
 
         return donky_sock;
 }
@@ -310,7 +308,7 @@ static void clean_dis_shiz(void)
  *
  * @return Socket!
  */
-static int create_tcp_listener(char *host, int port)
+static int create_tcp_listener(const char *host, int port)
 {
         int sfd;
         struct sockaddr_in server;

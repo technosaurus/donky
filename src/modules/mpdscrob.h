@@ -20,7 +20,6 @@
 extern int scrob_enabled;       /* bool */
 
 void scrob_init(void);
-void scrob_die(void);
 void scrob_urself(const char *artist, const char *title, const char *album,
                   const char *track, const int etime, const int ttime);
 

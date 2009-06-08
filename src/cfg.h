@@ -25,7 +25,7 @@ struct cfg {
         struct list *setting_ls;
 };
 
-char *get_char_key(char *mod, char *key, char *otherwise);
+const char *get_char_key(char *mod, char *key, char *otherwise);
 int get_int_key(char *mod, char *key, int otherwise);
 double get_double_key(char *mod,
                       char *key,

@@ -95,7 +95,7 @@ static void add_key(char *mod, char *key, char *value)
         struct setting *new_setting;
 
         cur = find_node(cfg_ls, &find_mod, mod);
-        if (!cur)
+        if (cur == NULL)
                 return;
 
         new_setting = malloc(sizeof(struct setting));
@@ -130,24 +130,24 @@ static int find_key(struct setting *cur, char *key)
  * 
  * @return Malloc'd char value of either key or 'otherwise'
  */
-char *get_char_key(char *mod, char *key, char *otherwise)
+const char *get_char_key(char *mod, char *key, char *otherwise)
 {
         struct cfg *cur;
         struct setting *cur_s;
 
         cur = find_node(cfg_ls, &find_mod, mod);
-        if (!cur) {
-                if (otherwise)
-                        return dstrdup(otherwise);
+        if (cur == NULL) {
+                if (otherwise != NULL)
+                        return otherwise;
 
                 return NULL;
         }
 
         cur_s = find_node(cur->setting_ls, &find_key, key);
-        if (cur_s && (cur_s->value))
-                return dstrdup(cur_s->value);
-        else if (otherwise)
-                return dstrdup(otherwise);
+        if ((cur_s != NULL) && (cur_s->value != NULL))
+                return cur_s->value;
+        else if (otherwise != NULL)
+                return otherwise;
 
         return NULL;
 }
@@ -167,11 +167,11 @@ int get_int_key(char *mod, char *key, int otherwise)
         struct setting *cur_s;
 
         cur = find_node(cfg_ls, &find_mod, mod);
-        if (!cur)
+        if (cur == NULL)
                 return otherwise;
 
         cur_s = find_node(cur->setting_ls, &find_key, key);
-        if (cur_s && (cur_s->value))
+        if ((cur_s != NULL) && (cur_s->value != NULL))
                 return atoi(cur_s->value);
 
         return otherwise;
@@ -192,11 +192,11 @@ double get_double_key(char *mod, char *key, double otherwise)
         struct setting *cur_s;
 
         cur = find_node(cfg_ls, &find_mod, mod);
-        if (!cur)
+        if (cur == NULL)
                 return otherwise;
 
         cur_s = find_node(cur->setting_ls, &find_key, key);
-        if (cur_s && (cur_s->value))
+        if ((cur_s != NULL) && (cur_s->value != NULL))
                 return atof(cur_s->value);
 
         return otherwise;
@@ -215,13 +215,13 @@ int get_bool_key(char *mod, char *key, int otherwise)
 {
         struct cfg *cur;
         struct setting *cur_s;
-        
+
         cur = find_node(cfg_ls, &find_mod, mod);
-        if (!cur)
+        if (cur == NULL)
                 return otherwise;
 
         cur_s = find_node(cur->setting_ls, &find_key, key);
-        if (cur_s && (cur_s->value)) {
+        if ((cur_s != NULL) && (cur_s->value != NULL)) {
                 if (IS_TRUE(cur_s->value[0]))
                         return 1;
                 else if (IS_FALSE(cur_s->value[0]))
@@ -247,7 +247,7 @@ void parse_cfg(void)
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
 
-        mod_check = 0;
+        mod_check = 0;  /* set this to 1 when we get our first mod */
 
         format[0] = " [%63[a-zA-Z0-9_-]]";                /* [mod]         */
         format[1] = " %63[a-zA-Z0-9_-] = \"%127[^\"]\" "; /* key = "value" */
@@ -255,9 +255,10 @@ void parse_cfg(void)
         format[3] = " %63[a-zA-Z0-9_-] = %127[^;\n] ";    /* key = value   */
         format[4] = " %63[a-zA-Z0-9_-] ";                 /* key           */
 
-        while ((fgets(str, MAX_LINE_SIZE, cfg_file)) != NULL) {
+        while ((fgets(str, sizeof(str), cfg_file)) != NULL) {
                 if (is_comment(str)) {
 #ifdef ENABLE_DEBUGGING
+                        chomp(str);
                         printf("Skipping comment [%s]\n", str);
 #endif
                         continue;
@@ -270,18 +271,20 @@ void parse_cfg(void)
                         continue;
                 }
 
-                if (mod_check == 1) {
-                        if (sscanf(str, format[1], key, value) == 2) {
-                                goto handle_key;
-                        } else if (sscanf(str, format[2], key, value) == 2) {
-                                goto handle_key;
-                        } else if (sscanf(str, format[3], key, value) == 2) {
-                                trim_t(value);
-                                goto handle_key;
-                        } else if (sscanf(str, format[4], key) == 1) {
-                                dstrlcpy(value, "True", sizeof(value));
-                                goto handle_key;
-                        }
+                /* if we have no mod, don't parse for keys & values */
+                if (mod_check == 0)
+                        continue;
+
+                if (sscanf(str, format[1], key, value) == 2) {
+                        goto handle_key;
+                } else if (sscanf(str, format[2], key, value) == 2) {
+                        goto handle_key;
+                } else if (sscanf(str, format[3], key, value) == 2) {
+                        trim_t(value);
+                        goto handle_key;
+                } else if (sscanf(str, format[4], key) == 1) {
+                        dstrlcpy(value, "True", sizeof(value));
+                        goto handle_key;
                 }
 
                 continue;
@@ -294,15 +297,13 @@ handle_key:
                 add_key(mod, key, value);
 
 #ifdef ENABLE_DEBUGGING
-                char *char_key = get_char_key(mod, key, "ERROR");
                 printf("added-> mod [%s] key [%s] value [%s]\n",
                        mod, key, value);
                 printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
-                       char_key,
+                       get_char_key(mod, key, "ERROR!"),
                        get_int_key(mod, key, -1),
                        get_double_key(mod, key, -1),
                        get_bool_key(mod, key, -1));
-                free(char_key);
 #endif
         }
 

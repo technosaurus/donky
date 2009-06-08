@@ -65,7 +65,7 @@ void protocol_handle(donky_conn *cur, const char *buf)
  */
 static void protocol_handle_auth(donky_conn *cur, const char *buf)
 {
-        char *pass = get_char_key("daemon", "pass", NULL);
+        const char *pass = get_char_key("daemon", "pass", NULL);
         char check[64];
 
         /* No password needed, set user as authenticated and pass on this
@@ -85,8 +85,6 @@ static void protocol_handle_auth(donky_conn *cur, const char *buf)
                         sendcrlf(cur->sock, PROTO_PASS_NACK);
                 }
         }
-        
-        free(pass);
 }
 
 /**

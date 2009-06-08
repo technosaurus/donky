@@ -45,7 +45,7 @@ static void init_settings(void);
 
 /* Globals. */
 static int mpd_sock = -1;
-static char *mpd_host = NULL;
+static const char *mpd_host = NULL;
 static int mpd_port;
 static struct sockaddr_in server;
 static struct hostent *hptr;
@@ -118,11 +118,6 @@ void module_destroy(void)
                 sendcrlf(mpd_sock, "close");
                 close(mpd_sock);
         }
-
-#ifdef HAVE_MPDSCROB
-        if (initialized)
-                scrob_die();
-#endif
 }
 
 /**
@@ -337,15 +332,12 @@ static void init_settings(void)
 
         if ((hptr = gethostbyname(mpd_host)) == NULL) {
                 fprintf(stderr, "Could not gethostbyname(%s)\n", mpd_host);
-                free(mpd_host);
                 return;
         }
         
         memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
         server.sin_family = AF_INET;
         server.sin_port = htons((short) mpd_port);
-
-        free(mpd_host);
 
 #ifdef HAVE_MPDSCROB
         scrob_init();

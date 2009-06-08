@@ -50,10 +50,10 @@ static char last_track[16];
 static int last_etime;
 static int last_ttime;
 int scrob_enabled;      /* bool */
-static char *scrob_host;
+static const char *scrob_host;
 static int scrob_port;
-static char *scrob_user;
-static char *scrob_pass;
+static const char *scrob_user;
+static const char *scrob_pass;
 static struct sockaddr_in server;
 static struct hostent *hptr;
 static int scrob_shaked;        /* bool */
@@ -105,16 +105,6 @@ void scrob_init(void)
                 server.sin_family = AF_INET;
                 server.sin_port = htons((short) scrob_port);
         }
-}
-
-/**
- * @brief Called when the mpd module is destroyed.
- */
-void scrob_die(void)
-{
-        free(scrob_host);
-        free(scrob_user);
-        free(scrob_pass);
 }
 
 /**
