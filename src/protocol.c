@@ -23,6 +23,7 @@
 
 #include "cfg.h"
 #include "daemon.h"
+#include "net.h"
 #include "protocol.h"
 #include "request.h"
 #include "util.h"

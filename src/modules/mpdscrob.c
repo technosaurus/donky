@@ -27,6 +27,7 @@
 
 #include "../cfg.h"
 #include "../mem.h"
+#include "../net.h"
 #include "../util.h"
 #include "mpdscrob.h"
 #include "extra/md5.h"

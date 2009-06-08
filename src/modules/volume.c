@@ -18,8 +18,6 @@
 #include <stdlib.h>
 #include <alsa/asoundlib.h>
 
-#include "../std/string.h"
-
 #include "../mem.h"
 #include "../module.h"
 

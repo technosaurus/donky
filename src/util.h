@@ -47,8 +47,6 @@ char *bytes_to_bigger(unsigned long bytes);
 int random_range(int min, int max);
 unsigned int get_str_sum(const char *str);
 double pown(double x, double y);
-int sendcrlf(int sock, const char *format, ...);
-int sendx(int sock, const char *format, ...);
 char *uint_to_str(char *dst, unsigned long int src, size_t siz);
 char *float_to_str(char *dst,
                    long double src,

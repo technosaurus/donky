@@ -25,6 +25,7 @@
 #include "default_settings.h"
 #include "mem.h"
 #include "module.h"
+#include "net.h"
 #include "protocol.h"
 #include "request.h"
 #include "util.h"

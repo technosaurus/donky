@@ -28,6 +28,7 @@
 #include "lists.h"
 #include "main.h"
 #include "mem.h"
+#include "net.h"
 #include "protocol.h"
 #include "request.h"
 #include "util.h"
@@ -46,7 +47,6 @@ static donky_conn *donky_conn_add(int sock);
 static int donky_listen(void);
 static void clean_dis_shiz(void);
 static void donky_conn_set_fdmax(void);
-static int create_tcp_listener(const char *host, int port);
 
 /**
  * @brief Donky loop (tm)
@@ -299,58 +299,3 @@ static void clean_dis_shiz(void)
         donky_conn_clear();
         FD_ZERO(&donky_fds);
 }
-
-/**
- * @brief Create a TCP listening socket.
- *
- * @param host Hostname
- * @param port Port to listen on
- *
- * @return Socket!
- */
-static int create_tcp_listener(const char *host, int port)
-{
-        int sfd;
-        struct sockaddr_in server;
-        struct hostent *hptr;
-        int opt = 1;
-
-        if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-                perror("socket");
-                return -1;
-        }
-
-        if ((hptr = gethostbyname(host)) == NULL) {
-                fprintf(stderr, "Could not gethostbyname(%s)\n", host);
-                return -1;
-        }
-        memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
-
-        server.sin_family = AF_INET;
-        server.sin_port = htons((short) port);
-        server.sin_addr.s_addr = INADDR_ANY;
-
-        if ((bind(sfd, (struct sockaddr *) &server, sizeof(server)) == -1)) {
-                perror("bind");
-                close(sfd);
-                return -1;
-        }
-
-        /* Allow this to be reused (needed for reloads and such) */
-        if ((setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
-                        &opt, sizeof(opt)) == -1)) {
-                perror("setsockopt");
-                close(sfd);
-                return -1;
-        }
-
-        /* Start listening. */
-        if ((listen(sfd, 10) == -1)) {
-                perror("listen");
-                close(sfd);
-                return -1;
-        }
-
-        return sfd;
-}
-

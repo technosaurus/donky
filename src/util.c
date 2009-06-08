@@ -22,17 +22,11 @@
  */
 
 #include <ctype.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
-#include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/types.h>
 
 #include "util.h"
 
@@ -274,49 +268,6 @@ double pown(double x, double y)
                 result *= x;
 
         return result;
-}
-
-/**
- * @brief Send sprintf formatted string to socket, CR-LF appended.
- *
- * @param sock Socket
- * @param format Format string
- * @param ... Format arguments
- *
- * @return Bytes written to socket
- */
-int sendcrlf(int sock, const char *format, ...)
-{
-        char buffer[2048];
-        va_list ap;
-        
-        va_start(ap, format);
-        vsnprintf(buffer, sizeof(buffer), format, ap);
-        va_end(ap);
-
-        return sendx(sock, "%s\r\n", buffer);
-}
-
-/**
- * @brief Send sprintf formatted string to socket
- *
- * @param sock Socket
- * @param format Format string
- * @param ... Format arguments
- *
- * @return Bytes written to socket
- */
-int sendx(int sock, const char *format, ...)
-{
-        char buffer[2048];
-        va_list ap;
-        int n;
-        
-        va_start(ap, format);
-        n = vsnprintf(buffer, sizeof(buffer), format, ap);
-        va_end(ap);
-
-        return send(sock, buffer, n, 0);
 }
 
 /** 
