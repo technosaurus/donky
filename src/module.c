@@ -18,9 +18,8 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/param.h>
-
-#include "std/string.h"
 
 #include "cfg.h"
 #include "module.h"
@@ -34,7 +33,7 @@ struct module *m_end = NULL;
 struct module_var *mv_start = NULL;
 struct module_var *mv_end = NULL;
 
-static bool first_load = true;
+static int first_load = 1; /* bool */
 
 /* Function prototypes. */
 static struct module *module_add(const char *name,
@@ -123,7 +122,7 @@ struct module_var *module_var_find_by_name(const char *name)
         struct module_var *cur = mv_start;
 
         while (cur) {
-                if (!strcasecmp(cur->name, name))
+                if (!strcmp(cur->name, name))
                         return cur;
                 
                 cur = cur->next;
@@ -190,7 +189,7 @@ static struct module *module_add(const char *name,
         printf("-- Loading module: %s...\n", name);
 
         snprintf(n->name, sizeof(n->name), "%s", name);
-        n->path = d_strcpy(path);
+        n->path = dstrdup(path);
         n->handle = handle;
         n->destroy = destroy;
         n->clients = 0;
@@ -230,7 +229,7 @@ static struct module *module_find_by_name(const char *name)
         struct module *cur = m_start;
 
         while (cur) {
-                if (!strcasecmp(cur->name, name))
+                if (!strcmp(cur->name, name))
                         return cur;
                 
                 cur = cur->next;
@@ -338,7 +337,7 @@ void module_load_all(void)
         }
 
         /* We want to unload all modules after loading. */
-        first_load = true;
+        first_load = 1;
 
         while ((dir = readdir(d))) {
                 if (!strcmp(dir->d_name, ".") ||
@@ -346,7 +345,7 @@ void module_load_all(void)
                         continue;
 
                 sptr = strrchr(dir->d_name, '.');
-                if (sptr && !strcasecmp(sptr, ".so")) {
+                if (sptr && !strcmp(sptr, ".so")) {
                         snprintf(full_path,
                                  sizeof(full_path) - sizeof(char),
                                  "%s/%s",
@@ -358,7 +357,7 @@ void module_load_all(void)
         }
 
         /* Modules will stay loaded whenever module_load is called now. */
-        first_load = false;
+        first_load = 0;
         
         closedir(d);
 }
@@ -422,5 +421,5 @@ void clear_module(void)
         m_start = m_end = NULL;
         mv_start = mv_end = NULL;
 
-        first_load = true;
+        first_load = 1;
 }

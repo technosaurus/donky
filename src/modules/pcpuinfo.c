@@ -66,7 +66,7 @@ char *get_pcpufreq(char *args)
                 if (strchr((str + 12), core) != NULL)
                         found = 1;
                 if (found && (strncmp(str, "cpu MHz", 7) == 0)) {
-                        ret_pcpufreq = m_strndup((str + 11), 4);
+                        ret_pcpufreq = m_strdup(str + 11);
 
                         /* Null the decimal point if it's there. */
                         if ((p = strchr((ret_pcpufreq + 3), '.')))
@@ -135,12 +135,12 @@ char *get_pcpucache(char *args)
                 core = '0';
         else
                 core = args[0];
-        
+
         while (fgets(str, 16, pcpuinfo) != NULL) {
                 if (strchr((str + 12), core) == NULL)
                         found = 1;
                 if (found && (strncmp(str, "cache size", 10) == 0)) {
-                        ret_pcpucache = m_strndup((str + 13), 4);
+                        ret_pcpucache = m_strdup(str + 13);
                         trim_t(ret_pcpucache);
                         break;
                 }

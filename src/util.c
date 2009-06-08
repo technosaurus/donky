@@ -1,4 +1,11 @@
 /*
+ * Functions dstrlcpy and dstrlcat are adapted from OpenBSD's
+ * libc functions strlcpy and strlcat:
+ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ *      $OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $
+ *      $OpenBSD: strlcpy.c,v 1.11 2006/05/05 15:27:38 millert Exp $
+ *
+ * Everything else:
  * Copyright (c) 2009 Matt Hayes, Jake LeMaster
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -27,10 +34,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
-#include "std/stdbool.h"
-#include "std/string.h"
-
 #include "util.h"
+
+static char *reverse_string(char *start, char *end);
 
 /**
  * @brief Trim leading and trailing whitespace from a string.
@@ -86,13 +92,13 @@ void trim_t(char *str)
  *
  * @return 1 if comment, 0 if not
  */
-bool is_comment(char *str)
+int is_comment(char *str)
 {
         str = trim_l(str);
         if (*str == ';')
-                return true;
+                return 1;
 
-        return false;
+        return 0;
 }
 
 /**
@@ -102,15 +108,15 @@ bool is_comment(char *str)
  *
  * @return 1 for yes, 0 for no
  */
-bool is_all_spaces(char *str)
+int is_all_spaces(char *str)
 {
         unsigned int i;
 
         for (i = 0; i < strlen(str); i++)
                 if (!isspace(str[i]))
-                        return false;
+                        return 0;
 
-        return true;
+        return 1;
 }
 
 /**
@@ -152,14 +158,12 @@ char *chomp(char *str)
  *
  * @return Substring of source string
  */
-char *substr(char *str, int offset, int length)
+char *substr(char *str, int offset, size_t len)
 {
-        /* EFFICIENCY TESTED TO THE FUCKING MAXIMUM BY A MAN IN A LAB COAT */
-        /* lol */
-        char *dup = malloc(length + 1);
+        size_t siz = len + sizeof(char);
+        char *dup = malloc(siz);
         str += offset;
-        strncpy(dup, str, length);
-        dup[length] = '\0';
+        dstrlcpy(dup, str, siz);
         return dup;
 }
 
@@ -176,39 +180,6 @@ double get_time(void)
 }
 
 /**
- * @brief A quicker alternative to strdup
- *
- * @param str String to duplicate
- * @param n Number of chars to duplicate
- *
- * @return Duplicated string
- */
-char *d_strcpy(const char *str)
-{
-        int n = strlen(str);
-        char *newstr = malloc(n + sizeof(char));
-        strncpy(newstr, str, n);
-        newstr[n] = '\0';
-        return newstr;
-}
-
-/**
- * @brief A quicker alternative to strndup
- *
- * @param str String to duplicate
- * @param n Number of chars to duplicate
- *
- * @return Duplicated string
- */
-char *d_strncpy(const char *str, size_t n)
-{
-        char *newstr = malloc(n + sizeof(char));
-        strncpy(newstr, str, n);
-        newstr[n] = '\0';
-        return newstr;
-}
-
-/**
  * @brief Convert raw bytes into formatted values.
  *
  * @param bytes Total bytes
@@ -218,29 +189,29 @@ char *d_strncpy(const char *str, size_t n)
 char *bytes_to_bigger(unsigned long bytes)
 {
         char str[16];
-        double tera = pown(1024, 4);
-        double giga = pown(1024, 3);
-        double mega = pown(1024, 2);
         double kilo = 1024;
+        double mega = kilo * 1024;
+        double giga = mega * 1024;
+        double tera = giga * 1024;
 
         if (bytes >= tera) {
                 float_to_str(str, bytes / tera, 2, sizeof(str));
-                strlcat(str, "TiB", sizeof(str));
+                dstrlcat(str, "TiB", sizeof(str));
         } else if (bytes >= giga) {
                 float_to_str(str, bytes / giga, 2, sizeof(str));
-                strlcat(str, "GiB", sizeof(str));
+                dstrlcat(str, "GiB", sizeof(str));
         } else if (bytes >= mega) {
                 float_to_str(str, bytes / mega, 2, sizeof(str));
-                strlcat(str, "MiB", sizeof(str));
+                dstrlcat(str, "MiB", sizeof(str));
         } else if (bytes >= kilo) {
                 float_to_str(str, bytes / kilo, 2, sizeof(str));
-                strlcat(str, "KiB", sizeof(str));
+                dstrlcat(str, "KiB", sizeof(str));
         } else {
                 uint_to_str(str, bytes, sizeof(str));
-                strlcat(str, "B", sizeof(str));
+                dstrlcat(str, "B", sizeof(str));
         }
 
-        return d_strcpy(str);
+        return dstrdup(str);
 }
 
 /**
@@ -264,103 +235,6 @@ int random_range(int min, int max)
         random_number = (random() % (max - min + 1)) + min;
 
         return random_number;
-}
-
-/**
- * @brief Create a TCP listening socket.
- *
- * @param host Hostname
- * @param port Port to listen on
- *
- * @return Socket!
- */
-int create_tcp_listener(char *host, int port)
-{
-        int sfd;
-        struct sockaddr_in server;
-        struct hostent *hptr;
-        int opt = 1;
-
-        if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-                perror("socket");
-                return -1;
-        }
-
-        if ((hptr = gethostbyname(host)) == NULL) {
-                fprintf(stderr, "Could not gethostbyname(%s)\n", host);
-                return -1;
-        }
-        memcpy(&server.sin_addr, hptr->h_addr_list[0], hptr->h_length);
-
-        server.sin_family = AF_INET;
-        server.sin_port = htons((short) port);
-        server.sin_addr.s_addr = INADDR_ANY;
-
-        if ((bind(sfd, (struct sockaddr *) &server, sizeof(server)) == -1)) {
-                perror("bind");
-                close(sfd);
-                return -1;
-        }
-
-        /* Allow this to be reused (needed for reloads and such) */
-        if ((setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR,
-                        &opt, sizeof(opt)) == -1)) {
-                perror("setsockopt");
-                close(sfd);
-                return -1;
-        }
-
-        /* Start listening. */
-        if ((listen(sfd, 10) == -1)) {
-                perror("listen");
-                close(sfd);
-                return -1;
-        }
-
-        return sfd;
-}
-
-/**
- * @brief Send sprintf formatted string to socket, CR-LF appended.
- *
- * @param sock Socket
- * @param format Format string
- * @param ... Format arguments
- *
- * @return Bytes written to socket
- */
-int sendcrlf(int sock, const char *format, ...)
-{
-        char buffer[2048];
-	va_list ap;
-	
-	va_start(ap, format);
-	vsnprintf(buffer, sizeof(buffer), format, ap);
-	va_end(ap);
-
-        return sendx(sock, "%s\r\n", buffer);
-}
-
-/**
- * @brief Send sprintf formatted string to socket
- *
- * @param sock Socket
- * @param format Format string
- * @param ... Format arguments
- *
- * @return Bytes written to socket
- */
-int sendx(int sock, const char *format, ...)
-{
-        char buffer[2048];
-	va_list ap;
-        int n;
-	
-	va_start(ap, format);
-	n = vsnprintf(buffer, sizeof(buffer), format, ap);
-	va_end(ap);
-
-        return send(sock, buffer, n, 0);
 }
 
 /**
@@ -400,6 +274,49 @@ double pown(double x, double y)
                 result *= x;
 
         return result;
+}
+
+/**
+ * @brief Send sprintf formatted string to socket, CR-LF appended.
+ *
+ * @param sock Socket
+ * @param format Format string
+ * @param ... Format arguments
+ *
+ * @return Bytes written to socket
+ */
+int sendcrlf(int sock, const char *format, ...)
+{
+        char buffer[2048];
+        va_list ap;
+        
+        va_start(ap, format);
+        vsnprintf(buffer, sizeof(buffer), format, ap);
+        va_end(ap);
+
+        return sendx(sock, "%s\r\n", buffer);
+}
+
+/**
+ * @brief Send sprintf formatted string to socket
+ *
+ * @param sock Socket
+ * @param format Format string
+ * @param ... Format arguments
+ *
+ * @return Bytes written to socket
+ */
+int sendx(int sock, const char *format, ...)
+{
+        char buffer[2048];
+        va_list ap;
+        int n;
+        
+        va_start(ap, format);
+        n = vsnprintf(buffer, sizeof(buffer), format, ap);
+        va_end(ap);
+
+        return send(sock, buffer, n, 0);
 }
 
 /** 
@@ -534,7 +451,7 @@ char *float_to_str(char *dst,
  * 
  * @return Pointer to the beginning of the reversed string
  */
-char *reverse_string(char *start, char *end)
+static char *reverse_string(char *start, char *end)
 {
         char rev;
 
@@ -548,3 +465,131 @@ char *reverse_string(char *start, char *end)
         return (end - 1);
 }
 
+/**
+ * @brief A quicker alternative to strdup
+ *
+ * @param str String to duplicate
+ * @param n Number of chars to duplicate
+ *
+ * @return Duplicated string
+ */
+char *dstrdup(const char *str)
+{
+        size_t siz = strlen(str) + sizeof(char);
+        char *newstr = malloc(siz);
+        dstrlcpy(newstr, str, siz);
+        return newstr;
+}
+
+/*
+ * Copy src to string dst of size siz.  At most siz-1 characters
+ * will be copied.  Always NUL terminates (unless siz == 0).
+ * Returns strlen(src); if retval >= siz, truncation occurred.
+ */
+size_t dstrlcpy(char *dst, const char *src, size_t siz)
+{
+        char *d = dst;
+        const char *s = src;
+        size_t n = siz;
+        size_t retval;
+
+        /* Copy as many bytes as will fit */
+        if (n != 0) {
+                while (--n != 0) {
+                        if ((*d++ = *s++) == '\0')
+                                break;
+                }
+        }
+
+        /* Not enough room in dst, add NUL and traverse rest of src */
+        if (n == 0) {
+                if (siz != 0)
+                        *d = '\0';      /* NUL-terminate dst */
+                while (*s++)
+                        ;
+        }
+
+        /* count does not include NUL */
+        retval = s - src - 1;
+
+#ifdef ENABLE_DEBUG
+        if (retval >= siz)
+                fprintf(stderr, "dstrlcpy truncation detected. "
+                                "Attempted to copy %d chars into "
+                                "an array of size %d. [%s]\n",
+                                retval, siz, dst);
+#endif
+
+        return retval;
+}
+
+/*
+ * Appends src to string dst of size siz (unlike strncat, siz is the
+ * full size of dst, not space left).  At most siz-1 characters
+ * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
+ * Returns strlen(src) + MIN(siz, strlen(initial dst)).
+ * If retval >= siz, truncation occurred.
+ */
+size_t dstrlcat(char *dst, const char *src, size_t siz)
+{
+        char *d = dst;
+        const char *s = src;
+        size_t n = siz;
+        size_t dlen;
+        size_t retval;
+
+        /* Find the end of dst and adjust bytes left but don't go past end */
+        while (n-- != 0 && *d != '\0')
+                d++;
+        dlen = d - dst;
+        n = siz - dlen;
+
+        if (n == 0) {
+                retval = dlen + strlen(s);
+                goto out;
+        }
+
+        while (*s != '\0') {
+                if (n != 1) {
+                        *d++ = *s;
+                        n--;
+                }
+                s++;
+        }
+        *d = '\0';
+
+        /* count does not include NUL */
+        retval = dlen + (s - src);
+
+out:
+#ifdef ENABLE_DEBUG
+        if (retval >= siz)
+                fprintf(stderr, "dstrlcat truncation detected. "
+                                "Attempted to copy %d chars into "
+                                "an array of size %d. [%s]\n",
+                                retval, siz, dst);
+#endif
+
+        return retval;
+}
+
+/*
+* @brief Compare two strings case insensitively. Note: I return -1 if
+*        not equal rather than the greater than less than crap. 0 means
+*        equal.
+*        In other words, this does NOT conform to the de facto standard
+*        strcasecmp, so don't misuse it.
+*
+* @param s1 string 1
+* @param s2 string 2
+*
+* @return -1 for no match, 0 for match
+*/
+int dstrcasecmp(const char *s1, const char *s2)
+{
+        for (; (*s1 || *s2); s1++, s2++)
+                if (tolower(*s1) != tolower(*s2))
+                        return -1;
+ 
+        return 0;
+}

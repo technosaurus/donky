@@ -17,8 +17,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "std/stdbool.h"
-
 #include "lists.h"
 
 struct cfg {
@@ -32,7 +30,7 @@ int get_int_key(char *mod, char *key, int otherwise);
 double get_double_key(char *mod,
                       char *key,
                       double otherwise);
-bool get_bool_key(char *mod, char *key, bool otherwise);
+int get_bool_key(char *mod, char *key, int otherwise);
 void parse_cfg(void);
 void clear_cfg(struct cfg *cur);
 

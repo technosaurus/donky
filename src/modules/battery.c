@@ -203,7 +203,7 @@ static struct batt *add_batt(char *batt_number)
 
         new = malloc(sizeof(struct batt));
 
-        new->number = d_strcpy(batt_number);
+        new->number = dstrdup(batt_number);
         new->remaining = NULL;
         new->maximum = get_maximum_charge(new->number);
 
@@ -260,7 +260,7 @@ static char *get_remaining_charge(char *args)
 
         chomp(remaining);
 
-        return d_strcpy(remaining);
+        return dstrdup(remaining);
 }
 
 /** 
@@ -299,7 +299,7 @@ static char *get_maximum_charge(char *args)
 
         chomp(maximum);
 
-        return d_strcpy(maximum);
+        return dstrdup(maximum);
 }
 
 /** 

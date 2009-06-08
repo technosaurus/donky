@@ -28,8 +28,6 @@
 #include "../cfg.h"
 #include "../mem.h"
 #include "../util.h"
-#include "../std/stdbool.h"
-#include "../std/string.h"
 #include "mpdscrob.h"
 #include "extra/md5.h"
 
@@ -51,14 +49,14 @@ static char last_album[128];
 static char last_track[16];
 static int last_etime;
 static int last_ttime;
-bool scrob_enabled;
+int scrob_enabled;      /* bool */
 static char *scrob_host;
 static int scrob_port;
 static char *scrob_user;
 static char *scrob_pass;
 static struct sockaddr_in server;
 static struct hostent *hptr;
-static bool scrob_shaked;
+static int scrob_shaked;        /* bool */
 static char scrob_sessionid[36];
 static char scrob_nowplayurl[256];
 static char scrob_submiturl[256];
@@ -83,23 +81,23 @@ void scrob_init(void)
         last_etime = 0;
         last_ttime = 0;
 
-        scrob_shaked = false;
+        scrob_shaked = 0;
         scrob_sessionid[0] = '\0';
 
         scrob_host = get_char_key("mpd", "scrob_host", NULL);
         scrob_port = get_int_key("mpd", "scrob_port", 80);
-        scrob_enabled = get_bool_key("mpd", "scrob_enabled", false);
+        scrob_enabled = get_bool_key("mpd", "scrob_enabled", 0);
         scrob_user = get_char_key("mpd", "scrob_user", NULL);
         scrob_pass = get_char_key("mpd", "scrob_pass", NULL);
 
         if (scrob_host == NULL)
-                scrob_enabled = false;
+                scrob_enabled = 0;
 
         if (scrob_enabled) {
                 if ((hptr = gethostbyname(scrob_host)) == NULL) {
                         fprintf(stderr,
                                 "Could not gethostbyname(%s)\n", scrob_host);
-                        scrob_enabled = false;
+                        scrob_enabled = 0;
                         return;
                 }
 
@@ -153,7 +151,7 @@ void scrob_urself(const char *artist, const char *title, const char *album,
                 if ((scrob_handshake(sock) == -1))
                         return;
 
-                scrob_shaked = true;
+                scrob_shaked = 1;
         }
 
         /* Okay, the last artist wasn't null and they played half or more
@@ -169,10 +167,10 @@ void scrob_urself(const char *artist, const char *title, const char *album,
                 scrob_nowplay(sock, artist, title, album, track, ttime);
 
         /* Update all the last_* stuff. */
-        strlcpy(last_artist, artist, sizeof(last_artist));
-        strlcpy(last_title, title, sizeof(last_title));
-        strlcpy(last_album, album, sizeof(last_album));
-        strlcpy(last_track, track, sizeof(last_track));
+        dstrlcpy(last_artist, artist, sizeof(last_artist));
+        dstrlcpy(last_title, title, sizeof(last_title));
+        dstrlcpy(last_album, album, sizeof(last_album));
+        dstrlcpy(last_track, track, sizeof(last_track));
         last_ttime = ttime;
 
         /* Close this maw faw. */
@@ -206,8 +204,8 @@ static int scrob_handshake(int sock)
                 return -1;
         }
 
-        strlcpy(utm_md5, scrob_pass, sizeof(utm_md5));
-        strlcat(utm_md5, utm, sizeof(utm_md5));
+        dstrlcpy(utm_md5, scrob_pass, sizeof(utm_md5));
+        dstrlcat(utm_md5, utm, sizeof(utm_md5));
 
         scrob_md5(utm_md5);
 
@@ -242,21 +240,21 @@ static int scrob_handshake(int sock)
         if (line == NULL)
                 return -1;
 
-        strlcpy(scrob_sessionid, line, sizeof(scrob_sessionid));
+        dstrlcpy(scrob_sessionid, line, sizeof(scrob_sessionid));
 
         /* Now playing URL */
         line = strtok(NULL, "\n");
         if (line == NULL)
                 return -1;
 
-        strlcpy(scrob_nowplayurl, line, sizeof(scrob_nowplayurl));
+        dstrlcpy(scrob_nowplayurl, line, sizeof(scrob_nowplayurl));
 
         /* Submit URL */
         line = strtok(NULL, "\n");
         if (line == NULL)
                 return -1;
 
-        strlcpy(scrob_submiturl, line, sizeof(scrob_submiturl));
+        dstrlcpy(scrob_submiturl, line, sizeof(scrob_submiturl));
 
         /* Success. */
         return 0;
@@ -306,12 +304,12 @@ static void scrob_submit(int sock, const char *artist, const char *title,
         char sttime[32];
         int len;
         char *line;
-        bool ok;
+        int ok; /* bool */
 
         printf("Submitting (%s - %s) to (%s)!\n", artist, title, scrob_submiturl);
 
         tries = 0;
-        ok = false;
+        ok = 0;
 
         t = time(NULL);
         tmp = localtime(&t);
@@ -324,28 +322,28 @@ static void scrob_submit(int sock, const char *artist, const char *title,
         uint_to_str(sttime, ttime, sizeof(sttime));
 
         /* Assemble request string. */
-        strlcpy(snd, "s=", sizeof(snd));
-        strlcat(snd, scrob_sessionid, sizeof(snd));
+        dstrlcpy(snd, "s=", sizeof(snd));
+        dstrlcat(snd, scrob_sessionid, sizeof(snd));
 
-        strlcat(snd, "&a[0]=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(artist), sizeof(snd));
+        dstrlcat(snd, "&a[0]=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(artist), sizeof(snd));
 
-        strlcat(snd, "&t[0]=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(title), sizeof(snd));
+        dstrlcat(snd, "&t[0]=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(title), sizeof(snd));
 
-        strlcat(snd, "&i[0]=", sizeof(snd));
-        strlcat(snd, utm, sizeof(snd));
+        dstrlcat(snd, "&i[0]=", sizeof(snd));
+        dstrlcat(snd, utm, sizeof(snd));
 
-        strlcat(snd, "&o[0]=P&r[0]=&l[0]=", sizeof(snd));
-        strlcat(snd, sttime, sizeof(snd));
+        dstrlcat(snd, "&o[0]=P&r[0]=&l[0]=", sizeof(snd));
+        dstrlcat(snd, sttime, sizeof(snd));
 
-        strlcat(snd, "&b[0]=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(album), sizeof(snd));
+        dstrlcat(snd, "&b[0]=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(album), sizeof(snd));
 
-        strlcat(snd, "&n[0]=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(track), sizeof(snd));
+        dstrlcat(snd, "&n[0]=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(track), sizeof(snd));
 
-        strlcat(snd, "&m[0]=", sizeof(snd));
+        dstrlcat(snd, "&m[0]=", sizeof(snd));
 
         len = strlen(snd);
 
@@ -368,7 +366,7 @@ SUBMITPOST:
 
         for (line = strtok(buf, "\r\n"); line; line = strtok(NULL, "\r\n")) {
                 if (!strcmp(line, "OK")) {
-                        ok = true;
+                        ok = 1;
                         break;
                 }
         }
@@ -392,7 +390,7 @@ SUBMITPOST:
                          * and send it out later when network connectivity
                          * is back. */
 
-                        scrob_shaked = false;
+                        scrob_shaked = 0;
                         return;
                 }
 
@@ -420,36 +418,36 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
         char sttime[32];
         int len;
         char *line;
-        bool ok;
+        int ok; /* bool */
 
         printf("Sending now playing (%s - %s) to (%s)!\n",
                artist, title, scrob_nowplayurl);
 
         tries = 0;
-        ok = false;
+        ok = 0;
 
         uint_to_str(sttime, ttime, sizeof(sttime));
 
         /* Assemble request string. */
-        strlcpy(snd, "s=", sizeof(snd));
-        strlcat(snd, scrob_sessionid, sizeof(snd));
+        dstrlcpy(snd, "s=", sizeof(snd));
+        dstrlcat(snd, scrob_sessionid, sizeof(snd));
 
-        strlcat(snd, "&a=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(artist), sizeof(snd));
+        dstrlcat(snd, "&a=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(artist), sizeof(snd));
 
-        strlcat(snd, "&t=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(title), sizeof(snd));
+        dstrlcat(snd, "&t=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(title), sizeof(snd));
 
-        strlcat(snd, "&b=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(album), sizeof(snd));
+        dstrlcat(snd, "&b=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(album), sizeof(snd));
 
-        strlcat(snd, "&l=", sizeof(snd));
-        strlcat(snd, sttime, sizeof(snd));
+        dstrlcat(snd, "&l=", sizeof(snd));
+        dstrlcat(snd, sttime, sizeof(snd));
 
-        strlcat(snd, "&n=", sizeof(snd));
-        strlcat(snd, scrob_urlenc(track), sizeof(snd));
+        dstrlcat(snd, "&n=", sizeof(snd));
+        dstrlcat(snd, scrob_urlenc(track), sizeof(snd));
 
-        strlcat(snd, "&m=", sizeof(snd));
+        dstrlcat(snd, "&m=", sizeof(snd));
 
         len = strlen(snd);
 
@@ -472,7 +470,7 @@ NOWPLAYPOST:
 
         for (line = strtok(buf, "\r\n"); line; line = strtok(NULL, "\r\n")) {
                 if (!strcmp(line, "OK")) {
-                        ok = true;
+                        ok = 1;
                         break;
                 }
         }
@@ -490,7 +488,7 @@ NOWPLAYPOST:
 
                 /* We most likely need to redo the handshake. */
                 if ((scrob_handshake(sock) == -1)) {
-                        scrob_shaked = false;
+                        scrob_shaked = 0;
                         return;
                 }
 

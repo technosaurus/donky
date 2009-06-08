@@ -17,7 +17,7 @@
 #ifndef MPDSCROB_H
 #define MPDSCROB_H
 
-extern bool scrob_enabled;
+extern int scrob_enabled;       /* bool */
 
 void scrob_init(void);
 void scrob_die(void);

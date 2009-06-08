@@ -19,9 +19,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "std/stdbool.h"
-#include "std/string.h"
+#include <string.h>
 
 #include "cfg.h"
 #include "default_settings.h"
@@ -62,7 +60,7 @@ static void add_mod(char *mod)
         struct cfg *new_mod;
 
         new_mod = malloc(sizeof(struct cfg));
-        new_mod->mod = d_strcpy(mod);
+        new_mod->mod = dstrdup(mod);
         new_mod->setting_ls = init_list();
 
         add_node(cfg_ls, new_mod);
@@ -78,7 +76,7 @@ static void add_mod(char *mod)
  */
 static int find_mod(struct cfg *cur, char *mod)
 {
-        if (!strcasecmp(cur->mod, mod))
+        if (!dstrcasecmp(cur->mod, mod))
                 return 1;
 
         return 0;
@@ -101,8 +99,8 @@ static void add_key(char *mod, char *key, char *value)
                 return;
 
         new_setting = malloc(sizeof(struct setting));
-        new_setting->key = d_strcpy(key);
-        new_setting->value = d_strcpy(value);
+        new_setting->key = dstrdup(key);
+        new_setting->value = dstrdup(value);
 
         add_node(cur->setting_ls, new_setting);
 }
@@ -117,7 +115,7 @@ static void add_key(char *mod, char *key, char *value)
  */
 static int find_key(struct setting *cur, char *key)
 {
-        if(!strcasecmp(cur->key, key))
+        if (!dstrcasecmp(cur->key, key))
                 return 1;
 
         return 0;
@@ -140,16 +138,16 @@ char *get_char_key(char *mod, char *key, char *otherwise)
         cur = find_node(cfg_ls, &find_mod, mod);
         if (!cur) {
                 if (otherwise)
-                        return d_strcpy(otherwise);
+                        return dstrdup(otherwise);
 
                 return NULL;
         }
 
         cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value))
-                return d_strcpy(cur_s->value);
+                return dstrdup(cur_s->value);
         else if (otherwise)
-                return d_strcpy(otherwise);
+                return dstrdup(otherwise);
 
         return NULL;
 }
@@ -213,7 +211,7 @@ double get_double_key(char *mod, char *key, double otherwise)
  * 
  * @return The boolean value of key, or 'otherwise'
  */
-bool get_bool_key(char *mod, char *key, bool otherwise)
+int get_bool_key(char *mod, char *key, int otherwise)
 {
         struct cfg *cur;
         struct setting *cur_s;
@@ -225,9 +223,9 @@ bool get_bool_key(char *mod, char *key, bool otherwise)
         cur_s = find_node(cur->setting_ls, &find_key, key);
         if (cur_s && (cur_s->value)) {
                 if (IS_TRUE(cur_s->value[0]))
-                        return true;
+                        return 1;
                 else if (IS_FALSE(cur_s->value[0]))
-                        return false;
+                        return 0;
         }
 
         return otherwise;
@@ -243,13 +241,13 @@ void parse_cfg(void)
         char mod[64];
         char key[64];
         char value[128];
-        const char *format[5];     /* sscanf formats */
-        bool mod_check;
+        const char *format[5];  /* sscanf formats */
+        int mod_check;          /* bool */
 
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
 
-        mod_check = false;
+        mod_check = 0;
 
         format[0] = " [%63[a-zA-Z0-9_-]]";                /* [mod]         */
         format[1] = " %63[a-zA-Z0-9_-] = \"%127[^\"]\" "; /* key = "value" */
@@ -267,12 +265,12 @@ void parse_cfg(void)
 
                 if (sscanf(str, format[0], mod) == 1) {
                         add_mod(mod);
-                        if (mod_check == false)
-                                mod_check = true;
+                        if (mod_check == 0)
+                                mod_check = 1;
                         continue;
                 }
 
-                if (mod_check == true) {
+                if (mod_check == 1) {
                         if (sscanf(str, format[1], key, value) == 2) {
                                 goto handle_key;
                         } else if (sscanf(str, format[2], key, value) == 2) {
@@ -281,7 +279,7 @@ void parse_cfg(void)
                                 trim_t(value);
                                 goto handle_key;
                         } else if (sscanf(str, format[4], key) == 1) {
-                                strlcpy(value, "True", sizeof(value));
+                                dstrlcpy(value, "True", sizeof(value));
                                 goto handle_key;
                         }
                 }
@@ -291,7 +289,7 @@ void parse_cfg(void)
 handle_key:
                 /* values of "" or '' are interpreted as False */
                 if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
-                        strlcpy(value, "False", sizeof(value));
+                        dstrlcpy(value, "False", sizeof(value));
 
                 add_key(mod, key, value);
 
@@ -323,14 +321,14 @@ static FILE *get_cfg_file(void)
         char cfg_file_path[DMAXPATHLEN];
         FILE *cfg_file;
 
-        strlcpy(cfg_file_path, getenv("HOME"), sizeof(cfg_file_path));
-        strlcat(cfg_file_path, "/" DEFAULT_CONF, sizeof(cfg_file_path));
+        dstrlcpy(cfg_file_path, getenv("HOME"), sizeof(cfg_file_path));
+        dstrlcat(cfg_file_path, "/" DEFAULT_CONF, sizeof(cfg_file_path));
 
         cfg_file = fopen(cfg_file_path, "r");
         if (!cfg_file) {
                 printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
 
-                strlcpy(cfg_file_path,
+                dstrlcpy(cfg_file_path,
                         SYSCONFDIR "/" DEFAULT_CONF_GLOBAL,
                         sizeof(cfg_file_path));
 

@@ -18,9 +18,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 
-#include "std/string.h"
 #include "cfg.h"
 #include "daemon.h"
 #include "protocol.h"
@@ -51,7 +51,7 @@ donky_cmd commands[] = {
  */
 void protocol_handle(donky_conn *cur, const char *buf)
 {
-        if (cur->authed)
+        if (cur->is_authed)
                 protocol_handle_command(cur, buf);
         else
                 protocol_handle_auth(cur, buf);
@@ -71,7 +71,7 @@ static void protocol_handle_auth(donky_conn *cur, const char *buf)
         /* No password needed, set user as authenticated and pass on this
          * buffer to the command handler. */
         if (pass == NULL) {
-                cur->authed = true;
+                cur->is_authed = 1;
                 protocol_handle_command(cur, buf);
                 return;
         }
@@ -79,7 +79,7 @@ static void protocol_handle_auth(donky_conn *cur, const char *buf)
         /* Grab the password. */
         if (sscanf(buf, PROTO_PASS_REQ, check) == 1) {
                 if (!strcmp(pass, check)) {
-                        cur->authed = 1;
+                        cur->is_authed = 1;
                         sendcrlf(cur->sock, PROTO_PASS_ACK);
                 } else {
                         sendcrlf(cur->sock, PROTO_PASS_NACK);
@@ -99,7 +99,7 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
 {
         char *args = NULL;
         int i;
-        bool did = false;
+        int did = 0;    /* bool */
 
         args = strchr(buf, ' ');
 
@@ -113,8 +113,8 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
 
         /* Look for this command. */
         for (i = 0; commands[i].alias != NULL; i++) {
-                if (!strcasecmp(commands[i].alias, buf)) {
-                        did = true;
+                if (!strcmp(commands[i].alias, buf)) {
+                        did = 1;
                         commands[i].func(cur, args);
                         break;
                 }
@@ -138,7 +138,7 @@ static void protocol_command_var(donky_conn *cur, const char *args)
                 return;
         }
         
-        if ((request_list_add(cur, args, false)))
+        if ((request_list_add(cur, args, 0)))
                 sendcrlf(cur->sock, PROTO_GOOD);
         else
                 sendcrlf(cur->sock, PROTO_ERROR);
@@ -157,7 +157,7 @@ static void protocol_command_varonce(donky_conn *cur, const char *args)
                 return;
         }
         
-        if ((request_list_add(cur, args, true)))
+        if ((request_list_add(cur, args, 1)))
                 sendcrlf(cur->sock, PROTO_GOOD);
         else
                 sendcrlf(cur->sock, PROTO_ERROR);

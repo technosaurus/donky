@@ -244,7 +244,7 @@ static void print_random_message(const char **messages)
         /* --i since arrays obviously start at 0 */
         if (--i >= 0) {
                 j = random_range(0, i);
-                printf(messages[j]);
+                printf("%s", messages[j]);
         }
 }
 

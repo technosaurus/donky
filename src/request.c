@@ -20,8 +20,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "std/stdbool.h"
-
 #include "cfg.h"
 #include "daemon.h"
 #include "default_settings.h"
@@ -39,7 +37,7 @@ static pthread_t request_thread_id;
 /* Function prototypes. */
 static void request_handler_sleep_setup(struct timespec *tspec);
 static void *request_handler_exec(void *arg);
-static bool thread_launched = false;
+static int thread_is_launched = 0; /* bool */
 
 /**
  * @brief Start the request handler execution thread.
@@ -62,7 +60,7 @@ int request_handler_start(void)
         /* We don't need this anymore! */
         pthread_attr_destroy(&request_thread_attr);
 
-        thread_launched = true;
+        thread_is_launched = 1;
 
         return 1;
 }
@@ -72,7 +70,7 @@ int request_handler_start(void)
  */
 void request_handler_stop(void)
 {
-        if (thread_launched) {
+        if (thread_is_launched) {
                 pthread_cancel(request_thread_id);
                 pthread_join(request_thread_id, NULL);
         }
@@ -113,8 +111,8 @@ static void *request_handler_exec(void *arg)
                         /* Keep going cuz this one hasn't timed out. */
                         if ((get_time() - last_update < timeout) &&
                             (timeout != 0 && last_update != 0) &&
-                            (cur->remove != true) &&
-                            (cur->first != true)) {
+                            (cur->remove != 1) &&
+                            (cur->is_first != 1)) {
                                 cur = next;
                                 continue;
                         }
@@ -136,7 +134,7 @@ static void *request_handler_exec(void *arg)
 
                                                 if (n <= 0) {
                                                         printf("Removing...\n");
-                                                        cur->remove = true;
+                                                        cur->remove = 1;
                                                 }
                                         }
                                 }
@@ -158,7 +156,7 @@ static void *request_handler_exec(void *arg)
 
                                                 if (n <= 0) {
                                                         printf("Removing...\n");
-                                                        cur->remove = true;
+                                                        cur->remove = 1;
                                                 }
                                         }
                                 }
@@ -174,8 +172,8 @@ static void *request_handler_exec(void *arg)
                         mem_list_clear();
 
                         /* This isn't the first handle anymore. */
-                        if (cur->first)
-                                cur->first = false;
+                        if (cur->is_first)
+                                cur->is_first = 0;
 
                         /* Remove this request. */
                         if (cur->remove)
@@ -222,7 +220,7 @@ static void request_handler_sleep_setup(struct timespec *tspec)
  * @param buf
  * @param remove
  */
-int request_list_add(const donky_conn *conn, const char *buf, bool remove)
+int request_list_add(const donky_conn *conn, const char *buf, int remove)
 {
         struct request_list *n;
         char *id;
@@ -230,7 +228,7 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         char *args;
         struct module_var *mv;
 
-        id = d_strcpy(buf);
+        id = dstrdup(buf);
 
         /* Get the variable name... */
         var = strchr(id, ':');
@@ -270,7 +268,7 @@ int request_list_add(const donky_conn *conn, const char *buf, bool remove)
         n->var = mv;
         n->args = args;
         n->remove = remove;
-        n->first = true;
+        n->is_first = 1;
 
         n->prev = NULL;
         n->next = NULL;
@@ -376,5 +374,5 @@ void request_list_clear(void)
 
         rl_start = NULL;
         rl_end = NULL;
-        thread_launched = false;
+        thread_is_launched = 0;
 }

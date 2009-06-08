@@ -17,6 +17,10 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#include "../config.h"
+
+#include "daemon.h"
+
 #define PROTO_CONN_ACK  "donky " VERSION
 #define PROTO_PASS_REQ  "pass: %63s[^\r\n]"
 #define PROTO_PASS_ACK  "SUP"

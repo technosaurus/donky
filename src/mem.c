@@ -78,27 +78,7 @@ char *m_strdup(char *str)
         if (str == NULL)
                 return NULL;
 
-        ret = d_strcpy(str);
-        mem_list_add(ret);
-        return ret;
-}
-
-/**
- * @brief Strndup wrapper.
- *
- * @param str String to duplicate
- * @param size Maximum size
- *
- * @return Pointer to string
- */
-char *m_strndup(char *str, size_t size)
-{
-        char *ret;
-
-        if (str == NULL)
-                return NULL;
-
-        ret = d_strncpy(str, size);
+        ret = dstrdup(str);
         mem_list_add(ret);
         return ret;
 }

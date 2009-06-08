@@ -1,4 +1,11 @@
 /*
+ * Functions dstrlcpy and dstrlcat are adapted from OpenBSD's
+ * libc functions strlcpy and strlcat:
+ * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ *      $OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $
+ *      $OpenBSD: strlcpy.c,v 1.11 2006/05/05 15:27:38 millert Exp $
+ *
+ * Everything else:
  * Copyright (c) 2009 Matt Hayes, Jake LeMaster
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +24,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-#include "std/stdbool.h"
+#include <stddef.h>
 
 #define DMAXPATHLEN 256
 
@@ -27,29 +34,29 @@
                 (ptr) = NULL;   \
         } while (0)
 
-char *trim(char *);
-char *trim_l(char *);
-void trim_t(char *);
-bool is_comment(char *);
-bool is_all_spaces(char *);
-char *chop(char *);
-char *chomp(char *);
-char *substr(char *, int, int);
+char *trim(char *str);
+char *trim_l(char *str);
+void trim_t(char *str);
+int is_comment(char *str);
+int is_all_spaces(char *str);
+char *chop(char *str);
+char *chomp(char *str);
+char *substr(char *str, int offset, size_t len);
 double get_time(void);
-char *d_strcpy(const char *str);
-char *d_strncpy(const char *str, size_t n);
 char *bytes_to_bigger(unsigned long bytes);
 int random_range(int min, int max);
-int create_tcp_listener(char *host, int port);
-int sendcrlf(int sock, const char *format, ...);
-int sendx(int sock, const char *format, ...);
 unsigned int get_str_sum(const char *str);
 double pown(double x, double y);
+int sendcrlf(int sock, const char *format, ...);
+int sendx(int sock, const char *format, ...);
 char *uint_to_str(char *dst, unsigned long int src, size_t siz);
 char *float_to_str(char *dst,
                    long double src,
                    unsigned int precision,
                    size_t siz);
-char *reverse_string(char *start, char *end);
+char *dstrdup(const char *str);
+size_t dstrlcpy(char *dst, const char *src, size_t siz);
+size_t dstrlcat(char *dst, const char *src, size_t siz);
+int dstrcasecmp(const char *s1, const char *s2);
 #endif /* UTIL_H */
 

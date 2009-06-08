@@ -17,21 +17,21 @@
 #ifndef REQUEST_H
 #define REQUEST_H
 
-#include "std/stdbool.h"
+#include "daemon.h"
 
 struct request_list {
         char *id;
         const donky_conn *conn;
         struct module_var *var;
         char *args;
-        bool remove;
-        bool first;
+        int remove;     /* bool */
+        int is_first;   /* bool */
         
         struct request_list *prev;
         struct request_list *next;
 };
 
-int request_list_add(const donky_conn *conn, const char *buf, bool remove);
+int request_list_add(const donky_conn *conn, const char *buf, int remove);
 void request_list_remove(struct request_list *cur);
 void request_list_clear(void);
 int request_handler_start(void);
