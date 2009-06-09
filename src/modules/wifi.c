@@ -27,7 +27,7 @@
 char module_name[] = "wifi_pwn_edition";
 
 /* Globals */
-static char *interface;
+static const char *interface;
 
 static struct wifi_info {
         char essid[64];
@@ -65,7 +65,6 @@ void module_init(const struct module *mod)
  */
 void module_destroy(void)
 {
-        free(interface);
 }
 
 /**

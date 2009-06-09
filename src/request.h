@@ -20,12 +20,13 @@
 #include "daemon.h"
 
 struct request_list {
-        char *id;
+        unsigned int id;
         const donky_conn *conn;
         struct module_var *var;
         char *args;
         int remove;     /* bool */
         int is_first;   /* bool */
+        char *tofree;
         
         struct request_list *prev;
         struct request_list *next;

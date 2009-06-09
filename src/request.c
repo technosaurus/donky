@@ -127,7 +127,7 @@ static void *request_handler_exec(void *arg)
 
                                         if (sum != cur->var->sum || cur->remove) {
                                                 n = sendcrlf(cur->conn->sock,
-                                                             "%s:%d:%s",
+                                                             "%u:%d:%s",
                                                              cur->id,
                                                              cur->var->type,
                                                              ret_str);
@@ -149,7 +149,7 @@ static void *request_handler_exec(void *arg)
 
                                         if (sum != cur->var->sum || cur->remove) {
                                                 n = sendcrlf(cur->conn->sock,
-                                                             "%s:%d:%d",
+                                                             "%u:%d:%d",
                                                              cur->id,
                                                              cur->var->type,
                                                              ret_int);
@@ -224,17 +224,18 @@ static void request_handler_sleep_setup(struct timespec *tspec)
 int request_list_add(const donky_conn *conn, const char *buf, int remove)
 {
         struct request_list *n;
-        char *id;
+        unsigned int id;
+        char *str;
         char *var;
         char *args;
         struct module_var *mv;
 
-        id = dstrdup(buf);
+        str = dstrdup(buf);
 
         /* Get the variable name... */
-        var = strchr(id, ':');
+        var = strchr(str, ':');
         if (!var) {
-                free(id);
+                free(str);
                 return 0;
         }
 
@@ -248,16 +249,17 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
                 args++;
         }
 
-        printf("Request list add: id[%s] var[%s] args[%s]\n", id, var, args);
+        id = atoi(str);
+        printf("Request list add: id[%u] var[%s] args[%s]\n", id, var, args);
 
         /* Find the module_var node for this variable. */
         if ((mv = module_var_find_by_name(var)) == NULL) {
                 printf("Couldn't find module var!\n");
 
                 /* Send an error response. */
-                sendcrlf(conn->sock, "%s:404:", id);
+                sendcrlf(conn->sock, "%u:404:", id);
                 
-                free(id);
+                free(str);
                 return 0;
         }
 
@@ -270,6 +272,7 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
         n->args = args;
         n->remove = remove;
         n->is_first = 1;
+        n->tofree = str;
 
         n->prev = NULL;
         n->next = NULL;
@@ -329,7 +332,7 @@ void request_list_remove(struct request_list *cur)
         if (cur == rl_end)
                 rl_end = cur->prev;
 
-        free(cur->id);
+        free(cur->tofree);
         free(cur);
 }
 
@@ -367,7 +370,7 @@ void request_list_clear(void)
         while (cur) {
                 next = cur->next;
 
-                free(cur->id);
+                free(cur->tofree);
                 free(cur);
                 
                 cur = next;
