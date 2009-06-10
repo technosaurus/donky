@@ -158,10 +158,10 @@ void scrob_urself(const char *artist, const char *title, const char *album,
                 scrob_nowplay(sock, artist, title, album, track, ttime);
 
         /* Update all the last_* stuff. */
-        dstrlcpy(last_artist, artist, sizeof(last_artist));
-        dstrlcpy(last_title, title, sizeof(last_title));
-        dstrlcpy(last_album, album, sizeof(last_album));
-        dstrlcpy(last_track, track, sizeof(last_track));
+        dstrfcpy(last_artist, artist, sizeof(last_artist));
+        dstrfcpy(last_title, title, sizeof(last_title));
+        dstrfcpy(last_album, album, sizeof(last_album));
+        dstrfcpy(last_track, track, sizeof(last_track));
         last_ttime = ttime;
 
         /* Close this maw faw. */
@@ -195,8 +195,8 @@ static int scrob_handshake(int sock)
                 return -1;
         }
 
-        dstrlcpy(utm_md5, scrob_pass, sizeof(utm_md5));
-        dstrlcat(utm_md5, utm, sizeof(utm_md5));
+        dstrfcpy(utm_md5, scrob_pass, sizeof(utm_md5));
+        dstrfcat(utm_md5, utm, sizeof(utm_md5));
 
         scrob_md5(utm_md5);
 
@@ -231,21 +231,21 @@ static int scrob_handshake(int sock)
         if (line == NULL)
                 return -1;
 
-        dstrlcpy(scrob_sessionid, line, sizeof(scrob_sessionid));
+        dstrfcpy(scrob_sessionid, line, sizeof(scrob_sessionid));
 
         /* Now playing URL */
         line = strtok(NULL, "\n");
         if (line == NULL)
                 return -1;
 
-        dstrlcpy(scrob_nowplayurl, line, sizeof(scrob_nowplayurl));
+        dstrfcpy(scrob_nowplayurl, line, sizeof(scrob_nowplayurl));
 
         /* Submit URL */
         line = strtok(NULL, "\n");
         if (line == NULL)
                 return -1;
 
-        dstrlcpy(scrob_submiturl, line, sizeof(scrob_submiturl));
+        dstrfcpy(scrob_submiturl, line, sizeof(scrob_submiturl));
 
         /* Success. */
         return 0;
@@ -313,28 +313,28 @@ static void scrob_submit(int sock, const char *artist, const char *title,
         uint_to_str(sttime, ttime, sizeof(sttime));
 
         /* Assemble request string. */
-        dstrlcpy(snd, "s=", sizeof(snd));
-        dstrlcat(snd, scrob_sessionid, sizeof(snd));
+        dstrfcpy(snd, "s=", sizeof(snd));
+        dstrfcat(snd, scrob_sessionid, sizeof(snd));
 
-        dstrlcat(snd, "&a[0]=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(artist), sizeof(snd));
+        dstrfcat(snd, "&a[0]=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(artist), sizeof(snd));
 
-        dstrlcat(snd, "&t[0]=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(title), sizeof(snd));
+        dstrfcat(snd, "&t[0]=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(title), sizeof(snd));
 
-        dstrlcat(snd, "&i[0]=", sizeof(snd));
-        dstrlcat(snd, utm, sizeof(snd));
+        dstrfcat(snd, "&i[0]=", sizeof(snd));
+        dstrfcat(snd, utm, sizeof(snd));
 
-        dstrlcat(snd, "&o[0]=P&r[0]=&l[0]=", sizeof(snd));
-        dstrlcat(snd, sttime, sizeof(snd));
+        dstrfcat(snd, "&o[0]=P&r[0]=&l[0]=", sizeof(snd));
+        dstrfcat(snd, sttime, sizeof(snd));
 
-        dstrlcat(snd, "&b[0]=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(album), sizeof(snd));
+        dstrfcat(snd, "&b[0]=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(album), sizeof(snd));
 
-        dstrlcat(snd, "&n[0]=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(track), sizeof(snd));
+        dstrfcat(snd, "&n[0]=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(track), sizeof(snd));
 
-        dstrlcat(snd, "&m[0]=", sizeof(snd));
+        dstrfcat(snd, "&m[0]=", sizeof(snd));
 
         len = strlen(snd);
 
@@ -420,25 +420,25 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
         uint_to_str(sttime, ttime, sizeof(sttime));
 
         /* Assemble request string. */
-        dstrlcpy(snd, "s=", sizeof(snd));
-        dstrlcat(snd, scrob_sessionid, sizeof(snd));
+        dstrfcpy(snd, "s=", sizeof(snd));
+        dstrfcat(snd, scrob_sessionid, sizeof(snd));
 
-        dstrlcat(snd, "&a=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(artist), sizeof(snd));
+        dstrfcat(snd, "&a=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(artist), sizeof(snd));
 
-        dstrlcat(snd, "&t=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(title), sizeof(snd));
+        dstrfcat(snd, "&t=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(title), sizeof(snd));
 
-        dstrlcat(snd, "&b=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(album), sizeof(snd));
+        dstrfcat(snd, "&b=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(album), sizeof(snd));
 
-        dstrlcat(snd, "&l=", sizeof(snd));
-        dstrlcat(snd, sttime, sizeof(snd));
+        dstrfcat(snd, "&l=", sizeof(snd));
+        dstrfcat(snd, sttime, sizeof(snd));
 
-        dstrlcat(snd, "&n=", sizeof(snd));
-        dstrlcat(snd, scrob_urlenc(track), sizeof(snd));
+        dstrfcat(snd, "&n=", sizeof(snd));
+        dstrfcat(snd, scrob_urlenc(track), sizeof(snd));
 
-        dstrlcat(snd, "&m=", sizeof(snd));
+        dstrfcat(snd, "&m=", sizeof(snd));
 
         len = strlen(snd);
 

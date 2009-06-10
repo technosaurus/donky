@@ -524,18 +524,18 @@ out:
         return retval;
 }
 
-/*
-* @brief Compare two strings case insensitively. Note: I return -1 if
-*        not equal rather than the greater than less than crap. 0 means
-*        equal.
-*        In other words, this does NOT conform to the de facto standard
-*        strcasecmp, so don't misuse it.
-*
-* @param s1 string 1
-* @param s2 string 2
-*
-* @return -1 for no match, 0 for match
-*/
+/**
+ * @brief Compare two strings case insensitively. Note: I return -1 if
+ *        not equal rather than the greater than less than crap. 0 means
+ *        equal.
+ *        In other words, this does NOT conform to the de facto standard
+ *        strcasecmp, so don't misuse it.
+ *
+ * @param s1 string 1
+ * @param s2 string 2
+ *
+ * @return -1 for no match, 0 for match
+ */
 int dstrcasecmp(const char *s1, const char *s2)
 {
         for (; (*s1 || *s2); s1++, s2++)
@@ -543,4 +543,68 @@ int dstrcasecmp(const char *s1, const char *s2)
                         return -1;
  
         return 0;
+}
+
+/**
+ * @brief Copy src into dst, with a maximum of siz - 1 characters.  Guaranteed
+ *        to be NUL terminated.  This has no truncation checking or any of that
+ *        other pansy stuff.  Intended for hardcore c0d3rs only.  The 'f' stands
+ *        for fast and furious.
+ *
+ * @param dst Destination string
+ * @param src Source string
+ * @param siz Size of destination string
+ */
+void dstrfcpy(char *dst, const char *src, size_t siz)
+{
+        size_t n;
+        n = siz;
+
+        /* Copy as many bytes as will fit */
+        while (--n > 0) {
+                if ((*dst++ = *src++) == '\0')
+                        break;
+        }
+
+        /* Not enough room in dst, add NUL */
+        if (n <= 0) {
+                if (siz != 0)
+                        *dst = '\0';      /* NUL-terminate dst */
+        }
+}
+
+/**
+ * @brief Concatenate src with dst, with a maximum of siz - 1 characters.
+ *        Guaranteed to be NUL terminated.  This has no truncation checking or
+ *        any of that other pansy stuff.  Intended for hardcore c0d3rs only.
+ *        The 'f' stands for fast and furious.
+ *
+ * @param dst Destination string
+ * @param src Source string
+ * @param siz Size of destination string
+ */
+void dstrfcat(char *dst, const char *src, size_t siz)
+{
+        char *d;
+        size_t n;
+
+        d = dst;
+        n = siz;
+
+        /* Find the end of dst and adjust bytes left but don't go past end */
+        while (n-- != 0 && *d != '\0')
+                d++;
+        n = siz - (d - dst);
+
+        if (n == 0)
+                return;
+
+        while (*src != '\0') {
+                if (n != 1) {
+                        *d++ = *src;
+                        n--;
+                }
+                src++;
+        }
+        *d = '\0';
 }

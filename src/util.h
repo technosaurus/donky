@@ -56,5 +56,7 @@ char *dstrdup(const char *str);
 size_t dstrlcpy(char *dst, const char *src, size_t siz);
 size_t dstrlcat(char *dst, const char *src, size_t siz);
 int dstrcasecmp(const char *s1, const char *s2);
+void dstrfcpy(char *dst, const char *src, size_t siz);
+void dstrfcat(char *dst, const char *src, size_t siz);
 #endif /* UTIL_H */
 
