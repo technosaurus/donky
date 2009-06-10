@@ -21,6 +21,8 @@
 #include "../module.h"
 #include "../util.h"
 
+#define DEFAULT_PATH "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
+
 /* Module name */
 char module_name[] = "scpuinfo";
 
@@ -38,22 +40,23 @@ void module_destroy(void)
 
 char *get_scpufreq(char *args)
 {
-        char path[DMAXPATHLEN];
-        int read;
+        char *path;
         FILE *freq_file;
-        char freq[16];
         char *fgets_check;
+        char freq[16];
+        int freq_int;
 
-        read = snprintf(path, sizeof(path), 
-                        "/sys/devices/system/cpu/cpu%s/cpufreq/scaling_cur_freq",
-                        args);
+        if (args != NULL) {
+                path = NULL;
+                stracpy(&path, "/sys/devices/system/cpu/cpu");
+                stracat(&path, args);
+                stracat(&path, "/cpufreq/scaling_cur_freq");
+                freq_file = fopen(path, "r");
+                free(path);
+        } else {
+                freq_file = fopen(DEFAULT_PATH, "r");
+        }
 
-        if (read >= DMAXPATHLEN)
-                printf("WARNING: [scpuinfo:get_scpufreq] "
-                       "snprintf truncation! read = %d, DMAXPATHLEN = %d!\n",
-                       read, DMAXPATHLEN);
-
-        freq_file = fopen(path, "r");
         if (!freq_file)
                 return "n/a";
 
@@ -62,7 +65,8 @@ char *get_scpufreq(char *args)
         if (fgets_check == NULL)
                 return "n/a";
 
-        snprintf(freq, sizeof(freq), "%d", (atoi(freq) / 1000));
+        freq_int = atoi(freq) / 1000;
+        uint_to_str(freq, freq_int, sizeof(freq));
 
         return m_strdup(freq);
 }

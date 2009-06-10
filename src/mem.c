@@ -80,6 +80,7 @@ char *m_strdup(char *str)
 
         ret = dstrdup(str);
         mem_list_add(ret);
+
         return ret;
 }
 

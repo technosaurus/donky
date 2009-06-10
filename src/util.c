@@ -1,11 +1,4 @@
 /*
- * Functions dstrlcpy and dstrlcat are adapted from OpenBSD's
- * libc functions strlcpy and strlcat:
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
- *      $OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $
- *      $OpenBSD: strlcpy.c,v 1.11 2006/05/05 15:27:38 millert Exp $
- *
- * Everything else:
  * Copyright (c) 2009 Matt Hayes, Jake LeMaster
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -157,7 +150,7 @@ char *substr(char *str, int offset, size_t len)
         size_t siz = len + sizeof(char);
         char *dup = malloc(siz);
         str += offset;
-        dstrlcpy(dup, str, siz);
+        strfcpy(dup, str, siz);
         return dup;
 }
 
@@ -190,19 +183,19 @@ char *bytes_to_bigger(unsigned long bytes)
 
         if (bytes >= tera) {
                 float_to_str(str, bytes / tera, 2, sizeof(str));
-                dstrlcat(str, "TiB", sizeof(str));
+                strfcat(str, "TiB", sizeof(str));
         } else if (bytes >= giga) {
                 float_to_str(str, bytes / giga, 2, sizeof(str));
-                dstrlcat(str, "GiB", sizeof(str));
+                strfcat(str, "GiB", sizeof(str));
         } else if (bytes >= mega) {
                 float_to_str(str, bytes / mega, 2, sizeof(str));
-                dstrlcat(str, "MiB", sizeof(str));
+                strfcat(str, "MiB", sizeof(str));
         } else if (bytes >= kilo) {
                 float_to_str(str, bytes / kilo, 2, sizeof(str));
-                dstrlcat(str, "KiB", sizeof(str));
+                strfcat(str, "KiB", sizeof(str));
         } else {
                 uint_to_str(str, bytes, sizeof(str));
-                dstrlcat(str, "B", sizeof(str));
+                strfcat(str, "B", sizeof(str));
         }
 
         return dstrdup(str);
@@ -417,114 +410,6 @@ static char *reverse_string(char *start, char *end)
 }
 
 /**
- * @brief A quicker alternative to strdup
- *
- * @param str String to duplicate
- * @param n Number of chars to duplicate
- *
- * @return Duplicated string
- */
-char *dstrdup(const char *str)
-{
-        size_t siz = strlen(str) + sizeof(char);
-        char *newstr = malloc(siz);
-        dstrlcpy(newstr, str, siz);
-        return newstr;
-}
-
-/*
- * Copy src to string dst of size siz.  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz == 0).
- * Returns strlen(src); if retval >= siz, truncation occurred.
- */
-size_t dstrlcpy(char *dst, const char *src, size_t siz)
-{
-        char *d = dst;
-        const char *s = src;
-        size_t n = siz;
-        size_t retval;
-
-        /* Copy as many bytes as will fit */
-        if (n != 0) {
-                while (--n != 0) {
-                        if ((*d++ = *s++) == '\0')
-                                break;
-                }
-        }
-
-        /* Not enough room in dst, add NUL and traverse rest of src */
-        if (n == 0) {
-                if (siz != 0)
-                        *d = '\0';      /* NUL-terminate dst */
-                while (*s++)
-                        ;
-        }
-
-        /* count does not include NUL */
-        retval = s - src - 1;
-
-#ifdef ENABLE_DEBUG
-        if (retval >= siz)
-                fprintf(stderr, "dstrlcpy truncation detected. "
-                                "Attempted to copy %d chars into "
-                                "an array of size %d. [%s]\n",
-                                retval, siz, dst);
-#endif
-
-        return retval;
-}
-
-/*
- * Appends src to string dst of size siz (unlike strncat, siz is the
- * full size of dst, not space left).  At most siz-1 characters
- * will be copied.  Always NUL terminates (unless siz <= strlen(dst)).
- * Returns strlen(src) + MIN(siz, strlen(initial dst)).
- * If retval >= siz, truncation occurred.
- */
-size_t dstrlcat(char *dst, const char *src, size_t siz)
-{
-        char *d = dst;
-        const char *s = src;
-        size_t n = siz;
-        size_t dlen;
-        size_t retval;
-
-        /* Find the end of dst and adjust bytes left but don't go past end */
-        while (n-- != 0 && *d != '\0')
-                d++;
-        dlen = d - dst;
-        n = siz - dlen;
-
-        if (n == 0) {
-                retval = dlen + strlen(s);
-                goto out;
-        }
-
-        while (*s != '\0') {
-                if (n != 1) {
-                        *d++ = *s;
-                        n--;
-                }
-                s++;
-        }
-        *d = '\0';
-
-        /* count does not include NUL */
-        retval = dlen + (s - src);
-
-out:
-#ifdef ENABLE_DEBUG
-        if (retval >= siz)
-                fprintf(stderr, "dstrlcat truncation detected. "
-                                "Attempted to copy %d chars into "
-                                "an array of size %d. [%s]\n",
-                                retval, siz, dst);
-#endif
-
-        return retval;
-}
-
-/**
  * @brief Compare two strings case insensitively. Note: I return -1 if
  *        not equal rather than the greater than less than crap. 0 means
  *        equal.
@@ -555,22 +440,18 @@ int dstrcasecmp(const char *s1, const char *s2)
  * @param src Source string
  * @param siz Size of destination string
  */
-void dstrfcpy(char *dst, const char *src, size_t siz)
+void strfcpy(char *dst, const char *src, size_t siz)
 {
-        size_t n;
-        n = siz;
+        size_t n = siz;
 
         /* Copy as many bytes as will fit */
-        while (--n > 0) {
+        while (--n > 0)
                 if ((*dst++ = *src++) == '\0')
-                        break;
-        }
+                        return;
 
         /* Not enough room in dst, add NUL */
-        if (n <= 0) {
-                if (siz != 0)
-                        *dst = '\0';      /* NUL-terminate dst */
-        }
+        if ((n == 0) && (siz != 0))
+                *dst = '\0';
 }
 
 /**
@@ -583,19 +464,16 @@ void dstrfcpy(char *dst, const char *src, size_t siz)
  * @param src Source string
  * @param siz Size of destination string
  */
-void dstrfcat(char *dst, const char *src, size_t siz)
+void strfcat(char *dst, const char *src, size_t siz)
 {
-        char *d;
-        size_t n;
-
-        d = dst;
-        n = siz;
+        char *d = dst;
+        size_t n = siz;
 
         /* Find the end of dst and adjust bytes left but don't go past end */
-        while (n-- != 0 && *d != '\0')
+        while ((n-- != 0) && (*d != '\0'))
                 d++;
-        n = siz - (d - dst);
 
+        n = siz - (d - dst);
         if (n == 0)
                 return;
 
@@ -606,5 +484,174 @@ void dstrfcat(char *dst, const char *src, size_t siz)
                 }
                 src++;
         }
+
         *d = '\0';
 }
+
+/**
+ * @brief A quick, portable strdup
+ *
+ * @param str String to duplicate
+ *
+ * @return Duplicated, malloc'd string
+ */
+char *dstrdup(const char *str)
+{
+        size_t siz = strlen(str) + sizeof(char);
+        char *dup = malloc(siz);
+        size_t i;
+
+        for (i = siz; i != 0; (*dup++ = *str++), i--);
+
+        return dup - siz;
+}
+
+/**
+ * The following stra functions receive either a malloc'd or NULL ptr
+ * (dst) which will be (re)allocated as necessary to hold the contents
+ * of src. These functions never return something newly malloc'd unless
+ * you send them a NULL dst ptr. If src is NULL when calling stra(n)cpy,
+ * dst will be free'd and set to NULL. If src is NULL is calling
+ * stra(n)cat, dst is unaffected.
+ *
+ * The purposes of these functions are to eliminate the possibility
+ * of truncation and buffer overflows and to remove the need for
+ * specifying arbitrary buffer sizes.
+ */
+
+/** 
+ * @brief Copy src to dst.
+ * 
+ * @return The new length of dst.
+ */
+int stracpy(char **dst, const char *src)
+{
+        char *d;
+        size_t srclen;
+        size_t siz;
+
+        if (src == NULL) {
+                free(*dst);
+                *dst = NULL;
+                return 0;
+        }
+
+        srclen = strlen(src);
+        siz = srclen + sizeof(char);
+        if ((*dst == NULL) || (strlen(*dst) < srclen))
+                if ((*dst = realloc(*dst, siz)) == NULL)
+                        return -1;
+
+        d = *dst;
+        while (--siz != 0)
+                *d++ = *src++;
+
+        *d = '\0';
+
+        return strlen(*dst);
+}
+
+/** 
+ * @brief Concatenate src onto dst.
+ * 
+ * @return The new length of dst.
+ */
+int stracat(char **dst, const char *src)
+{
+        char *d;
+        size_t dstlen, srclen;
+        size_t siz;
+
+        if (src == NULL)
+                return 0;
+        else if (*dst == NULL)
+                return stracpy(dst, src);
+
+        dstlen = strlen(*dst);
+        srclen = strlen(src);
+        siz = dstlen + srclen + sizeof(char);
+        if ((*dst = realloc(*dst, siz)) == NULL)
+                return -1;
+
+        d = *dst + dstlen;
+        siz -= dstlen;
+        while (--siz != 0)
+                *d++ = *src++;
+
+        *d = '\0';
+
+        return strlen(*dst);
+}
+
+/** 
+ * @brief Copy n characters from src to dst.
+ * 
+ * @return The new length of dst.
+ */
+int strancpy(char **dst, const char *src, size_t n)
+{
+        char *d;
+        size_t srclen;
+        size_t siz;
+
+        if (src == NULL) {
+                free(*dst);
+                *dst = NULL;
+                return 0;
+        }
+
+        srclen = strlen(src);
+        if (n > srclen)
+                siz = srclen + sizeof(char);
+        else
+                siz = n + sizeof(char);
+
+        if ((*dst == NULL) || (strlen(*dst) < srclen))
+                if ((*dst = realloc(*dst, siz)) == NULL)
+                        return -1;
+
+        d = *dst;
+        while (--siz != 0)
+                *d++ = *src++;
+
+        *d = '\0';
+
+        return strlen(*dst);
+}
+
+/** 
+ * @brief Concatenate n characters from src onto dst.
+ * 
+ * @return The new length of dst.
+ */
+int strancat(char **dst, const char *src, size_t n)
+{
+        char *d;
+        size_t dstlen, srclen;
+        size_t siz;
+
+        if (src == NULL)
+                return 0;
+        else if (*dst == NULL)
+                return strancpy(dst, src, n);
+
+        dstlen = strlen(*dst);
+        srclen = strlen(src);
+        if (n > srclen)
+                siz = dstlen + srclen + sizeof(char);
+        else
+                siz = dstlen + n + sizeof(char);
+
+        if ((*dst = realloc(*dst, siz)) == NULL)
+                return -1;
+
+        d = *dst + dstlen;
+        siz -= dstlen;
+        while (--siz != 0)
+                *d++ = *src++;
+
+        *d = '\0';
+
+        return strlen(*dst);
+}
+

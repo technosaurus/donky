@@ -1,11 +1,4 @@
 /*
- * Functions dstrlcpy and dstrlcat are adapted from OpenBSD's
- * libc functions strlcpy and strlcat:
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
- *      $OpenBSD: strlcat.c,v 1.13 2005/08/08 08:05:37 espie Exp $
- *      $OpenBSD: strlcpy.c,v 1.11 2006/05/05 15:27:38 millert Exp $
- *
- * Everything else:
  * Copyright (c) 2009 Matt Hayes, Jake LeMaster
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -52,11 +45,13 @@ char *float_to_str(char *dst,
                    long double src,
                    unsigned int precision,
                    size_t siz);
-char *dstrdup(const char *str);
-size_t dstrlcpy(char *dst, const char *src, size_t siz);
-size_t dstrlcat(char *dst, const char *src, size_t siz);
 int dstrcasecmp(const char *s1, const char *s2);
-void dstrfcpy(char *dst, const char *src, size_t siz);
-void dstrfcat(char *dst, const char *src, size_t siz);
+void strfcpy(char *dst, const char *src, size_t siz);
+void strfcat(char *dst, const char *src, size_t siz);
+char *dstrdup(const char *str);
+int stracpy(char **dst, const char *src);
+int stracat(char **dst, const char *src);
+int strancpy(char **dst, const char *src, size_t n);
+int strancat(char **dst, const char *src, size_t n);
 #endif /* UTIL_H */
 

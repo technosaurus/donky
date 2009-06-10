@@ -26,19 +26,19 @@
 char module_name[] = "moc";
 
 /* Globals */
-static char home[DMAXPATHLEN];
+static char *home;
 
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
         module_var_add(mod, "moc", "get_moc", 10.0, VARIABLE_STR);
-        snprintf(home, sizeof(home), "%s", getenv("HOME"));
+        home = dstrdup(getenv("HOME"));
 }
 
 /* These run on module unload */
 void module_destroy(void)
 {
-
+        free(home);
 }
 
 char *get_moc(char *args)

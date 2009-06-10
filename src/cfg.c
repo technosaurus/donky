@@ -283,7 +283,7 @@ void parse_cfg(void)
                         trim_t(value);
                         goto handle_key;
                 } else if (sscanf(str, format[4], key) == 1) {
-                        dstrlcpy(value, "True", sizeof(value));
+                        strfcpy(value, "True", sizeof(value));
                         goto handle_key;
                 }
 
@@ -292,7 +292,7 @@ void parse_cfg(void)
 handle_key:
                 /* values of "" or '' are interpreted as False */
                 if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
-                        dstrlcpy(value, "False", sizeof(value));
+                        strfcpy(value, "False", sizeof(value));
 
                 add_key(mod, key, value);
 
@@ -319,29 +319,31 @@ handle_key:
  */
 static FILE *get_cfg_file(void)
 {
-        char cfg_file_path[DMAXPATHLEN];
+        char *cfg_path = NULL;
         FILE *cfg_file;
 
-        dstrlcpy(cfg_file_path, getenv("HOME"), sizeof(cfg_file_path));
-        dstrlcat(cfg_file_path, "/" DEFAULT_CONF, sizeof(cfg_file_path));
+        stracpy(&cfg_path, getenv("HOME"));
+        stracat(&cfg_path, "/" DEFAULT_CONF);
 
-        cfg_file = fopen(cfg_file_path, "r");
-        if (!cfg_file) {
-                printf("Warning: ~/%s file not found.\n", DEFAULT_CONF);
+        cfg_file = fopen(cfg_path, "r");
+        if (cfg_file == NULL) {
+                fprintf(stderr,
+                        "Warning: ~/%s file not found.\n",
+                        DEFAULT_CONF);
 
-                dstrlcpy(cfg_file_path,
-                        SYSCONFDIR "/" DEFAULT_CONF_GLOBAL,
-                        sizeof(cfg_file_path));
+                stracpy(&cfg_path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL);
 
-                cfg_file = fopen(cfg_file_path, "r");
-                if (!cfg_file) {
+                cfg_file = fopen(cfg_path, "r");
+                if (cfg_file == NULL) {
+                        free(cfg_path);
                         fprintf(stderr,
                                 "Error: %s/%s file not found.\n",
-                                SYSCONFDIR,
-                                DEFAULT_CONF_GLOBAL);
+                                SYSCONFDIR, DEFAULT_CONF_GLOBAL);
                         exit(EXIT_FAILURE);
                 }
         }
+
+        free(cfg_path);
 
         return cfg_file;
 }
