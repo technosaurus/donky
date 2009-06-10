@@ -35,12 +35,14 @@ static void protocol_handle_command(donky_conn *cur, const char *buf);
 static void protocol_command_var(donky_conn *cur, const char *args);
 static void protocol_command_varonce(donky_conn *cur, const char *args);
 static void protocol_command_bye(donky_conn *cur, const char *args);
+static void protocol_command_cfg(donky_conn *cur, const char *args);
 
 /* Globals. */
 donky_cmd commands[] = {
         { "var",     &protocol_command_var },
         { "varonce", &protocol_command_varonce },
         { "bye",     &protocol_command_bye },
+        { "cfg",  &protocol_command_cfg },
         { NULL,      NULL }
 };
 
@@ -172,4 +174,46 @@ static void protocol_command_bye(donky_conn *cur, const char *args)
 {
         sendcrlf(cur->sock, PROTO_BYE);
         donky_conn_drop(cur);
+}
+
+/**
+ * @brief Config get
+ *
+ * @param cur Donky connection
+ * @param args Arguments
+ */
+static void protocol_command_cfg(donky_conn *cur, const char *args)
+{
+        char id[8];
+        char mod[64];
+        char key[64];
+        unsigned int type;
+
+        if (sscanf(args, "%7[^:]:%63[^:]:%63[^:]:%u",
+                   id, mod, key, &type) != 4) {
+                sendcrlf(cur->sock, PROTO_ERROR);
+                return;
+        }
+
+        switch (type) {
+        case 0:
+                sendcrlf(cur->sock, "cfg:%s:\"%s\"",
+                         id, get_char_key(mod, key, ""));
+                break;
+        case 1:
+                sendcrlf(cur->sock, "cfg:%s:%d",
+                         id, get_int_key(mod, key, -1));
+                break;
+        case 2:
+                sendcrlf(cur->sock, "cfg:%s:%f",
+                         id, get_double_key(mod, key, -1.0));
+                break;
+        case 3:
+                sendcrlf(cur->sock, "cfg:%s:%d",
+                         id, get_bool_key(mod, key, -1));
+                break;
+        default:
+                sendcrlf(cur->sock, PROTO_ERROR);
+                break;
+        }
 }

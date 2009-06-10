@@ -50,7 +50,27 @@
 
                 varonce <id>:<variable name> <args>\r\n
 
-5. Cleanly quitting
+5. Configuration retrieval
+
+        You can retrieve configuration variables from donky's main configuration
+        file via the protocol.  Request is in the following format:
+
+                cfg <id>:<config mod (section)>:<config key>:<type>
+
+        An example might be:
+
+                cfg 0:mpd:host:0
+
+        Note that <id> needs to be a unique integer.
+
+        Note that <type> refers to the variable type.  This can be:
+
+                0 = char *
+                1 = int
+                2 = double
+                3 = bool (int)
+
+6. Cleanly quitting
 
         Ideally clients should quit cleanly by issues the `bye` command.
 
