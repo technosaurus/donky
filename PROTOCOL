@@ -70,6 +70,15 @@
                 2 = double
                 3 = bool (int)
 
+        Replies will be sent in the following format:
+
+                cfg:<id>:<value>
+
+        Where <id> is the same unique ID that was sent by the client.
+
+        <value> will be the resulting value.  Note that char * values are
+        wrapped in quotes "".
+
 6. Cleanly quitting
 
         Ideally clients should quit cleanly by issues the `bye` command.
