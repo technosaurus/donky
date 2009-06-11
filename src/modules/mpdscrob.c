@@ -134,13 +134,20 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         sock = scrob_connect();
         if (sock == -1) {
                 printf("Could not connect to scrobbler server ;[\n");
-                return;
+                
+                goto ABOLISHTHECLASSSYSTEM;
         }
 
         /* We haven't done the handshake. */
         if (!scrob_shaked) {
-                if ((scrob_handshake(sock) == -1))
-                        return;
+                if ((scrob_handshake(sock) == -1)) {
+                        /* We need to update these variables so that we will only try
+                         * to connect once per song, as to not spam! */
+                        strfcpy(last_artist, artist, sizeof(last_artist));
+                        strfcpy(last_title, title, sizeof(last_title));
+                        
+                        goto ABOLISHTHECLASSSYSTEM;
+                }
 
                 scrob_shaked = 1;
         }
@@ -157,6 +164,8 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         if (artist[0] != '\0' && title[0] != '\0')
                 scrob_nowplay(sock, artist, title, album, track, ttime);
 
+ABOLISHTHECLASSSYSTEM:
+
         /* Update all the last_* stuff. */
         strfcpy(last_artist, artist, sizeof(last_artist));
         strfcpy(last_title, title, sizeof(last_title));
@@ -165,7 +174,8 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         last_ttime = ttime;
 
         /* Close this maw faw. */
-        close(sock);
+        if (sock)
+                close(sock);
 }
 
 /**
