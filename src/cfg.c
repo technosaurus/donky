@@ -100,9 +100,22 @@ static void add_key(char *mod, char *key, char *value)
 
         new_setting = malloc(sizeof(struct setting));
         new_setting->key = dstrdup(key);
-        new_setting->value = dstrdup(value);
+        if (value != NULL)
+                new_setting->value = dstrdup(value);
+        else
+                new_setting->value = NULL;
 
         add_node(cur->setting_ls, new_setting);
+
+#ifdef ENABLE_DEBUGGING
+        printf("added-> mod [%s] key [%s] value [%s]\n",
+               mod, key, value);
+        printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
+               get_char_key(mod, key, "(null)"),
+               get_int_key(mod, key, -1),
+               get_double_key(mod, key, -1),
+               get_bool_key(mod, key, -1));
+#endif
 }
 
 /** 
@@ -241,8 +254,8 @@ void parse_cfg(void)
         char mod[64];
         char key[64];
         char value[128];
+        int mod_check;          /* bool - do we have a mod? */
         const char *format[5];  /* sscanf formats */
-        int mod_check;          /* bool */
 
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
@@ -276,35 +289,18 @@ void parse_cfg(void)
                         continue;
 
                 if (sscanf(str, format[1], key, value) == 2) {
-                        goto handle_key;
+                        add_key(mod, key, value);
                 } else if (sscanf(str, format[2], key, value) == 2) {
-                        goto handle_key;
+                        add_key(mod, key, value);
                 } else if (sscanf(str, format[3], key, value) == 2) {
                         trim_t(value);
-                        goto handle_key;
+                        if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
+                                add_key(mod, key, NULL);
+                        else
+                                add_key(mod, key, value);
                 } else if (sscanf(str, format[4], key) == 1) {
-                        strfcpy(value, "True", sizeof(value));
-                        goto handle_key;
+                        add_key(mod, key, "True");
                 }
-
-                continue;
-
-handle_key:
-                /* values of "" or '' are interpreted as False */
-                if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
-                        strfcpy(value, "False", sizeof(value));
-
-                add_key(mod, key, value);
-
-#ifdef ENABLE_DEBUGGING
-                printf("added-> mod [%s] key [%s] value [%s]\n",
-                       mod, key, value);
-                printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
-                       get_char_key(mod, key, "ERROR!"),
-                       get_int_key(mod, key, -1),
-                       get_double_key(mod, key, -1),
-                       get_bool_key(mod, key, -1));
-#endif
         }
 
         fclose(cfg_file);
@@ -319,10 +315,10 @@ handle_key:
  */
 static FILE *get_cfg_file(void)
 {
-        char *cfg_path = NULL;
+        char *cfg_path;
         FILE *cfg_file;
 
-        stracpy(&cfg_path, getenv("HOME"));
+        cfg_path = dstrdup(getenv("HOME"));
         stracat(&cfg_path, "/" DEFAULT_CONF);
 
         cfg_file = fopen(cfg_path, "r");

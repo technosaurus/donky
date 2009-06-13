@@ -47,8 +47,7 @@ char *get_scpufreq(char *args)
         int freq_int;
 
         if (args != NULL) {
-                path = NULL;
-                stracpy(&path, "/sys/devices/system/cpu/cpu");
+                path = dstrdup("/sys/devices/system/cpu/cpu");
                 stracat(&path, args);
                 stracat(&path, "/cpufreq/scaling_cur_freq");
                 freq_file = fopen(path, "r");
