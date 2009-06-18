@@ -112,7 +112,7 @@ int main(int argc, char **argv)
         /* Initialize, then start donky. */
         initialize_stuff();
 
-        exit(EXIT_SUCCESS);
+        return 0;
 }
 
 /**
@@ -197,13 +197,13 @@ static void sigint_handler(int signum)
 static void donky_greet(void)
 {
         const char *greetings[] = {
-                "Welcome to donky! Have a mint.\n",
-                "SUP! donky in the h00se.\n",
-                "Who dare awakes donky? Mothereff.\n",
-                "donky. It's like honky, minus racial connotations.\n",
-                "My name is donky, and I am your g0d.\n",
-                "donky hygiene tip: shower before I segfault.\n",
-                "donky is starting... beginning... going... doing shit...\n",
+                "Welcome to donky! Have a mint.",
+                "SUP! donky in the h00se.",
+                "Who dare awakes donky? Mothereff.",
+                "donky. It's like honky, minus racial connotations.",
+                "My name is donky, and I am your g0d.",
+                "donky hygiene tip: shower before I segfault.",
+                "donky is starting... beginning... going... doing shit...",
                 NULL /* always last */
         };
 
@@ -216,12 +216,12 @@ static void donky_greet(void)
 static void donky_farewell(void)
 {
         const char *farewells[] = {
-                "donky is peacin' the eff out.\n",
-                "I'm OUT!\n",
-                "donky is out like California lights.\n",
-                "Okay... donky knows when it's not wanted... (//_.)\n",
-                "donky sez, \"PTFO!\"\n",
-                "KBYE. >:O\n",
+                "donky is peacin' the eff out.",
+                "I'm OUT!",
+                "donky is out like California lights.",
+                "Okay... donky knows when it's not wanted... (//_.)",
+                "donky sez, \"PTFO!\"",
+                "KBYE. >:O",
                 NULL /* always last */
         };
 
@@ -241,10 +241,10 @@ static void print_random_message(const char **messages)
         /* count the number of strings in the array */
         for (i = 0; messages[i] != NULL; i++);
 
-        /* --i since arrays obviously start at 0 */
+        /* --i since arrays obviously start at 0, not 1 */
         if (--i >= 0) {
                 j = random_range(0, i);
-                printf("%s", messages[j]);
+                printf("%s\n", messages[j]);
         }
 }
 

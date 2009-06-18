@@ -27,7 +27,7 @@
 char module_name[] = "battery";
 
 /* My function data structures and prototypes */
-static struct batt {
+struct batt {
         char *number;           /* battery number ("0" for BATT0) */
 
         char *remaining; /* remaining charge in mAh */
