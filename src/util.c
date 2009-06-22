@@ -176,26 +176,23 @@ double get_time(void)
 char *bytes_to_bigger(unsigned long bytes)
 {
         char str[16];
-        double kilo = 1024;
-        double mega = kilo * 1024;
-        double giga = mega * 1024;
-        double tera = giga * 1024;
+        double kilo, mega, giga, tera;
 
-        if (bytes >= tera) {
-                float_to_str(str, bytes / tera, 2, sizeof(str));
-                strfcat(str, "TiB", sizeof(str));
-        } else if (bytes >= giga) {
-                float_to_str(str, bytes / giga, 2, sizeof(str));
-                strfcat(str, "GiB", sizeof(str));
-        } else if (bytes >= mega) {
-                float_to_str(str, bytes / mega, 2, sizeof(str));
-                strfcat(str, "MiB", sizeof(str));
-        } else if (bytes >= kilo) {
-                float_to_str(str, bytes / kilo, 2, sizeof(str));
-                strfcat(str, "KiB", sizeof(str));
-        } else {
+        if (bytes < (kilo = 1024)) {
                 uint_to_str(str, bytes, sizeof(str));
                 strfcat(str, "B", sizeof(str));
+        } else if (bytes < (mega = kilo * 1024)) {
+                float_to_str(str, bytes / kilo, 2, sizeof(str));
+                strfcat(str, "KiB", sizeof(str));
+        } else if (bytes < (giga = mega * 1024)) {
+                float_to_str(str, bytes / mega, 2, sizeof(str));
+                strfcat(str, "MiB", sizeof(str));
+        } else if (bytes < (tera = giga * 1024)) {
+                float_to_str(str, bytes / giga, 2, sizeof(str));
+                strfcat(str, "GiB", sizeof(str));
+        } else {
+                float_to_str(str, bytes / tera, 2, sizeof(str));
+                strfcat(str, "TiB", sizeof(str));
         }
 
         return dstrdup(str);

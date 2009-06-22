@@ -190,9 +190,7 @@ static void *request_handler_exec(void *arg)
                                         cur->var->sum = sum;
 
                                         if (n <= 0) {
-#ifdef ENABLE_DEBUGGING
-                                                printf("Removing...\n");
-#endif
+                                                DEBUG_PRINTF("Removing...\n");
                                                 cur->remove = 1;
                                         }
                                 }
@@ -211,9 +209,7 @@ static void *request_handler_exec(void *arg)
                                         cur->var->sum = sum;
 
                                         if (n <= 0) {
-#ifdef ENABLE_DEBUGGING
-                                                printf("Removing...\n");
-#endif
+                                                DEBUG_PRINTF("Removing...\n");
                                                 cur->remove = 1;
                                         }
                                 }
@@ -240,16 +236,12 @@ UPDATESTAT:
 
                 /* Sleep! */
                 if (nanosleep(&tspec, NULL) == -1) {
-#ifdef ENABLE_DEBUGGING
-                        printf("Breaking from request handler...\n");
-#endif
+                        DEBUG_PRINTF("Breaking from request handler...\n");
                         break;
                 }
         }
 
-#ifdef ENABLE_DEBUGGING
-        printf("Done with thread!\n");
-#endif
+        DEBUG_PRINTF("Done with thread!\n");
         return NULL;
 }
 
@@ -378,9 +370,7 @@ void request_list_remove(struct request_list *cur)
         
         cur->var->parent->clients--;
 
-#ifdef ENABLE_DEBUGGING
-        printf("Removing from request list...\n");
-#endif
+        DEBUG_PRINTF("Removing from request list...\n");
 
         /* If the clients just hit 0, unload this module. */
         if (cur->var->parent->clients == 0)

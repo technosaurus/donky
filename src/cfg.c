@@ -254,13 +254,13 @@ void parse_cfg(void)
         char mod[64];
         char key[64];
         char value[128];
-        int mod_check;          /* bool - do we have a mod? */
+        int have_mod;           /* bool - do we have a mod? */
         const char *format[5];  /* sscanf formats */
 
         cfg_file = get_cfg_file();
         cfg_ls = init_list();      /* initialize our cfg list */
 
-        mod_check = 0;  /* set this to 1 when we get our first mod */
+        have_mod = 0;  /* set this to 1 when we get our first mod */
 
         format[0] = " [%63[a-zA-Z0-9_-]]";                /* [mod]         */
         format[1] = " %63[a-zA-Z0-9_-] = \"%127[^\"]\" "; /* key = "value" */
@@ -279,13 +279,13 @@ void parse_cfg(void)
 
                 if (sscanf(str, format[0], mod) == 1) {
                         add_mod(mod);
-                        if (mod_check == 0)
-                                mod_check = 1;
+                        if (have_mod == 0)
+                                have_mod = 1;
                         continue;
                 }
 
                 /* if we have no mod, don't parse for keys & values */
-                if (mod_check == 0)
+                if (have_mod == 0)
                         continue;
 
                 if (sscanf(str, format[1], key, value) == 2) {
@@ -320,24 +320,27 @@ static FILE *get_cfg_file(void)
 
         path = dstrdup(getenv("HOME"));
         stracat(&path, "/" DEFAULT_CONF);
-
         file = fopen(path, "r");
-        if (file != NULL)
-                goto success;
+        if (file == NULL)
+                goto try_global;
 
-        fprintf(stderr, "Warning: %s file not found.\n", path);
-        stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
-        file = fopen(path, "r");
-        if (file != NULL)
-                goto success;
-
-        fprintf(stderr, "Error: %s file also not found.\n", path);
-        free(path);
-        exit(EXIT_FAILURE);
-
-success:
         free(path);
         return file;
+
+try_global:
+        fprintf(stderr, "Warning: %s file not found. Trying global.\n", path);
+        stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
+        file = fopen(path, "r");
+        if (file == NULL)
+                goto error;
+
+        free(path);
+        return file;
+
+error:
+        fprintf(stderr, "Error: %s file also not found. Exiting.\n", path);
+        free(path);
+        exit(EXIT_FAILURE);
 }
 
 /** 

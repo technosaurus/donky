@@ -143,9 +143,7 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         /* We haven't done the handshake. */
         if (!scrob_shaked) {
                 if ((scrob_handshake(sock) == -1)) {
-#ifdef ENABLE_DEBUGGING
-                        printf("mpdscrob: Handshake failed!\n");
-#endif
+                        DEBUG_PRINTF("mpdscrob: Handshake failed!\n");
                         
                         /* We need to update these variables so that we will only try
                          * to connect once per song, as to not spam! */
@@ -458,9 +456,7 @@ static void scrob_send_submission(int sock, const char *snd, const char *url)
                 }
 
                 if (ok) {
-#ifdef ENABLE_DEBUGGING
-                        printf("mpdscrob: Submission successful!\n");
-#endif
+                        DEBUG_PRINTF("mpdscrob: Submission successful!\n");
                         return;
                 }
 

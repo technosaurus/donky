@@ -120,19 +120,13 @@ static void initialize_stuff(void)
         while (1) {
                 donky_greet();
 
-#ifdef ENABLE_DEBUGGING
-                printf("Parsing .donkyrc...\n");
-#endif
+                DEBUG_PRINTF("Parsing .donkyrc...\n");
                 parse_cfg();
 
-#ifdef ENABLE_DEBUGGING
-                printf("Loading modules...\n");
-#endif
+                DEBUG_PRINTF("Loading modules...\n");
                 module_load_all();
 
-#ifdef ENABLE_DEBUGGING
-                printf("Starting the donky loop (TM)... >_<\n");
-#endif
+                DEBUG_PRINTF("Starting the donky loop (TM)... >_<\n");
                 donky_loop();
 
                 clean_up_everything();
@@ -154,29 +148,17 @@ static void clean_up_everything(void)
 {
         extern struct list *cfg_ls;
 
-#ifdef ENABLE_DEBUGGING
-        printf("Clearing config list...");
-#endif
+        DEBUG_PRINTF("Clearing config list...");
         del_list(cfg_ls, &clear_cfg);
-#ifdef ENABLE_DEBUGGING
-        printf(" done.\n");
-#endif
+        DEBUG_PRINTF(" done.\n");
 
-#ifdef ENABLE_DEBUGGING
-        printf("Clearing modules...");
-#endif
+        DEBUG_PRINTF("Clearing modules...");
         clear_module();
-#ifdef ENABLE_DEBUGGING
-        printf(" done.\n");
-#endif
+        DEBUG_PRINTF(" done.\n");
 
-#ifdef ENABLE_DEBUGGING
-        printf("Clearing request list...");
-#endif
+        DEBUG_PRINTF("Clearing request list...");
         request_list_clear();
-#ifdef ENABLE_DEBUGGING
-        printf(" done.\n");
-#endif
+        DEBUG_PRINTF(" done.\n");
 }
 
 /**

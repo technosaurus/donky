@@ -27,6 +27,12 @@
                 (ptr) = NULL;   \
         } while (0)
 
+#ifdef ENABLE_DEBUGGING
+#define DEBUG_PRINTF(str) printf(str)
+#else
+#define DEBUG_PRINTF
+#endif
+
 char *trim(char *str);
 char *trim_l(char *str);
 void trim_t(char *str);
