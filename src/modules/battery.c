@@ -50,10 +50,10 @@ struct list *batt_ls = NULL;
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod, "battper", "get_battper", 30.0, VARIABLE_STR);
-        module_var_add(mod, "battrem", "get_battrem", 30.0, VARIABLE_STR);
-        module_var_add(mod, "battmax", "get_battmax", 30.0, VARIABLE_STR);
-        module_var_add(mod, "battbar", "get_battbar", 30.0, VARIABLE_BAR);
+        module_var_add(mod, "battper", "get_battper", 30.0, VARIABLE_STR | ARGSTR);
+        module_var_add(mod, "battrem", "get_battrem", 30.0, VARIABLE_STR | ARGSTR);
+        module_var_add(mod, "battmax", "get_battmax", 30.0, VARIABLE_STR | ARGSTR);
+        module_var_add(mod, "battbar", "get_battbar", 30.0, VARIABLE_BAR | ARGSTR);
         module_var_add(mod, "batt_cron", "batt_cron", 30.0, VARIABLE_CRON);
 }
 

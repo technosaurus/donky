@@ -19,12 +19,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include "../../config.h"
 #include "../cfg.h"
 #include "../mem.h"
 #include "../net.h"
@@ -32,12 +32,9 @@
 #include "mpdscrob.h"
 #include "extra/md5.h"
 
-#define SCROB_CLIENT "dms"
+#define SCROB_CLIENT "tst"
 #define SCROB_VERSION "1.0"
-
-/* Reminder: try to find a portable strftime alternative for getting the UNIX
- * timestamp.  I'm sure there is something I just do not know of it and haven't
- * found it yet!  I'd like this module to be totally ANSI compliant. */
+#define SCROB_RETRIES 3
 
 /* Reminder: implement the caching feature while local/remote network connection
  * is down.  Most clients seem to write to a cache file, might be better for
@@ -71,6 +68,9 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
 static int scrob_handshake(int sock);
 static void scrob_md5(char *str);
 static char *scrob_urlenc(const char *str);
+static int scrob_handshake_parse(char *buf);
+static char *scrob_utime(char *dst, size_t sz);
+static void scrob_send_submission(int sock, const char *snd, const char *url);
 
 /**
  * @brief Called with mpd's init_settings method.
@@ -97,7 +97,8 @@ void scrob_init(void)
         if (scrob_enabled) {
                 if ((hptr = gethostbyname(scrob_host)) == NULL) {
                         fprintf(stderr,
-                                "Could not gethostbyname(%s)\n", scrob_host);
+                                "mpdscrob: Could not gethostbyname(%s)\n",
+                                scrob_host);
                         scrob_enabled = 0;
                         return;
                 }
@@ -133,7 +134,8 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         /* Connect to the scrobbler server. */
         sock = scrob_connect();
         if (sock == -1) {
-                printf("Could not connect to scrobbler server ;[\n");
+                fprintf(stderr,
+                        "mpdscrob: Could not connect to scrobbler server ;[\n");
                 
                 goto ABOLISHTHECLASSSYSTEM;
         }
@@ -141,6 +143,10 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         /* We haven't done the handshake. */
         if (!scrob_shaked) {
                 if ((scrob_handshake(sock) == -1)) {
+#ifdef ENABLE_DEBUGGING
+                        printf("mpdscrob: Handshake failed!\n");
+#endif
+                        
                         /* We need to update these variables so that we will only try
                          * to connect once per song, as to not spam! */
                         strfcpy(last_artist, artist, sizeof(last_artist));
@@ -165,7 +171,6 @@ void scrob_urself(const char *artist, const char *title, const char *album,
                 scrob_nowplay(sock, artist, title, album, track, ttime);
 
 ABOLISHTHECLASSSYSTEM:
-
         /* Update all the last_* stuff. */
         strfcpy(last_artist, artist, sizeof(last_artist));
         strfcpy(last_title, title, sizeof(last_title));
@@ -187,23 +192,16 @@ ABOLISHTHECLASSSYSTEM:
  */
 static int scrob_handshake(int sock)
 {
-        time_t t;
-        struct tm *tmp;
         char utm[96];
         char utm_md5[160];
         int n;
         char buf[1024];
-        char *line;
 
-        printf("Handshaking with (%s:%d)!\n", scrob_host, scrob_port);
+#ifdef ENABLE_DEBUGGING
+        printf("mpdscrob: Handshaking with (%s:%d)!\n", scrob_host, scrob_port);
+#endif
 
-        t = time(NULL);
-        tmp = localtime(&t);
-
-        if (strftime(utm, sizeof(utm) - sizeof(char), "%s", tmp) == 0) {
-                printf("mpdscrob: Issues with strftime!\n");
-                return -1;
-        }
+        scrob_utime(utm, sizeof(utm));
 
         strfcpy(utm_md5, scrob_pass, sizeof(utm_md5));
         strfcat(utm_md5, utm, sizeof(utm_md5));
@@ -212,22 +210,50 @@ static int scrob_handshake(int sock)
 
         sendcrlf(sock,
                  "GET http://%s/"
-                 "?hs=true&p=1.2&c=%s&v=%s&u=%s&t=%s&a=%s",
+                 "?hs=true&p=1.2&c=%s&v=%s&u=%s&t=%s&a=%s\n"
+                 "Host: %s\r\n",
                  scrob_host,
                  SCROB_CLIENT,
                  SCROB_VERSION,
                  scrob_user,
                  utm,
-                 utm_md5);
+                 utm_md5,
+                 scrob_host);
 
         n = recv(sock, buf, sizeof(buf), 0);
         if (n <= 0) {
-                printf("Socket disconnected!\n");
+                fprintf(stderr, "mpdscrob: Socket disconnected!\n");
                 return -1;
         }
 
         buf[n] = '\0';
 
+        return scrob_handshake_parse(buf);
+}
+
+/**
+ * @brief Parse the handshake reply.
+ *
+ * @param buf Buffer
+ *
+ * @return -1 for fail, 0 for success
+ */
+static int scrob_handshake_parse(char *buf)
+{
+        char *line;
+        char *header;
+
+        header = strstr(buf, "\r\n\r\n");
+        
+        if (header) {
+                header += 4;
+                buf = header;
+        }
+
+#ifdef ENABLE_DEBUGGING
+        printf("mpdscrob buf: {\n%s\n}\n", buf);
+#endif
+        
         /* Okay, the buffer should contain 4 lines. */
         line = strtok(buf, "\n");
         if (line == NULL)
@@ -256,8 +282,6 @@ static int scrob_handshake(int sock)
                 return -1;
 
         strfcpy(scrob_submiturl, line, sizeof(scrob_submiturl));
-
-        /* Success. */
         return 0;
 }
 
@@ -284,6 +308,18 @@ static void scrob_md5(char *str)
 }
 
 /**
+ * @brief UNIX time shiznazzlage. */
+static char *scrob_utime(char *dst, size_t sz)
+{
+        unsigned long int utime;
+
+        utime = get_unix_time();
+        uint_to_str(dst, utime, sz);
+
+        return dst;
+}
+
+/**
  * @brief Submit track to scrobbler.
  *
  * @param artist
@@ -295,30 +331,15 @@ static void scrob_md5(char *str)
 static void scrob_submit(int sock, const char *artist, const char *title,
                          const char *album, const char *track, const int ttime)
 {
-        char buf[1024];
-        int n;
-        time_t t;
-        struct tm *tmp;
         char utm[96];
-        int tries;
         char snd[1024];
         char sttime[32];
-        int len;
-        char *line;
-        int ok; /* bool */
 
+#ifdef ENABLE_DEBUGGING
         printf("Submitting (%s - %s) to (%s)!\n", artist, title, scrob_submiturl);
+#endif
 
-        tries = 0;
-        ok = 0;
-
-        t = time(NULL);
-        tmp = localtime(&t);
-
-        if (strftime(utm, sizeof(utm) - sizeof(char), "%s", tmp) == 0) {
-                printf("mpdscrob: Issues with strftime!\n");
-                return;
-        }
+        scrob_utime(utm, sizeof(utm));
 
         uint_to_str(sttime, ttime, sizeof(sttime));
 
@@ -346,58 +367,7 @@ static void scrob_submit(int sock, const char *artist, const char *title,
 
         strfcat(snd, "&m[0]=", sizeof(snd));
 
-        len = strlen(snd);
-
-SUBMITPOST:
-        tries++;
-        sendcrlf(sock, "POST %s HTTP/1.1", scrob_submiturl);
-        sendcrlf(sock, "Host: %s", scrob_host);
-        sendcrlf(sock, "User-Agent: donkympd/2009.5");
-        sendcrlf(sock, "Content-Type: application/x-www-form-urlencoded");
-        sendcrlf(sock, "Content-Length: %d", len);
-        sendx(sock, "\r\n");
-        sendx(sock, snd);
-
-        n = recv(sock, buf, sizeof(buf), 0);
-        if (n <= 0)
-                return;
-
-        buf[n] = '\0';
-        chomp(buf);
-
-        for (line = strtok(buf, "\r\n"); line; line = strtok(NULL, "\r\n")) {
-                if (!strcmp(line, "OK")) {
-                        ok = 1;
-                        break;
-                }
-        }
-
-        /* We got something other than OK ;[ */
-        if (!ok) {
-                close(sock);
-
-                /* Connect to the scrobbler server. */
-                sock = scrob_connect();
-                if (sock == -1) {
-                        printf("Could not connect to scrobbler server ;[\n");
-                        return;
-                }
-
-                /* We most likely need to redo the handshake. */
-                if ((scrob_handshake(sock) == -1)) {
-                        /* TODO: Add to cache.  If server connectivity is ever
-                         * problematic, or our own internet connection goes
-                         * down, it would be nice to cache what we are playing,
-                         * and send it out later when network connectivity
-                         * is back. */
-
-                        scrob_shaked = 0;
-                        return;
-                }
-
-                if (tries < 3)
-                        goto SUBMITPOST;
-        }
+        scrob_send_submission(sock, snd, scrob_submiturl);
 }
 
 /**
@@ -412,20 +382,13 @@ SUBMITPOST:
 static void scrob_nowplay(int sock, const char *artist, const char *title,
                           const char *album, const char *track, const int ttime)
 {
-        char buf[1024];
-        int n;
-        int tries;
         char snd[1024];
         char sttime[32];
-        int len;
-        char *line;
-        int ok; /* bool */
 
+#ifdef ENABLE_DEBUGGING
         printf("Sending now playing (%s - %s) to (%s)!\n",
                artist, title, scrob_nowplayurl);
-
-        tries = 0;
-        ok = 0;
+#endif
 
         uint_to_str(sttime, ttime, sizeof(sttime));
 
@@ -450,40 +413,65 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
 
         strfcat(snd, "&m=", sizeof(snd));
 
+        scrob_send_submission(sock, snd, scrob_nowplayurl);
+}
+
+/**
+ * @brief Send submission/nowplaying to server.
+ *
+ * @param snd Send string
+ * @param url URL to post to
+ */
+static void scrob_send_submission(int sock, const char *snd, const char *url)
+{
+        char buf[1024];
+        char *line;
+        unsigned int i;
+        unsigned int len;
+        int ok; /* bool */
+        int n;
+
+        ok = 0;
         len = strlen(snd);
+        
+        for (i = 0; i < SCROB_RETRIES; i++) {
+                sendcrlf(sock, "POST %s HTTP/1.1", url);
+                sendcrlf(sock, "Host: %s", scrob_host);
+                sendcrlf(sock, "User-Agent: %s/%s", SCROB_CLIENT, SCROB_VERSION);
+                sendcrlf(sock, "Content-Type: application/x-www-form-urlencoded");
+                sendcrlf(sock, "Content-Length: %d", len);
+                sendx(sock, "\r\n");
+                sendx(sock, snd);
 
-NOWPLAYPOST:
-        tries++;
-        sendcrlf(sock, "POST %s HTTP/1.1", scrob_nowplayurl);
-        sendcrlf(sock, "Host: %s", scrob_host);
-        sendcrlf(sock, "User-Agent: donkympd/2009.5");
-        sendcrlf(sock, "Content-Type: application/x-www-form-urlencoded");
-        sendcrlf(sock, "Content-Length: %d", len);
-        sendx(sock, "\r\n");
-        sendx(sock, snd);
+                n = recv(sock, buf, sizeof(buf), 0);
+                if (n <= 0)
+                        return;
 
-        n = recv(sock, buf, sizeof(buf), 0);
-        if (n <= 0)
-                return;
+                buf[n] = '\0';
 
-        buf[n] = '\0';
-        chomp(buf);
-
-        for (line = strtok(buf, "\r\n"); line; line = strtok(NULL, "\r\n")) {
-                if (!strcmp(line, "OK")) {
-                        ok = 1;
-                        break;
+                for (line = strtok(buf, "\r\n");
+                     line; line = strtok(NULL, "\r\n")) {
+                        if (!strcmp(line, "OK")) {
+                                ok = 1;
+                                break;
+                        }
                 }
-        }
 
-        /* We got something other than OK ;[ */
-        if (!ok) {
+                if (ok) {
+#ifdef ENABLE_DEBUGGING
+                        printf("mpdscrob: Submission successful!\n");
+#endif
+                        return;
+                }
+
+                /* We got something other than OK ;[ */
                 close(sock);
 
                 /* Connect to the scrobbler server. */
                 sock = scrob_connect();
                 if (sock == -1) {
-                        printf("Could not connect to scrobbler server ;[\n");
+                        fprintf(stderr,
+                                "Could not connect to scrobbler server ;[\n");
                         return;
                 }
 
@@ -492,9 +480,6 @@ NOWPLAYPOST:
                         scrob_shaked = 0;
                         return;
                 }
-
-                if (tries < 3)
-                        goto NOWPLAYPOST;
         }
 }
 

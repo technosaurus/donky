@@ -23,6 +23,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 
+#include "../config.h"
 #include "cfg.h"
 #include "daemon.h"
 #include "lists.h"
@@ -130,7 +131,9 @@ static void donky_conn_read(donky_conn *cur)
                 donky_conn_drop(cur);
                 return;
         } else if (n == 0) {
+#ifdef ENABLE_DEBUGGING
                 printf("Connection hung up on us!\n");
+#endif
                 donky_conn_drop(cur);
                 return;
         }
@@ -144,7 +147,9 @@ static void donky_conn_read(donky_conn *cur)
                 chomp(line);
 
                 /* Send away to the protocol handler. */
+#ifdef ENABLE_DEBUGGING
                 printf("line = [%s]\n", line);
+#endif
                 protocol_handle(cur, line);
         }
 }
@@ -166,7 +171,9 @@ static void donky_conn_new(donky_conn *cur)
         if (newfd > donky_fdmax)
                 donky_fdmax = newfd;
 
+#ifdef ENABLE_DEBUGGING
         printf("New connection, adding to client list.\n");
+#endif
         donky_conn_add(newfd);
         sendcrlf(newfd, PROTO_CONN_ACK);
 }
@@ -236,7 +243,9 @@ void donky_conn_drop(donky_conn *cur)
         /* Free some memorah! */
         free(cur);
 
+#ifdef ENABLE_DEBUGGING
         printf("Dropped connection like a freakin' turd.\n");
+#endif
 }
 
 /**
@@ -295,7 +304,9 @@ static int donky_listen(void)
  */
 static void clean_dis_shiz(void)
 {
+#ifdef ENABLE_DEBUGGING
         printf("Cleaning up some daemon junk... ;[\n");
+#endif
         donky_conn_clear();
         FD_ZERO(&donky_fds);
 }

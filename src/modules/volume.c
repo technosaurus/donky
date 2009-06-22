@@ -39,7 +39,7 @@ static long volume_alsaMax;
 /* These run on module startup */
 void module_init(struct module *mod)
 {
-        module_var_add(mod, "volume", "get_volume", 5.0, VARIABLE_STR);
+        module_var_add(mod, "volume", "get_volume", 5.0, VARIABLE_STR | ARGSTR);
 }
 
 /* These run on module unload */

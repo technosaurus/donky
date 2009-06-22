@@ -94,9 +94,6 @@ int main(int argc, char **argv)
                 case 'c':
                         printf("Using alternate config file: %s\n", optarg);
                         break;
-                case 'd':
-                        printf("Debug mode enabled.");
-                        break;
                 default:
                         printf("\n" HELP);
                         exit(EXIT_FAILURE);
@@ -123,13 +120,19 @@ static void initialize_stuff(void)
         while (1) {
                 donky_greet();
 
+#ifdef ENABLE_DEBUGGING
                 printf("Parsing .donkyrc...\n");
+#endif
                 parse_cfg();
 
+#ifdef ENABLE_DEBUGGING
                 printf("Loading modules...\n");
+#endif
                 module_load_all();
 
+#ifdef ENABLE_DEBUGGING
                 printf("Starting the donky loop (TM)... >_<\n");
+#endif
                 donky_loop();
 
                 clean_up_everything();
@@ -151,17 +154,29 @@ static void clean_up_everything(void)
 {
         extern struct list *cfg_ls;
 
+#ifdef ENABLE_DEBUGGING
         printf("Clearing config list...");
+#endif
         del_list(cfg_ls, &clear_cfg);
+#ifdef ENABLE_DEBUGGING
         printf(" done.\n");
+#endif
 
+#ifdef ENABLE_DEBUGGING
         printf("Clearing modules...");
+#endif
         clear_module();
+#ifdef ENABLE_DEBUGGING
         printf(" done.\n");
+#endif
 
+#ifdef ENABLE_DEBUGGING
         printf("Clearing request list...");
+#endif
         request_list_clear();
+#ifdef ENABLE_DEBUGGING
         printf(" done.\n");
+#endif
 }
 
 /**

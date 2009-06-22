@@ -59,7 +59,7 @@ void module_destroy(void)
 
 }
 
-char *get_uptime(char *args)
+char *get_uptime(void)
 {
         unsigned long cur_up;
         int days, hours, mins, secs;
@@ -88,7 +88,7 @@ char *get_uptime(char *args)
 }
 
 
-char *get_loadavg(char *args)
+char *get_loadavg(void)
 {
         float load0, load1, load2;
 
@@ -106,7 +106,7 @@ char *get_loadavg(char *args)
         return ret;
 }
 
-char *get_totalram(char *args)
+char *get_totalram(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -114,7 +114,7 @@ char *get_totalram(char *args)
         return m_freelater(bytes_to_bigger(info.totalram * info.mem_unit));
 }
 
-char *get_freeram(char *args)
+char *get_freeram(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -122,7 +122,7 @@ char *get_freeram(char *args)
         return m_freelater(bytes_to_bigger(info.freeram * info.mem_unit));
 }
 
-char *get_usedram(char *args)
+char *get_usedram(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -130,7 +130,7 @@ char *get_usedram(char *args)
         return m_freelater(bytes_to_bigger((info.totalram - info.freeram) * info.mem_unit));
 }
 
-char *get_sharedram(char *args)
+char *get_sharedram(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -146,7 +146,7 @@ char *get_bufferram(char *args)
         return m_freelater(bytes_to_bigger(info.bufferram * info.mem_unit));
 }
 
-char *get_totalswap(char *args)
+char *get_totalswap(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -154,7 +154,7 @@ char *get_totalswap(char *args)
         return m_freelater(bytes_to_bigger(info.totalswap * info.mem_unit));
 }
 
-char *get_freeswap(char *args)
+char *get_freeswap(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -162,7 +162,7 @@ char *get_freeswap(char *args)
         return m_freelater(bytes_to_bigger(info.freeswap * info.mem_unit));
 }
 
-char *get_usedswap(char *args)
+char *get_usedswap(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -170,7 +170,7 @@ char *get_usedswap(char *args)
         return m_freelater(bytes_to_bigger((info.totalswap - info.freeswap) * info.mem_unit));
 }
 
-char *get_procs(char *args)
+char *get_procs(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -180,7 +180,7 @@ char *get_procs(char *args)
         return ret;
 }
 
-char *get_totalhigh(char *args)
+char *get_totalhigh(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -188,7 +188,7 @@ char *get_totalhigh(char *args)
         return m_freelater(bytes_to_bigger(info.totalhigh * info.mem_unit));
 }
 
-char *get_freehigh(char *args)
+char *get_freehigh(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";
@@ -196,7 +196,7 @@ char *get_freehigh(char *args)
         return m_freelater(bytes_to_bigger(info.freehigh * info.mem_unit));
 }
 
-char *get_usedhigh(char *args)
+char *get_usedhigh(void)
 {
         if (sysinfo(&info) == -1)
                 return "n/a";

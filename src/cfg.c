@@ -315,33 +315,29 @@ void parse_cfg(void)
  */
 static FILE *get_cfg_file(void)
 {
-        char *cfg_path;
-        FILE *cfg_file;
+        char *path;
+        FILE *file;
 
-        cfg_path = dstrdup(getenv("HOME"));
-        stracat(&cfg_path, "/" DEFAULT_CONF);
+        path = dstrdup(getenv("HOME"));
+        stracat(&path, "/" DEFAULT_CONF);
 
-        cfg_file = fopen(cfg_path, "r");
-        if (cfg_file == NULL) {
-                fprintf(stderr,
-                        "Warning: ~/%s file not found.\n",
-                        DEFAULT_CONF);
+        file = fopen(path, "r");
+        if (file != NULL)
+                goto success;
 
-                stracpy(&cfg_path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL);
+        fprintf(stderr, "Warning: %s file not found.\n", path);
+        stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
+        file = fopen(path, "r");
+        if (file != NULL)
+                goto success;
 
-                cfg_file = fopen(cfg_path, "r");
-                if (cfg_file == NULL) {
-                        free(cfg_path);
-                        fprintf(stderr,
-                                "Error: %s/%s file not found.\n",
-                                SYSCONFDIR, DEFAULT_CONF_GLOBAL);
-                        exit(EXIT_FAILURE);
-                }
-        }
+        fprintf(stderr, "Error: %s file also not found.\n", path);
+        free(path);
+        exit(EXIT_FAILURE);
 
-        free(cfg_path);
-
-        return cfg_file;
+success:
+        free(path);
+        return file;
 }
 
 /** 

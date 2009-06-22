@@ -218,8 +218,8 @@ int random_range(int min, int max)
                 return min;
 
         time(&seconds);
-        srandom((unsigned int)seconds);
-        random_number = (random() % (max - min + 1)) + min;
+        srand((unsigned int) seconds);
+        random_number = (rand() % (max - min + 1)) + min;
 
         return random_number;
 }
@@ -655,3 +655,34 @@ int strancat(char **dst, const char *src, size_t n)
         return strlen(*dst);
 }
 
+/**
+ * @brief Get the current UNIX time.
+ *
+ * @return UNIX time
+ */
+unsigned long int get_unix_time(void)
+{
+        time_t t1;
+        time_t t2;
+        struct tm tms_utime;
+        struct tm *tms_now;
+        long int ret;
+
+        tms_utime.tm_sec = 0;
+        tms_utime.tm_min = 0;
+        tms_utime.tm_hour = 0;
+        tms_utime.tm_mday = 1;
+        tms_utime.tm_mon = 0;
+        tms_utime.tm_year = 70;
+        tms_utime.tm_yday = 0;
+        
+        t2 = mktime(&tms_utime);
+
+        t1 = time(NULL);
+        tms_now = gmtime(&t1);
+        t1 = mktime(tms_now);
+
+        ret = (long int) difftime(t1, t2);
+
+        return ret;
+}

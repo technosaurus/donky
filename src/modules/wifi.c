@@ -154,11 +154,11 @@ void run_cron(void)
         free(info);
 }
 
-char *get_essid(char *args) { return m_strdup(wifistuff.essid); }
-char *get_mode(char *args) { return m_strdup(wifistuff.mode); }
-char *get_bitrate(char *args) { return m_strdup(wifistuff.bitrate); }
-char *get_ap(char *args) { return m_strdup(wifistuff.ap); }
-char *get_link_qual(char *args) { return m_strdup(wifistuff.link_qual); }
-char *get_link_qual_max(char *args) { return m_strdup(wifistuff.link_qual_max); }
-char *get_link_qual_perc(char *args) { return m_strdup(wifistuff.link_qual_perc); }
-unsigned int get_link_bar(char *args) { return strtol(wifistuff.link_qual_perc, NULL, 0); }
+char *get_essid(void) { return m_strdup(wifistuff.essid); }
+char *get_mode(void) { return m_strdup(wifistuff.mode); }
+char *get_bitrate(void) { return m_strdup(wifistuff.bitrate); }
+char *get_ap(void) { return m_strdup(wifistuff.ap); }
+char *get_link_qual(void) { return m_strdup(wifistuff.link_qual); }
+char *get_link_qual_max(void) { return m_strdup(wifistuff.link_qual_max); }
+char *get_link_qual_perc(void) { return m_strdup(wifistuff.link_qual_perc); }
+unsigned int get_link_bar(void) { return strtol(wifistuff.link_qual_perc, NULL, 0); }

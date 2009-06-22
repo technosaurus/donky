@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include "../config.h"
 #include "cfg.h"
 #include "module.h"
 #include "util.h"
@@ -57,7 +58,7 @@ int module_var_add(const struct module *parent,
                    char *name,
                    const char *method,
                    double timeout,
-                   enum variable_type type)
+                   unsigned char type)
 {
         double user_timeout;
         struct module_var *find;
@@ -70,10 +71,10 @@ int module_var_add(const struct module *parent,
         n = (find) ? find : malloc(sizeof(struct module_var));
 
         /* Fill in module_var structure. */
-        snprintf(n->name, sizeof(n->name), "%s", name);
-        snprintf(n->method, sizeof(n->method), "%s", method);
+        strfcpy(n->name, name, sizeof(n->name));
+        strfcpy(n->method, method, sizeof(n->method));
         n->type = type;
-        n->sym = NULL;
+        module_var_clearsym(n);
 
         if (!find) {
                 n->prev = NULL;
@@ -132,6 +133,98 @@ struct module_var *module_var_find_by_name(const char *name)
 }
 
 /**
+ * @brief Set all symbol BS to NULL.
+ *
+ * @param Module var node
+ */
+void module_var_clearsym(struct module_var *mv)
+{
+        mv->syms.f_void = NULL;
+        mv->syms.f_str = NULL;
+        mv->syms.f_str_str = NULL;
+        mv->syms.f_str_int = NULL;
+        mv->syms.f_str_double = NULL;
+        mv->syms.f_int = NULL;
+        mv->syms.f_int_str = NULL;
+        mv->syms.f_int_int = NULL;
+        mv->syms.f_int_double = NULL;
+}
+
+/**
+ * @brief Load symbol according to variable type and argument type.
+ *
+ * @param mv Module var node
+ */
+void module_var_loadsym(struct module_var *mv)
+{
+        if (mv->type & VARIABLE_STR) {
+                if (mv->type & ARGSTR)
+                        mv->syms.f_str_str =
+                                module_get_sym(mv->parent->handle, mv->method);
+                else if (mv->type & ARGINT)
+                        mv->syms.f_str_int =
+                                module_get_sym(mv->parent->handle, mv->method);
+                else if (mv->type & ARGDOUBLE)
+                        mv->syms.f_str_double =
+                                module_get_sym(mv->parent->handle, mv->method);
+                else
+                        mv->syms.f_str =
+                                module_get_sym(mv->parent->handle, mv->method);
+        } else if (mv->type & VARIABLE_BAR || mv->type & VARIABLE_GRAPH) {
+                if (mv->type & ARGSTR)
+                        mv->syms.f_int_str =
+                                module_get_sym(mv->parent->handle, mv->method);
+                else if (mv->type & ARGINT)
+                        mv->syms.f_int_int =
+                                module_get_sym(mv->parent->handle, mv->method);
+                else if (mv->type & ARGDOUBLE)
+                        mv->syms.f_int_double =
+                                module_get_sym(mv->parent->handle, mv->method);
+                else
+                        mv->syms.f_int =
+                                module_get_sym(mv->parent->handle, mv->method);
+        } else if (mv->type & VARIABLE_CRON) {
+                mv->syms.f_void = module_get_sym(mv->parent->handle, mv->method);
+        }
+}
+
+/**
+ * @brief Check if a symbol is null.
+ *
+ * @param mv Module var node
+ */
+unsigned int module_var_checksym(struct module_var *mv)
+{
+        unsigned int ret;
+        
+        if (mv->type & VARIABLE_STR) {
+                if (mv->type & ARGSTR)
+                        ret = (mv->syms.f_str_str) ? 1 : 0;
+                else if (mv->type & ARGINT)
+                        ret = (mv->syms.f_str_int) ? 1 : 0;
+                else if (mv->type & ARGDOUBLE)
+                        ret = (mv->syms.f_str_double) ? 1 : 0;
+                else
+                        ret = (mv->syms.f_str) ? 1 : 0;
+        } else if (mv->type & VARIABLE_BAR || mv->type & VARIABLE_GRAPH) {
+                if (mv->type & ARGSTR)
+                        ret = (mv->syms.f_int_str) ? 1 : 0;
+                else if (mv->type & ARGINT)
+                        ret = (mv->syms.f_int_int) ? 1 : 0;
+                else if (mv->type & ARGDOUBLE)
+                        ret = (mv->syms.f_int_double) ? 1 : 0;
+                else
+                        ret = (mv->syms.f_int) ? 1 : 0;
+        } else if (mv->type & VARIABLE_CRON) {
+                ret = (mv->syms.f_void) ? 1 : 0;
+        } else {
+                ret = 0;
+        }
+
+        return ret;
+}
+
+/**
  * @brief Run cron jobs.
  */
 void module_var_cron_exec(void)
@@ -141,8 +234,8 @@ void module_var_cron_exec(void)
         while (cur) {
                 if (cur->type == VARIABLE_CRON &&
                     (get_time() - cur->last_update) >= cur->timeout) {
-                        if (cur->sym != NULL) {
-                                cur->sym(NULL);
+                        if (cur->syms.f_void != NULL) {
+                                cur->syms.f_void();
                                 cur->last_update = get_time();
                         }
                 }
@@ -162,7 +255,8 @@ void module_var_cron_init(struct module *parent)
 
         while (cur) {
                 if (cur->parent == parent)
-                        cur->sym = module_get_sym(parent->handle, cur->method);
+                        cur->syms.f_void =
+                                module_get_sym(parent->handle, cur->method);
                 
                 cur = cur->next;
         }
@@ -186,9 +280,11 @@ static struct module *module_add(const char *name,
         struct module *find = module_find_by_name(name);
         struct module *n = (find) ? find : malloc(sizeof(struct module));
 
+#ifdef ENABLE_DEBUGGING
         printf("-- Loading module: %s...\n", name);
+#endif
 
-        snprintf(n->name, sizeof(n->name), "%s", name);
+        strfcpy(n->name, name, sizeof(n->name));
         n->path = dstrdup(path);
         n->handle = handle;
         n->destroy = destroy;
@@ -212,7 +308,9 @@ static struct module *module_add(const char *name,
                 m_end = n;
         }
 
+#ifdef ENABLE_DEBUGGING
         printf("-- Done.\n");
+#endif
 
         return n;
 }
@@ -251,7 +349,9 @@ void module_unload(struct module *cur)
         if (!cur)
                 return;
 
+#ifdef ENABLE_DEBUGGING
         printf("Unloading module %s... ", cur->name);
+#endif
 
         destroy = cur->destroy;
         destroy();
@@ -267,12 +367,14 @@ void module_unload(struct module *cur)
 
         while (mv) {
                 if (mv->parent == cur)
-                        mv->sym = NULL;
+                        module_var_clearsym(mv);
                 
                 mv = mv->next;
         }
 
+#ifdef ENABLE_DEBUGGING
         printf("done.\n");
+#endif
 }
 
 /**
@@ -346,12 +448,13 @@ void module_load_all(void)
 
                 sptr = strrchr(dir->d_name, '.');
                 if (sptr && !strcmp(sptr, ".so")) {
-                        snprintf(full_path,
-                                 sizeof(full_path) - sizeof(char),
-                                 "%s/%s",
-                                 LIBDIR, dir->d_name);
+                        strfcpy(full_path, LIBDIR, sizeof(full_path));
+                        strfcat(full_path, "/", sizeof(full_path));
+                        strfcat(full_path, dir->d_name, sizeof(full_path));
 
+#ifdef ENABLE_DEBUGGING
                         printf("Attempting to load: %s\n", full_path);
+#endif
                         module_load(full_path);
                 }
         }

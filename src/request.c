@@ -20,6 +20,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "../config.h"
 #include "cfg.h"
 #include "daemon.h"
 #include "default_settings.h"
@@ -34,11 +35,13 @@
 struct request_list *rl_start = NULL;
 struct request_list *rl_end = NULL;
 static pthread_t request_thread_id;
+static int thread_is_launched = 0; /* bool */
 
 /* Function prototypes. */
 static void request_handler_sleep_setup(struct timespec *tspec);
 static void *request_handler_exec(void *arg);
-static int thread_is_launched = 0; /* bool */
+static char *request_handler_strfunc(struct request_list *cur);
+static unsigned int request_handler_intfunc(struct request_list *cur);
 
 /**
  * @brief Start the request handler execution thread.
@@ -75,6 +78,56 @@ void request_handler_stop(void)
                 pthread_cancel(request_thread_id);
                 pthread_join(request_thread_id, NULL);
         }
+}
+
+/**
+ * @brief Call module methods according to the argument type.
+ *
+ * @param cur Request list node
+ *
+ * @return String
+ */
+static char *request_handler_strfunc(struct request_list *cur)
+{
+        char *ret;
+        
+        if (cur->var->type & ARGSTR)
+                ret = cur->var->syms.f_str_str(cur->args);
+        else if (cur->var->type & ARGINT)
+                ret = cur->var->syms.f_str_int((cur->args) ?
+                                               atoi(cur->args) : -1);
+        else if (cur->var->type & ARGDOUBLE)
+                ret = cur->var->syms.f_str_double((cur->args) ?
+                                                  strtod(cur->args, NULL) : -1.0);
+        else
+                ret = cur->var->syms.f_str();
+
+        return ret;
+}
+
+/**
+ * @brief Call module methods according to the argument type.
+ *
+ * @param cur Request list node
+ *
+ * @return Integer
+ */
+static unsigned int request_handler_intfunc(struct request_list *cur)
+{
+        unsigned int ret;
+        
+        if (cur->var->type & ARGSTR)
+                ret = cur->var->syms.f_int_str(cur->args);
+        else if (cur->var->type & ARGINT)
+                ret = cur->var->syms.f_int_int((cur->args) ?
+                                               atoi(cur->args) : -1);
+        else if (cur->var->type & ARGDOUBLE)
+                ret = cur->var->syms.f_int_double((cur->args) ?
+                                                  strtod(cur->args, NULL) : -1.0);
+        else
+                ret = cur->var->syms.f_int();
+
+        return ret;
 }
 
 /**
@@ -118,54 +171,55 @@ static void *request_handler_exec(void *arg)
                                 continue;
                         }
 
-                        /* Figure out what type of variable this is. */
-                        switch (cur->var->type) {
-                        case VARIABLE_STR:
-                                if (cur->var->sym) {
-                                        ret_str = cur->var->sym(cur->args);
-                                        sum = get_str_sum(ret_str);
+                        /* Check that we have a symbol for the module var
+                         * method. */
+                        if (!module_var_checksym(cur->var))
+                                goto UPDATESTAT;
 
-                                        if (sum != cur->var->sum || cur->remove) {
-                                                n = sendcrlf(cur->conn->sock,
-                                                             "%u:%d:%s",
-                                                             cur->id,
-                                                             cur->var->type,
-                                                             ret_str);
-                                                cur->var->sum = sum;
+                        /* VARIABLE_STR */
+                        if (cur->var->type & VARIABLE_STR) {
+                                ret_str = request_handler_strfunc(cur);
+                                sum = get_str_sum(ret_str);
 
-                                                if (n <= 0) {
-                                                        printf("Removing...\n");
-                                                        cur->remove = 1;
-                                                }
+                                if (sum != cur->var->sum || cur->remove) {
+                                        n = sendcrlf(cur->conn->sock,
+                                                     "%u:%d:%s",
+                                                     cur->id,
+                                                     cur->var->type,
+                                                     ret_str);
+                                        cur->var->sum = sum;
+
+                                        if (n <= 0) {
+#ifdef ENABLE_DEBUGGING
+                                                printf("Removing...\n");
+#endif
+                                                cur->remove = 1;
                                         }
                                 }
-                                break;
-                        case VARIABLE_BAR:
-                        case VARIABLE_GRAPH:
-                                if (cur->var->sym) {
-                                        ret_int = (unsigned int)
-                                                  cur->var->sym(cur->args);
-                                        sum = ret_int;
+                        /* VARIABLE_BAR || VARIABLE_GRAPH */
+                        } else if (cur->var->type & VARIABLE_BAR ||
+                                   cur->var->type & VARIABLE_GRAPH) {
+                                ret_int = request_handler_intfunc(cur);
+                                sum = ret_int;
 
-                                        if (sum != cur->var->sum || cur->remove) {
-                                                n = sendcrlf(cur->conn->sock,
-                                                             "%u:%d:%d",
-                                                             cur->id,
-                                                             cur->var->type,
-                                                             ret_int);
-                                                cur->var->sum = sum;
+                                if (sum != cur->var->sum || cur->remove) {
+                                        n = sendcrlf(cur->conn->sock,
+                                                     "%u:%d:%d",
+                                                     cur->id,
+                                                     cur->var->type,
+                                                     ret_int);
+                                        cur->var->sum = sum;
 
-                                                if (n <= 0) {
-                                                        printf("Removing...\n");
-                                                        cur->remove = 1;
-                                                }
+                                        if (n <= 0) {
+#ifdef ENABLE_DEBUGGING
+                                                printf("Removing...\n");
+#endif
+                                                cur->remove = 1;
                                         }
                                 }
-                                break;
-                        default:
-                                break;
                         }
 
+UPDATESTAT:
                         /* Set the last time it was updated. */
                         cur->var->last_update = get_time();
 
@@ -186,12 +240,16 @@ static void *request_handler_exec(void *arg)
 
                 /* Sleep! */
                 if (nanosleep(&tspec, NULL) == -1) {
+#ifdef ENABLE_DEBUGGING
                         printf("Breaking from request handler...\n");
+#endif
                         break;
                 }
         }
 
+#ifdef ENABLE_DEBUGGING
         printf("Done with thread!\n");
+#endif
         return NULL;
 }
 
@@ -250,11 +308,15 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
         }
 
         id = atoi(str);
+#ifdef ENABLE_DEBUGGING
         printf("Request list add: id[%u] var[%s] args[%s]\n", id, var, args);
+#endif
 
         /* Find the module_var node for this variable. */
         if ((mv = module_var_find_by_name(var)) == NULL) {
+#ifdef ENABLE_DEBUGGING
                 printf("Couldn't find module var!\n");
+#endif
 
                 /* Send an error response. */
                 sendcrlf(conn->sock, "%u:404:", id);
@@ -295,8 +357,8 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
         }
 
         /* If the symbol is NULL, get a pointer to it. */
-        if (!mv->sym)
-                mv->sym = module_get_sym(mv->parent->handle, mv->method);
+        if (!module_var_checksym(mv))
+                module_var_loadsym(mv);
 
         /* Let the module var parent know we are using it. */
         mv->parent->clients++;
@@ -316,7 +378,9 @@ void request_list_remove(struct request_list *cur)
         
         cur->var->parent->clients--;
 
+#ifdef ENABLE_DEBUGGING
         printf("Removing from request list...\n");
+#endif
 
         /* If the clients just hit 0, unload this module. */
         if (cur->var->parent->clients == 0)

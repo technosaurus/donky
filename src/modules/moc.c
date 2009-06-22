@@ -31,7 +31,7 @@ static char *home;
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod, "moc", "get_moc", 10.0, VARIABLE_STR);
+        module_var_add(mod, "moc", "get_moc", 10.0, VARIABLE_STR | ARGSTR);
         home = dstrdup(getenv("HOME"));
 }
 

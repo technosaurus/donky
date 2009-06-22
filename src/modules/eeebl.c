@@ -68,7 +68,7 @@ void eeebl_cron(void)
  * 
  * @return String of current backlight level percentage.
  */
-char *get_eeeblper(char *args)
+char *get_eeeblper(void)
 {
         int percentage;
         char ret_per[4];
@@ -90,7 +90,7 @@ char *get_eeeblper(char *args)
  * 
  * @return String of current backlight level.
  */
-char *get_eeeblcur(char *args)
+char *get_eeeblcur(void)
 {
         return (cur_bl) ? cur_bl : "n/a";
 }
@@ -102,7 +102,7 @@ char *get_eeeblcur(char *args)
  * 
  * @return String of maximum backlight level.
  */
-char *get_eeeblmax(char *args)
+char *get_eeeblmax(void)
 {
         return (max_bl) ? max_bl : "n/a";
 }
@@ -114,7 +114,7 @@ char *get_eeeblmax(char *args)
  * 
  * @return Integer representing current backlight level percentage.
  */
-unsigned int get_eeeblbar(char *args)
+unsigned int get_eeeblbar(void)
 {
         if (cur_bl && max_bl)
                 return (int)((atof(cur_bl) / atof(max_bl)) * 100);

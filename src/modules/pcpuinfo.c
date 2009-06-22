@@ -33,9 +33,9 @@ static char *ret_pcpucache = NULL;
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod, "pcpufreq", "get_pcpufreq", 1.0, VARIABLE_STR);
-        module_var_add(mod, "pcpuname", "get_pcpuname", 0.0, VARIABLE_STR);
-        module_var_add(mod, "pcpucache", "get_pcpucache", 0.0, VARIABLE_STR);
+        module_var_add(mod, "pcpufreq", "get_pcpufreq", 1.0, VARIABLE_STR | ARGSTR);
+        module_var_add(mod, "pcpuname", "get_pcpuname", 0.0, VARIABLE_STR | ARGSTR);
+        module_var_add(mod, "pcpucache", "get_pcpucache", 0.0, VARIABLE_STR | ARGSTR);
 }
 
 /* These run on module unload */

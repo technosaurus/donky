@@ -53,5 +53,6 @@ int stracpy(char **dst, const char *src);
 int stracat(char **dst, const char *src);
 int strancpy(char **dst, const char *src, size_t n);
 int strancat(char **dst, const char *src, size_t n);
+unsigned long int get_unix_time(void);
 #endif /* UTIL_H */
 

@@ -258,7 +258,7 @@ static void pop_currentsong(void)
 }
 
 /* From here down are merely functions that return the gathered information */
-char *get_state(char *args) {
+char *get_state(void) {
         if (mpdinfo.state) {
                 if (!strncmp(mpdinfo.state, "stop", 1))
                         return "Stopped";
@@ -271,24 +271,24 @@ char *get_state(char *args) {
         return "MPD";
 }
 
-char *get_file(char *args) { return mpdinfo.file; }
-char *get_artist(char *args) { return mpdinfo.artist; }
-char *get_title(char *args) { return mpdinfo.title; }
-char *get_album(char *args) { return mpdinfo.album; }
-char *get_track(char *args) { return mpdinfo.track; }
-char *get_date(char *args) { return mpdinfo.date; }
-char *get_genre(char *args) { return mpdinfo.genre; }
-char *get_volume(char *args) { return mpdinfo.volume; }
-char *get_repeat(char *args) { return mpdinfo.repeat; }
-char *get_random(char *args) { return mpdinfo.random; }
-char *get_playlist(char *args) { return mpdinfo.playlist; }
-char *get_playlistlength(char *args) { return mpdinfo.playlistlength; }
-char *get_xfade(char *args) { return mpdinfo.xfade; }
-char *get_song(char *args) { return mpdinfo.song; }
-char *get_bitrate(char *args) { return mpdinfo.bitrate; }
-char *get_audio(char *args) { return mpdinfo.audio; }
+char *get_file(void) { return mpdinfo.file; }
+char *get_artist(void) { return mpdinfo.artist; }
+char *get_title(void) { return mpdinfo.title; }
+char *get_album(void) { return mpdinfo.album; }
+char *get_track(void) { return mpdinfo.track; }
+char *get_date(void) { return mpdinfo.date; }
+char *get_genre(void) { return mpdinfo.genre; }
+char *get_volume(void) { return mpdinfo.volume; }
+char *get_repeat(void) { return mpdinfo.repeat; }
+char *get_random(void) { return mpdinfo.random; }
+char *get_playlist(void) { return mpdinfo.playlist; }
+char *get_playlistlength(void) { return mpdinfo.playlistlength; }
+char *get_xfade(void) { return mpdinfo.xfade; }
+char *get_song(void) { return mpdinfo.song; }
+char *get_bitrate(void) { return mpdinfo.bitrate; }
+char *get_audio(void) { return mpdinfo.audio; }
 
-char *get_elapsed_time(char *args) {
+char *get_elapsed_time(void) {
         char ret[8];
         
         if (mpdinfo.etime) {
@@ -301,7 +301,7 @@ char *get_elapsed_time(char *args) {
         return "00:00";
 }
 
-char *get_total_time(char *args) {
+char *get_total_time(void) {
         char ret[8];
         
         if (mpdinfo.ttime) {
@@ -314,7 +314,7 @@ char *get_total_time(char *args) {
         return "00:00";
 }
 
-unsigned int get_volume_bar(char *args) {
+unsigned int get_volume_bar(void) {
         if (mpdinfo.volume)
                 return strtol(mpdinfo.volume, NULL, 0);
         return 0;
@@ -325,7 +325,9 @@ unsigned int get_volume_bar(char *args) {
  */
 static void init_settings(void)
 {
+#ifdef ENABLE_DEBUGGING
         printf("Initializing MPD connection stuff.\n");
+#endif
         
         /* Read configuration settings, if none exist, use some defaults. */
         mpd_host = get_char_key(module_name, "host", "localhost");

@@ -17,12 +17,13 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-enum variable_type {
-        VARIABLE_STR,   /* Function should return char * */
-        VARIABLE_BAR,   /* Function should return int between 0 and 100 */
-        VARIABLE_GRAPH, /* Function should return int between 0 and 100 */
-        VARIABLE_CRON   /* This is simply a method to be run on schedule. */
-};
+#define VARIABLE_STR 1   /* Function should return char * */
+#define VARIABLE_BAR 2   /* Function should return int between 0 and 100 */
+#define VARIABLE_GRAPH 4 /* Function should return int between 0 and 100 */
+#define VARIABLE_CRON 8  /* void function run on schedule */
+#define ARGSTR 16        /* Function takes a char * argument */
+#define ARGINT 32        /* Function takes an int argument */
+#define ARGDOUBLE 64     /* Function takes a double argument */
 
 struct module {
         char name[64];  /* Unique identifier, value really doesn't matter. */
@@ -35,22 +36,25 @@ struct module {
         struct module *prev;
 };
 
-/* we're going to have to do something like this if we want -pedantic to shutup */
-/*
 union module_funcs {
-        char *(*c)(char *);
-        char *(*cv)(void);
-        int (*i)(char *);
-        int (*iv)(void);
+        void (*f_void)(void);
+        
+        char *(*f_str)(void);
+        char *(*f_str_str)(char *);
+        char *(*f_str_int)(int);
+        char *(*f_str_double)(double);
+        
+        unsigned int (*f_int)(void);
+        unsigned int (*f_int_str)(char *);
+        unsigned int (*f_int_int)(int);
+        unsigned int (*f_int_double)(double);
 };
-*/
 
 struct module_var {
         char name[64];           /* Name of the variable. */
         char method[64];         /* Method name to call. */
-        /*union module_funcs syms;*/
-        char *(*sym)(char *);    /* Link to method symbol. */
-        enum variable_type type; /* Type of method.  See the enum above. */
+        union module_funcs syms;
+        unsigned char type;      /* Type of method.  See the enum above. */
 
         double timeout;          /* Used for cron jobs */
         double last_update;      /* Ditto */
@@ -68,12 +72,15 @@ int module_var_add(const struct module *parent,
                    char *name,
                    const char *method,
                    double timeout,
-                   enum variable_type type);
+                   unsigned char type);
 void module_load_all(void);
 void clear_module(void);
 void module_var_cron_exec(void);
 void *module_get_sym(void *handle, char *name);
 struct module_var *module_var_find_by_name(const char *name);
+void module_var_clearsym(struct module_var *mv);
+void module_var_loadsym(struct module_var *mv);
+unsigned int module_var_checksym(struct module_var *mv);
 int module_load(char *path);
 void module_unload(struct module *cur);
 void module_var_cron_init(struct module *parent);

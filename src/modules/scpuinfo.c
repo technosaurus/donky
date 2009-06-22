@@ -29,7 +29,7 @@ char module_name[] = "scpuinfo";
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod, "scpufreq", "get_scpufreq", 1.0, VARIABLE_STR);
+        module_var_add(mod, "scpufreq", "get_scpufreq", 1.0, VARIABLE_STR | ARGSTR);
 }
 
 /* These run on module unload */

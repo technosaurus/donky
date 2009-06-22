@@ -31,7 +31,7 @@ char module_name[] = "date_shet"; /* Up to 63 characters, any more and it will
  */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod, "date", "get_date", 1.0, VARIABLE_STR);
+        module_var_add(mod, "date", "get_date", 1.0, VARIABLE_STR | ARGSTR);
 }
 
 /**

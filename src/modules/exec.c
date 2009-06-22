@@ -29,8 +29,8 @@ char module_name[] = "exec";
 /* These run on module startup */
 void module_init(const struct module *mod)
 {
-        module_var_add(mod, "exec", "get_exec", 10.0, VARIABLE_STR);
-        module_var_add(mod, "execbar", "get_execbar", 10.0, VARIABLE_BAR);
+        module_var_add(mod, "exec", "get_exec", 10.0, VARIABLE_STR | ARGSTR);
+        module_var_add(mod, "execbar", "get_execbar", 10.0, VARIABLE_BAR | ARGSTR);
 }
 
 /* These run on module unload */
