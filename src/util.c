@@ -496,62 +496,67 @@ char *dstrdup(const char *str)
 {
         size_t siz = strlen(str) + sizeof(char);
         char *dup = malloc(siz);
-        size_t i;
+        char *p;
 
-        for (i = siz; i != 0; (*dup++ = *str++), i--);
+        for (p = dup; siz != 0; siz--)
+                *p++ = *str++;
 
-        return dup - siz;
+        return dup;
 }
 
 /**
- * The following stra functions receive either a malloc'd or NULL ptr
- * (dst) which will be (re)allocated as necessary to hold the contents
- * of src. These functions never return something newly malloc'd unless
- * you send them a NULL dst ptr. If src is NULL when calling stra(n)cpy,
- * dst will be free'd and set to NULL. If src is NULL is calling
- * stra(n)cat, dst is unaffected.
+ * The following stra functions receive either a malloc'd or NULL ptr (dst)
+ * which will be (re)allocated as necessary to hold the contents of src. These
+ * functions never create something newly malloc'd unless you send them a NULL
+ * dst ptr.
  *
- * The purposes of these functions are to eliminate the possibility
- * of truncation and buffer overflows and to remove the need for
- * specifying arbitrary buffer sizes.
+ * If src is NULL when calling stra(n)cpy, dst will be free'd and set to NULL.
+ * If src is NULL is calling stra(n)cat, dst is unaffected.
+ *
+ * The purposes of these functions are to eliminate the possibility of
+ * truncation and buffer overflows and to remove the need for specifying
+ * arbitrary buffer sizes - like when dealing with lame shit like path names.
+ *
+ * All functions return 0 on success, and -1 on a realloc() error.
  */
 
 /** 
  * @brief Copy src to dst.
  * 
- * @return The new length of dst.
+ * @return 0 on success, -1 on realloc() error.
  */
 int stracpy(char **dst, const char *src)
 {
         char *d;
         size_t srclen;
-        size_t siz;
 
-        if (src == NULL) {
-                free(*dst);
-                *dst = NULL;
-                return 0;
-        }
+        if (src == NULL)
+                goto clear;
 
         srclen = strlen(src);
-        siz = srclen + sizeof(char);
-        if ((*dst == NULL) || (strlen(*dst) < srclen))
-                if ((*dst = realloc(*dst, siz)) == NULL)
-                        return -1;
+        if ((*dst != NULL) && (strlen(*dst) < srclen))
+                goto copy;
 
-        d = *dst;
-        while (--siz != 0)
+        *dst = realloc(*dst, srclen + sizeof(char));
+        if (*dst == NULL)
+                goto error;
+copy:
+        for (d = *dst; srclen != 0; srclen--)
                 *d++ = *src++;
-
         *d = '\0';
-
-        return strlen(*dst);
+        return 0;
+clear:
+        free(*dst);
+        *dst = NULL;
+        return 0;
+error:
+        return -1;
 }
 
 /** 
  * @brief Concatenate src onto dst.
  * 
- * @return The new length of dst.
+ * @return 0 on success, -1 on realloc() error.
  */
 int stracat(char **dst, const char *src)
 {
@@ -577,13 +582,13 @@ int stracat(char **dst, const char *src)
 
         *d = '\0';
 
-        return strlen(*dst);
+        return 0;
 }
 
 /** 
  * @brief Copy n characters from src to dst.
  * 
- * @return The new length of dst.
+ * @return 0 on success, -1 on realloc() error.
  */
 int strancpy(char **dst, const char *src, size_t n)
 {
@@ -613,13 +618,13 @@ int strancpy(char **dst, const char *src, size_t n)
 
         *d = '\0';
 
-        return strlen(*dst);
+        return 0;
 }
 
 /** 
  * @brief Concatenate n characters from src onto dst.
  * 
- * @return The new length of dst.
+ * @return 0 on success, -1 on realloc() error.
  */
 int strancat(char **dst, const char *src, size_t n)
 {
@@ -649,7 +654,7 @@ int strancat(char **dst, const char *src, size_t n)
 
         *d = '\0';
 
-        return strlen(*dst);
+        return 0;
 }
 
 /**

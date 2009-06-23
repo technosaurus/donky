@@ -310,24 +310,31 @@ void parse_cfg(void)
  */
 static FILE *get_cfg_file(void)
 {
-        char path[FILENAME_MAX];
+        char *path = NULL;
         FILE *file;
 
-        strfcpy(path, getenv("HOME"), sizeof(path));
-        strfcat(path, "/" DEFAULT_CONF, sizeof(path));
+        stracpy(&path, getenv("HOME"));
+        stracat(&path, "/" DEFAULT_CONF);
         file = fopen(path, "r");
-        if (file == NULL) {
-                fprintf(stderr, "Warning: Can't open config file %s.\n", path);
-                strfcpy(path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL, sizeof(path)); 
-                file = fopen(path, "r");
-                if (file == NULL)
-                        goto error;
-        }
+        if (file == NULL)
+                goto try_global;
 
+        free(path);
+        return file;
+
+try_global:
+        fprintf(stderr, "Warning: Can't open configuration file %s.\n", path);
+        stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
+        file = fopen(path, "r");
+        if (file == NULL)
+                goto error;
+
+        free(path);
         return file;
 
 error:
-        fprintf(stderr, "Error: Also can't open file %s. Exiting.\n", path);
+        fprintf(stderr, "Error: Also can't open system configuration file %s "
+                        "Exiting.\n", path);
         exit(EXIT_FAILURE);
 }
 
