@@ -111,9 +111,7 @@ static void protocol_handle_command(donky_conn *cur, const char *buf)
                 args++;
         }
 
-#ifdef ENABLE_DEBUGGING
-        printf("cmd[%s]args[%s]\n", buf, args);
-#endif
+        DEBUGF(("cmd[%s]args[%s]\n", buf, args));
 
         /* Look for this command. */
         for (i = 0; commands[i].alias != NULL; i++) {

@@ -190,7 +190,7 @@ static void *request_handler_exec(void *arg)
                                         cur->var->sum = sum;
 
                                         if (n <= 0) {
-                                                DEBUG_PRINTF("Removing...\n");
+                                                DEBUGF(("Removing...\n"));
                                                 cur->remove = 1;
                                         }
                                 }
@@ -209,7 +209,7 @@ static void *request_handler_exec(void *arg)
                                         cur->var->sum = sum;
 
                                         if (n <= 0) {
-                                                DEBUG_PRINTF("Removing...\n");
+                                                DEBUGF(("Removing...\n"));
                                                 cur->remove = 1;
                                         }
                                 }
@@ -236,12 +236,12 @@ UPDATESTAT:
 
                 /* Sleep! */
                 if (nanosleep(&tspec, NULL) == -1) {
-                        DEBUG_PRINTF("Breaking from request handler...\n");
+                        DEBUGF(("Breaking from request handler...\n"));
                         break;
                 }
         }
 
-        DEBUG_PRINTF("Done with thread!\n");
+        DEBUGF(("Done with thread!\n"));
         return NULL;
 }
 
@@ -300,15 +300,11 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
         }
 
         id = atoi(str);
-#ifdef ENABLE_DEBUGGING
-        printf("Request list add: id[%u] var[%s] args[%s]\n", id, var, args);
-#endif
+        DEBUGF(("Request list add: id[%u] var[%s] args[%s]\n", id, var, args));
 
         /* Find the module_var node for this variable. */
         if ((mv = module_var_find_by_name(var)) == NULL) {
-#ifdef ENABLE_DEBUGGING
-                printf("Couldn't find module var!\n");
-#endif
+                DEBUGF(("Couldn't find module var!\n"));
 
                 /* Send an error response. */
                 sendcrlf(conn->sock, "%u:404:", id);
@@ -370,7 +366,7 @@ void request_list_remove(struct request_list *cur)
         
         cur->var->parent->clients--;
 
-        DEBUG_PRINTF("Removing from request list...\n");
+        DEBUGF(("Removing from request list...\n"));
 
         /* If the clients just hit 0, unload this module. */
         if (cur->var->parent->clients == 0)

@@ -143,8 +143,8 @@ void scrob_urself(const char *artist, const char *title, const char *album,
         /* We haven't done the handshake. */
         if (!scrob_shaked) {
                 if ((scrob_handshake(sock) == -1)) {
-                        DEBUG_PRINTF("mpdscrob: Handshake failed!\n");
-                        
+                        DEBUGF(("mpdscrob: Handshake failed!\n"));
+
                         /* We need to update these variables so that we will only try
                          * to connect once per song, as to not spam! */
                         strfcpy(last_artist, artist, sizeof(last_artist));
@@ -195,9 +195,8 @@ static int scrob_handshake(int sock)
         int n;
         char buf[1024];
 
-#ifdef ENABLE_DEBUGGING
-        printf("mpdscrob: Handshaking with (%s:%d)!\n", scrob_host, scrob_port);
-#endif
+        DEBUGF(("mpdscrob: Handshaking with (%s:%d)!\n",
+                scrob_host, scrob_port));
 
         scrob_utime(utm, sizeof(utm));
 
@@ -248,10 +247,8 @@ static int scrob_handshake_parse(char *buf)
                 buf = header;
         }
 
-#ifdef ENABLE_DEBUGGING
-        printf("mpdscrob buf: {\n%s\n}\n", buf);
-#endif
-        
+        DEBUGF(("mpdscrob buf: {\n%s\n}\n", buf));
+
         /* Okay, the buffer should contain 4 lines. */
         line = strtok(buf, "\n");
         if (line == NULL)
@@ -333,9 +330,8 @@ static void scrob_submit(int sock, const char *artist, const char *title,
         char snd[1024];
         char sttime[32];
 
-#ifdef ENABLE_DEBUGGING
-        printf("Submitting (%s - %s) to (%s)!\n", artist, title, scrob_submiturl);
-#endif
+        DEBUGF(("Submitting (%s - %s) to (%s)!\n",
+                artist, title, scrob_submiturl));
 
         scrob_utime(utm, sizeof(utm));
 
@@ -383,10 +379,8 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
         char snd[1024];
         char sttime[32];
 
-#ifdef ENABLE_DEBUGGING
-        printf("Sending now playing (%s - %s) to (%s)!\n",
-               artist, title, scrob_nowplayurl);
-#endif
+        DEBUGF(("Sending now playing (%s - %s) to (%s)!\n",
+                artist, title, scrob_nowplayurl));
 
         uint_to_str(sttime, ttime, sizeof(sttime));
 
@@ -456,7 +450,7 @@ static void scrob_send_submission(int sock, const char *snd, const char *url)
                 }
 
                 if (ok) {
-                        DEBUG_PRINTF("mpdscrob: Submission successful!\n");
+                        DEBUGF(("mpdscrob: Submission successful!\n"));
                         return;
                 }
 

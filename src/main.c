@@ -14,8 +14,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../config.h"
-
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
@@ -120,13 +118,13 @@ static void initialize_stuff(void)
         while (1) {
                 donky_greet();
 
-                DEBUG_PRINTF("Parsing .donkyrc...\n");
+                DEBUGF(("Parsing .donkyrc...\n"));
                 parse_cfg();
 
-                DEBUG_PRINTF("Loading modules...\n");
+                DEBUGF(("Loading modules...\n"));
                 module_load_all();
 
-                DEBUG_PRINTF("Starting the donky loop (TM)... >_<\n");
+                DEBUGF(("Starting the donky loop (TM)... >_<\n"));
                 donky_loop();
 
                 clean_up_everything();
@@ -148,17 +146,17 @@ static void clean_up_everything(void)
 {
         extern struct list *cfg_ls;
 
-        DEBUG_PRINTF("Clearing config list...");
+        DEBUGF(("Clearing config list..."));
         del_list(cfg_ls, &clear_cfg);
-        DEBUG_PRINTF(" done.\n");
+        DEBUGF((" done.\n"));
 
-        DEBUG_PRINTF("Clearing modules...");
+        DEBUGF(("Clearing modules..."));
         clear_module();
-        DEBUG_PRINTF(" done.\n");
+        DEBUGF((" done.\n"));
 
-        DEBUG_PRINTF("Clearing request list...");
+        DEBUGF(("Clearing request list..."));
         request_list_clear();
-        DEBUG_PRINTF(" done.\n");
+        DEBUGF((" done.\n"));
 }
 
 /**

@@ -280,9 +280,7 @@ static struct module *module_add(const char *name,
         struct module *find = module_find_by_name(name);
         struct module *n = (find) ? find : malloc(sizeof(struct module));
 
-#ifdef ENABLE_DEBUGGING
-        printf("-- Loading module: %s...\n", name);
-#endif
+        DEBUGF(("-- Loading module: %s...\n", name));
 
         strfcpy(n->name, name, sizeof(n->name));
         n->path = dstrdup(path);
@@ -308,9 +306,7 @@ static struct module *module_add(const char *name,
                 m_end = n;
         }
 
-#ifdef ENABLE_DEBUGGING
-        printf("-- Done.\n");
-#endif
+        DEBUGF(("-- Done.\n"));
 
         return n;
 }
@@ -349,9 +345,7 @@ void module_unload(struct module *cur)
         if (!cur)
                 return;
 
-#ifdef ENABLE_DEBUGGING
-        printf("Unloading module %s... ", cur->name);
-#endif
+        DEBUGF(("Unloading module %s... ", cur->name));
 
         destroy = cur->destroy;
         destroy();
@@ -372,9 +366,7 @@ void module_unload(struct module *cur)
                 mv = mv->next;
         }
 
-#ifdef ENABLE_DEBUGGING
-        printf("done.\n");
-#endif
+        DEBUGF(("done.\n"));
 }
 
 /**
@@ -452,9 +444,7 @@ void module_load_all(void)
                         strfcat(full_path, "/", sizeof(full_path));
                         strfcat(full_path, dir->d_name, sizeof(full_path));
 
-#ifdef ENABLE_DEBUGGING
-                        printf("Attempting to load: %s\n", full_path);
-#endif
+                        DEBUGF(("Attempting to load: %s\n", full_path));
                         module_load(full_path);
                 }
         }

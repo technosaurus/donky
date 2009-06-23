@@ -17,21 +17,32 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include "../config.h"
+
 #include <stddef.h>
 
 #define DMAXPATHLEN 256
 
+/** 
+ * @brief Debugging printf. This must be used with double parenthesis due to
+ *        the limitations of ANSI C not supporting variadic macros.
+ *              Example:
+ *                      DEBUG(("blah blah blah, %s", str));
+ */
+#ifdef ENABLE_DEBUGGING
+#define DEBUGF(args) printf args
+#else
+#define DEBUGF(args)
+#endif /* ENABLE_DEBUGGING */
+
+/**
+ * @brief Free a pointer, then set it to NULL.
+ */
 #define freenull(ptr)           \
         do {                    \
                 free(ptr);      \
                 (ptr) = NULL;   \
         } while (0)
-
-#ifdef ENABLE_DEBUGGING
-#define DEBUG_PRINTF(str) printf(str)
-#else
-#define DEBUG_PRINTF
-#endif
 
 char *trim(char *str);
 char *trim_l(char *str);
@@ -60,5 +71,5 @@ int stracat(char **dst, const char *src);
 int strancpy(char **dst, const char *src, size_t n);
 int strancat(char **dst, const char *src, size_t n);
 unsigned long int get_unix_time(void);
-#endif /* UTIL_H */
 
+#endif /* UTIL_H */

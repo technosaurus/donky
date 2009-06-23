@@ -107,15 +107,13 @@ static void add_key(char *mod, char *key, char *value)
 
         add_node(cur->setting_ls, new_setting);
 
-#ifdef ENABLE_DEBUGGING
-        printf("added-> mod [%s] key [%s] value [%s]\n",
-               mod, key, value);
-        printf("  char [%s] int [%d] double [%f] bool [%d]\n\n",
-               get_char_key(mod, key, "(null)"),
-               get_int_key(mod, key, -1),
-               get_double_key(mod, key, -1),
-               get_bool_key(mod, key, -1));
-#endif
+        DEBUGF(("Added: mod [%s] key [%s] value [%s]\n"
+                "-- char [%s] int [%d] double [%f] bool [%d]\n\n",
+                mod, key, value,
+                get_char_key(mod, key, "(null)"),
+                get_int_key(mod, key, -1),
+                get_double_key(mod, key, -1),
+                get_bool_key(mod, key, -1)));
 }
 
 /** 
@@ -270,10 +268,7 @@ void parse_cfg(void)
 
         while ((fgets(str, sizeof(str), cfg_file)) != NULL) {
                 if (is_comment(str)) {
-#ifdef ENABLE_DEBUGGING
-                        chomp(str);
-                        printf("Skipping comment [%s]\n", str);
-#endif
+                        DEBUGF(("Skipping comment [%s]\n", chomp(str)));
                         continue;
                 }
 
@@ -315,31 +310,24 @@ void parse_cfg(void)
  */
 static FILE *get_cfg_file(void)
 {
-        char *path;
+        char path[FILENAME_MAX];
         FILE *file;
 
-        path = dstrdup(getenv("HOME"));
-        stracat(&path, "/" DEFAULT_CONF);
+        strfcpy(path, getenv("HOME"), sizeof(path));
+        strfcat(path, "/" DEFAULT_CONF, sizeof(path));
         file = fopen(path, "r");
-        if (file == NULL)
-                goto try_global;
+        if (file == NULL) {
+                fprintf(stderr, "Warning: Can't open config file %s.\n", path);
+                strfcpy(path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL, sizeof(path)); 
+                file = fopen(path, "r");
+                if (file == NULL)
+                        goto error;
+        }
 
-        free(path);
-        return file;
-
-try_global:
-        fprintf(stderr, "Warning: %s file not found. Trying global.\n", path);
-        stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
-        file = fopen(path, "r");
-        if (file == NULL)
-                goto error;
-
-        free(path);
         return file;
 
 error:
-        fprintf(stderr, "Error: %s file also not found. Exiting.\n", path);
-        free(path);
+        fprintf(stderr, "Error: Also can't open file %s. Exiting.\n", path);
         exit(EXIT_FAILURE);
 }
 
