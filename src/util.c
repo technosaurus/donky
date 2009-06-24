@@ -173,26 +173,25 @@ double get_time(void)
  *
  * @return Formatted string
  */
+#define KILO 1024
+#define MEGA 1048576
+#define GIGA 1073741824
 char *bytes_to_bigger(unsigned long bytes)
 {
         char str[16];
-        double kilo, mega, giga, tera;
 
-        if (bytes < (kilo = 1024)) {
+        if (bytes < KILO) {
                 uint_to_str(str, bytes, sizeof(str));
                 strfcat(str, "B", sizeof(str));
-        } else if (bytes < (mega = kilo * 1024)) {
-                float_to_str(str, bytes / kilo, 2, sizeof(str));
+        } else if (bytes < MEGA) {
+                float_to_str(str, bytes / KILO, 2, sizeof(str));
                 strfcat(str, "KiB", sizeof(str));
-        } else if (bytes < (giga = mega * 1024)) {
-                float_to_str(str, bytes / mega, 2, sizeof(str));
+        } else if (bytes < GIGA) {
+                float_to_str(str, bytes / MEGA, 2, sizeof(str));
                 strfcat(str, "MiB", sizeof(str));
-        } else if (bytes < (tera = giga * 1024)) {
-                float_to_str(str, bytes / giga, 2, sizeof(str));
-                strfcat(str, "GiB", sizeof(str));
         } else {
-                float_to_str(str, bytes / tera, 2, sizeof(str));
-                strfcat(str, "TiB", sizeof(str));
+                float_to_str(str, bytes / GIGA, 2, sizeof(str));
+                strfcat(str, "GiB", sizeof(str));
         }
 
         return dstrdup(str);
