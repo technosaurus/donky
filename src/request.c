@@ -173,7 +173,7 @@ static void *request_handler_exec(void *arg)
 
                         /* Check that we have a symbol for the module var
                          * method. */
-                        if (!module_var_checksym(cur->var))
+                        if (!cur->var->loaded)
                                 goto UPDATESTAT;
 
                         /* VARIABLE_STR */
@@ -345,7 +345,7 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
         }
 
         /* If the symbol is NULL, get a pointer to it. */
-        if (!module_var_checksym(mv))
+        if (!mv->loaded)
                 module_var_loadsym(mv);
 
         /* Let the module var parent know we are using it. */

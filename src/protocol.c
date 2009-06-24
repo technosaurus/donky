@@ -43,7 +43,7 @@ donky_cmd commands[] = {
         { "var",     &protocol_command_var },
         { "varonce", &protocol_command_varonce },
         { "bye",     &protocol_command_bye },
-        { "cfg",  &protocol_command_cfg },
+        { "cfg",     &protocol_command_cfg },
         { NULL,      NULL }
 };
 

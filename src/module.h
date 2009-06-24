@@ -55,7 +55,8 @@ struct module_var {
         char method[64];         /* Method name to call. */
         union module_funcs syms;
         unsigned char type;      /* Type of method.  See the enum above. */
-
+        
+        int loaded;              /* Loaded (bool) */
         double timeout;          /* Used for cron jobs */
         double last_update;      /* Ditto */
 
@@ -78,9 +79,7 @@ void clear_module(void);
 void module_var_cron_exec(void);
 void *module_get_sym(void *handle, char *name);
 struct module_var *module_var_find_by_name(const char *name);
-void module_var_clearsym(struct module_var *mv);
 void module_var_loadsym(struct module_var *mv);
-unsigned int module_var_checksym(struct module_var *mv);
 int module_load(char *path);
 void module_unload(struct module *cur);
 void module_var_cron_init(struct module *parent);
