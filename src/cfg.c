@@ -316,26 +316,18 @@ static FILE *get_cfg_file(void)
         stracpy(&path, getenv("HOME"));
         stracat(&path, "/" DEFAULT_CONF);
         file = fopen(path, "r");
-        if (file == NULL)
-                goto try_global;
+        if (file == NULL) {
+                fprintf(stderr, "Warning: Can't open config file %s.\n", path);
+                stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
+                file = fopen(path, "r");
+                if (file == NULL)
+                        fprintf(stderr, "Error: Also can't open system config "
+                                        "file %s. Exiting.\n", path);
+                        exit(EXIT_FAILURE);
+        }
 
         free(path);
         return file;
-
-try_global:
-        fprintf(stderr, "Warning: Can't open configuration file %s.\n", path);
-        stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
-        file = fopen(path, "r");
-        if (file == NULL)
-                goto error;
-
-        free(path);
-        return file;
-
-error:
-        fprintf(stderr, "Error: Also can't open system configuration file %s "
-                        "Exiting.\n", path);
-        exit(EXIT_FAILURE);
 }
 
 /** 

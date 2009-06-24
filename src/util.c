@@ -530,30 +530,24 @@ int stracpy(char **dst, const char *src)
         char *d;
         size_t srclen;
 
-        /* free and NULL dst if src is NULL */
-        if (src == NULL)
-                goto clear;
+        if (src == NULL) {
+                free(*dst);
+                *dst = NULL;
+                return 0;
+        }
 
-        /* if our buffer is already big enough, skip to copying */
         srclen = strlen(src);
-        if ((*dst != NULL) && (strlen(*dst) < srclen))
-                goto copy;
+        if ((*dst == NULL) || (strlen(*dst) < srclen)) {
+                *dst = realloc(*dst, srclen + sizeof(char));
+                if (*dst == NULL)
+                        return -1;
+        }
 
-        /* (re)allocate enough memory before copying */
-        *dst = realloc(*dst, srclen + sizeof(char));
-        if (*dst == NULL)
-                goto error;
-copy:
         for (d = *dst; srclen != 0; srclen--)
                 *d++ = *src++;
         *d = '\0';
+
         return 0;
-clear:
-        free(*dst);
-        *dst = NULL;
-        return 0;
-error:
-        return -1;
 }
 
 /** 
