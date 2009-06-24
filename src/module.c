@@ -74,7 +74,7 @@ int module_var_add(const struct module *parent,
         strfcpy(n->name, name, sizeof(n->name));
         strfcpy(n->method, method, sizeof(n->method));
         n->type = type;
-        module_var_clearsym(n);
+        n->loaded = 0;
 
         if (!find) {
                 n->prev = NULL;
@@ -133,30 +133,13 @@ struct module_var *module_var_find_by_name(const char *name)
 }
 
 /**
- * @brief Set all symbol BS to NULL.
- *
- * @param Module var node
- */
-void module_var_clearsym(struct module_var *mv)
-{
-        mv->syms.f_void = NULL;
-        mv->syms.f_str = NULL;
-        mv->syms.f_str_str = NULL;
-        mv->syms.f_str_int = NULL;
-        mv->syms.f_str_double = NULL;
-        mv->syms.f_int = NULL;
-        mv->syms.f_int_str = NULL;
-        mv->syms.f_int_int = NULL;
-        mv->syms.f_int_double = NULL;
-}
-
-/**
  * @brief Load symbol according to variable type and argument type.
  *
  * @param mv Module var node
  */
 void module_var_loadsym(struct module_var *mv)
 {
+        /* VARIABLE_STR */
         if (mv->type & VARIABLE_STR) {
                 if (mv->type & ARGSTR)
                         mv->syms.f_str_str =
@@ -170,6 +153,7 @@ void module_var_loadsym(struct module_var *mv)
                 else
                         mv->syms.f_str =
                                 module_get_sym(mv->parent->handle, mv->method);
+        /* VARIABLE_BAR || VARIABLE_GRAPH */
         } else if (mv->type & VARIABLE_BAR || mv->type & VARIABLE_GRAPH) {
                 if (mv->type & ARGSTR)
                         mv->syms.f_int_str =
@@ -183,45 +167,16 @@ void module_var_loadsym(struct module_var *mv)
                 else
                         mv->syms.f_int =
                                 module_get_sym(mv->parent->handle, mv->method);
+        /* VARIABLE_CRON */
         } else if (mv->type & VARIABLE_CRON) {
                 mv->syms.f_void = module_get_sym(mv->parent->handle, mv->method);
-        }
-}
-
-/**
- * @brief Check if a symbol is null.
- *
- * @param mv Module var node
- */
-unsigned int module_var_checksym(struct module_var *mv)
-{
-        unsigned int ret;
-        
-        if (mv->type & VARIABLE_STR) {
-                if (mv->type & ARGSTR)
-                        ret = (mv->syms.f_str_str) ? 1 : 0;
-                else if (mv->type & ARGINT)
-                        ret = (mv->syms.f_str_int) ? 1 : 0;
-                else if (mv->type & ARGDOUBLE)
-                        ret = (mv->syms.f_str_double) ? 1 : 0;
-                else
-                        ret = (mv->syms.f_str) ? 1 : 0;
-        } else if (mv->type & VARIABLE_BAR || mv->type & VARIABLE_GRAPH) {
-                if (mv->type & ARGSTR)
-                        ret = (mv->syms.f_int_str) ? 1 : 0;
-                else if (mv->type & ARGINT)
-                        ret = (mv->syms.f_int_int) ? 1 : 0;
-                else if (mv->type & ARGDOUBLE)
-                        ret = (mv->syms.f_int_double) ? 1 : 0;
-                else
-                        ret = (mv->syms.f_int) ? 1 : 0;
-        } else if (mv->type & VARIABLE_CRON) {
-                ret = (mv->syms.f_void) ? 1 : 0;
+        /* Shouldn't happen, but who knows? */
         } else {
-                ret = 0;
+                return;
         }
 
-        return ret;
+        /* Set the loaded flag. */
+        mv->loaded = 1;
 }
 
 /**
@@ -234,7 +189,7 @@ void module_var_cron_exec(void)
         while (cur) {
                 if (cur->type == VARIABLE_CRON &&
                     (get_time() - cur->last_update) >= cur->timeout) {
-                        if (cur->syms.f_void != NULL) {
+                        if (cur->loaded) {
                                 cur->syms.f_void();
                                 cur->last_update = get_time();
                         }
@@ -254,9 +209,13 @@ void module_var_cron_init(struct module *parent)
         struct module_var *cur = mv_start;
 
         while (cur) {
-                if (cur->parent == parent)
+                if (cur->parent == parent) {
                         cur->syms.f_void =
                                 module_get_sym(parent->handle, cur->method);
+
+                        /* Loaded flag. */
+                        cur->loaded = 1;
+                }
                 
                 cur = cur->next;
         }
@@ -355,13 +314,12 @@ void module_unload(struct module *cur)
         cur->handle = NULL;
         cur->clients = 0;
 
-        /* Set all module_var symbol pointers to NULL if this is their
-         * parent module. */
+        /* Set all module_var loaded flags to 0. */
         mv = mv_start;
 
         while (mv) {
                 if (mv->parent == cur)
-                        module_var_clearsym(mv);
+                        mv->loaded = 0;
                 
                 mv = mv->next;
         }
