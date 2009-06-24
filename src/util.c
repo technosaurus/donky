@@ -530,13 +530,16 @@ int stracpy(char **dst, const char *src)
         char *d;
         size_t srclen;
 
+        /* free and NULL dst if src is NULL */
         if (src == NULL)
                 goto clear;
 
+        /* if our buffer is already big enough, skip to copying */
         srclen = strlen(src);
         if ((*dst != NULL) && (strlen(*dst) < srclen))
                 goto copy;
 
+        /* (re)allocate enough memory before copying */
         *dst = realloc(*dst, srclen + sizeof(char));
         if (*dst == NULL)
                 goto error;
