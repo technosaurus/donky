@@ -14,98 +14,132 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "../config.h"
-
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "cfg.h"
 #include "default_settings.h"
-#include "lists.h"
 #include "util.h"
+
+#define MAX_LINE_SIZE 1024
 
 struct setting {
         char *key;
         char *value;
+
+        struct setting *next;
 };
 
-static void add_mod(char *mod);
-static int find_mod(struct cfg *cur, char *mod);
-static void add_key(char *mod, char *key, char *value);
-static int find_key(struct setting *cur, char *key);
+struct setting_ls {
+        struct setting *first;
+        struct setting *last;
+};
+
+struct cfg {
+        char *mod;
+        struct setting_ls *setting_ls;
+
+        struct cfg *next;
+};
+
+struct cfg_ls {
+        struct cfg *first;
+        struct cfg *last;
+};
+
+static void init_cfg_ls(void);
+static void add_mod(const char *mod);
+static struct cfg *find_mod(const char *mod);
+static void add_key(const char *mod, const char *key, const char *value);
+static struct setting *find_key(const char *mod, const char *key);
 static FILE *get_cfg_file(void);
-static void clear_settings(struct setting *cur_s);
+static void clear_settings(struct setting_ls *ls);
 
-struct list *cfg_ls;
+static struct cfg_ls *cfg_ls;
 
-#define IS_TRUE(c) ( ((c) == 'y') || ((c) == 'Y') || \
-                     ((c) == 't') || ((c) == 'T') || \
-                     ((c) == '1') )
+/** 
+ * @brief Return an initialized configuration list
+ */
+static void init_cfg_ls(void)
+{
+        extern struct cfg_ls *cfg_ls;
 
-#define IS_FALSE(c) ( ((c) == 'n') || ((c) == 'N') || \
-                      ((c) == 'f') || ((c) == 'F') || \
-                      ((c) == '0') )
-
-#define MAX_LINE_SIZE 1024
+        cfg_ls = malloc(sizeof(struct cfg_ls));
+        cfg_ls->first = NULL;
+        cfg_ls->last = NULL;
+}
 
 /** 
  * @brief Add a mod to the configuration list
- * 
- * @param mod The name of the mod to add
  */
-static void add_mod(char *mod)
+static void add_mod(const char *mod)
 {
-        struct cfg *new_mod;
+        extern struct cfg_ls *cfg_ls;
+        struct cfg *new;
 
-        new_mod = malloc(sizeof(struct cfg));
-        new_mod->mod = dstrdup(mod);
-        new_mod->setting_ls = init_list();
+        new = malloc(sizeof(struct cfg));
+        new->next = NULL;
+        new->mod = dstrdup(mod);
+        new->setting_ls = malloc(sizeof(struct setting_ls));
+        new->setting_ls->first = NULL;
+        new->setting_ls->last = NULL;
 
-        add_node(cfg_ls, new_mod);
+        if (cfg_ls->last) {
+                cfg_ls->last->next = new;
+                cfg_ls->last = new;
+        } else {
+                cfg_ls->first = new;
+                cfg_ls->last = new;
+        }
 }
 
 /** 
- * @brief Callback used in finding a mod in the coming functions.
- * 
- * @param cur cfg node whose mod we check against
- * @param mod Mod name we're looking for
- * 
- * @return 1 if this is the node we want, 0 if not
+ * @brief Search for and return a mod from the configuration list.
+ *        Return NULL if it isn't found.
  */
-static int find_mod(struct cfg *cur, char *mod)
+static struct cfg *find_mod(const char *mod)
 {
-        if (!dstrcasecmp(cur->mod, mod))
-                return 1;
+        extern struct cfg_ls *cfg_ls;
+        struct cfg *cur;
 
-        return 0;
+        cur = cfg_ls->first;
+        while (cur != NULL) {
+                if (!dstrcasecmp(cur->mod, mod))
+                        return cur;
+                cur = cur->next;
+        }
+
+        return NULL;
 }
 
 /** 
- * @brief Add a key (setting, option) and its value to its respective mod
- * 
- * @param mod Name of the mod to add the key to
- * @param key Name of key
- * @param value Value of the key to add (as a string)
+ * @brief Add key and its value to a mod's list of settings
  */
-static void add_key(char *mod, char *key, char *value)
+static void add_key(const char *mod, const char *key, const char *value)
 {
         struct cfg *cur;
-        struct setting *new_setting;
+        struct setting *new_set;
 
-        cur = find_node(cfg_ls, &find_mod, mod);
+        cur = find_mod(mod);
         if (cur == NULL)
                 return;
 
-        new_setting = malloc(sizeof(struct setting));
-        new_setting->key = dstrdup(key);
+        new_set = malloc(sizeof(struct setting));
+        new_set->next = NULL;
+        new_set->key = dstrdup(key);
         if (value != NULL)
-                new_setting->value = dstrdup(value);
+                new_set->value = dstrdup(value);
         else
-                new_setting->value = NULL;
+                new_set->value = NULL;
 
-        add_node(cur->setting_ls, new_setting);
+        if (cur->setting_ls->last != NULL) {
+                cur->setting_ls->last->next = new_set;
+                cur->setting_ls->last = new_set;
+        } else {
+                cur->setting_ls->first = new_set;
+                cur->setting_ls->last = new_set;
+        }
 
         DEBUGF(("Added: mod [%s] key [%s] value [%s]\n"
                 "-- char [%s] int [%d] double [%f] bool [%d]\n\n",
@@ -117,133 +151,113 @@ static void add_key(char *mod, char *key, char *value)
 }
 
 /** 
- * @brief Callback used in finding a key in the coming functions.
- * 
- * @param cur setting node whose key we check against
- * @param mod Key name we're looking for
- * 
- * @return 1 if this is the node we want, 0 if not
+ * @brief Search for a mod's setting by name and return the setting struct.
  */
-static int find_key(struct setting *cur, char *key)
+static struct setting *find_key(const char *mod, const char *key)
 {
-        if (!dstrcasecmp(cur->key, key))
-                return 1;
+        struct cfg *cur_mod;
+        struct setting *cur_set;
 
-        return 0;
-}
-
-/** 
- * @brief Get the char value of a key of a mod
- * 
- * @param mod Name of mod
- * @param key Name of key
- * @param otherwise Value to return if we cannot determine a key
- * 
- * @return Malloc'd char value of either key or 'otherwise'
- */
-const char *get_char_key(char *mod, char *key, char *otherwise)
-{
-        struct cfg *cur;
-        struct setting *cur_s;
-
-        cur = find_node(cfg_ls, &find_mod, mod);
-        if (cur == NULL) {
-                if (otherwise != NULL)
-                        return otherwise;
-
+        cur_mod = find_mod(mod);
+        if (cur_mod == NULL)
                 return NULL;
-        }
 
-        cur_s = find_node(cur->setting_ls, &find_key, key);
-        if ((cur_s != NULL) && (cur_s->value != NULL))
-                return cur_s->value;
-        else if (otherwise != NULL)
-                return otherwise;
+        cur_set = cur_mod->setting_ls->first;
+        while (cur_set != NULL) {
+                if (!dstrcasecmp(cur_set->key, key))
+                        return cur_set;
+                cur_set = cur_set->next;
+        }
 
         return NULL;
 }
 
-/** 
- * @brief Get the int value of a key of a mod
- * 
- * @param mod Name of mod
- * @param key Name of key
- * @param otherwise Value to return if we cannot determine a key
- * 
- * @return The int value of key, or 'otherwise'
+/**
+ * See "cfg.h" for information on the following 4 functions.
  */
-int get_int_key(char *mod, char *key, int otherwise)
-{
-        struct cfg *cur;
-        struct setting *cur_s;
 
-        cur = find_node(cfg_ls, &find_mod, mod);
-        if (cur == NULL)
+/** 
+ * @brief Search a mod for a setting, and return the value of the setting
+ *        in char * format. If the setting cannot be found or has no value,
+ *        return the 'otherwise' parameter.
+ */
+const char *get_char_key(const char *mod,
+                         const char *key,
+                         const char *otherwise)
+{
+        struct setting *cur;
+
+        cur = find_key(mod, key);
+        if ((cur == NULL) || (cur->value == NULL))
                 return otherwise;
 
-        cur_s = find_node(cur->setting_ls, &find_key, key);
-        if ((cur_s != NULL) && (cur_s->value != NULL))
-                return atoi(cur_s->value);
-
-        return otherwise;
+        return cur->value;
 }
 
 /** 
- * @brief Get the double value of a key of a mod
- * 
- * @param mod Name of mod
- * @param key Name of key
- * @param otherwise Value to return if we cannot determine a key
- * 
- * @return The double value of key, or 'otherwise'
+ * @brief Search a mod for a setting, and return the value of the setting
+ *        in int format. If the setting cannot be found or has no value,
+ *        return the 'otherwise' parameter.
  */
-double get_double_key(char *mod, char *key, double otherwise)
+int get_int_key(const char *mod, const char *key, int otherwise)
 {
-        struct cfg *cur;
-        struct setting *cur_s;
+        struct setting *cur;
 
-        cur = find_node(cfg_ls, &find_mod, mod);
-        if (cur == NULL)
+        cur = find_key(mod, key);
+        if ((cur == NULL) || (cur->value == NULL))
                 return otherwise;
 
-        cur_s = find_node(cur->setting_ls, &find_key, key);
-        if ((cur_s != NULL) && (cur_s->value != NULL))
-                return atof(cur_s->value);
-
-        return otherwise;
+        return atoi(cur->value);
 }
 
 /** 
- * @brief Get the boolean value of a key
- * 
- * @param mod Name of mod
- * @param key Name of key
- * @param otherwise Value to return if we cannot determine a key
- * 
- * @return The boolean value of key, or 'otherwise'
+ * @brief Search a mod for a setting, and return the value of the setting
+ *        in double format. If the setting cannot be found or has no value,
+ *        return the 'otherwise' parameter.
  */
-int get_bool_key(char *mod, char *key, int otherwise)
+double get_double_key(const char *mod, const char *key, double otherwise)
 {
-        struct cfg *cur;
-        struct setting *cur_s;
+        struct setting *cur;
 
-        cur = find_node(cfg_ls, &find_mod, mod);
-        if (cur == NULL)
+        cur = find_key(mod, key);
+        if ((cur == NULL) || (cur->value == NULL))
                 return otherwise;
 
-        cur_s = find_node(cur->setting_ls, &find_key, key);
-        if ((cur_s != NULL) && (cur_s->value != NULL)) {
-                if (IS_TRUE(cur_s->value[0]))
-                        return 1;
-                else if (IS_FALSE(cur_s->value[0]))
-                        return 0;
-        }
-
-        return otherwise;
+        return atof(cur->value);
 }
 
 /** 
- * @brief Parses the main donky configuration file
+ * @brief Search a mod for a setting, and return the value of the setting
+ *        in boolean (int) format. (1 = true, 0 = false)
+ *        If the setting cannot be found or has no value, return the
+ *        'otherwise' parameter.
+ */
+#define IS_TRUE(c) ( ((c) == 'y') || ((c) == 'Y') || \
+                     ((c) == 't') || ((c) == 'T') || \
+                     ((c) == '1') )
+
+#define IS_FALSE(c) ( ((c) == 'n') || ((c) == 'N') || \
+                      ((c) == 'f') || ((c) == 'F') || \
+                      ((c) == '0') )
+
+int get_bool_key(const char *mod, const char *key, int otherwise)
+{
+        struct setting *cur;
+
+        cur = find_key(mod, key);
+        if ((cur == NULL) || (cur->value == NULL))
+                goto out;
+
+        if (IS_TRUE(cur->value[0]))
+                return 1;
+        else if (IS_FALSE(cur->value[0]))
+                return 0;
+out:
+        return otherwise;
+}
+
+/**
+ * @brief Parse the main donky configuration file.
  */
 void parse_cfg(void)
 {
@@ -252,19 +266,11 @@ void parse_cfg(void)
         char mod[64];
         char key[64];
         char value[128];
-        int have_mod;           /* bool - do we have a mod? */
-        const char *format[5];  /* sscanf formats */
+        int have_mod;   /* bool - do we have a mod? */
 
         cfg_file = get_cfg_file();
-        cfg_ls = init_list();      /* initialize our cfg list */
-
-        have_mod = 0;  /* set this to 1 when we get our first mod */
-
-        format[0] = " [%63[a-zA-Z0-9_-]]";                /* [mod]         */
-        format[1] = " %63[a-zA-Z0-9_-] = \"%127[^\"]\" "; /* key = "value" */
-        format[2] = " %63[a-zA-Z0-9_-] = '%127[^\']' ";   /* key = 'value' */
-        format[3] = " %63[a-zA-Z0-9_-] = %127[^;\n] ";    /* key = value   */
-        format[4] = " %63[a-zA-Z0-9_-] ";                 /* key           */
+        init_cfg_ls();  /* initialize the cfg list */
+        have_mod = 0;   /* set this to 1 when we get our first mod */
 
         while ((fgets(str, sizeof(str), cfg_file)) != NULL) {
                 if (is_comment(str)) {
@@ -272,7 +278,8 @@ void parse_cfg(void)
                         continue;
                 }
 
-                if (sscanf(str, format[0], mod) == 1) {
+#define         MOD_FMT " [%63[a-zA-Z0-9_-]]"
+                if (sscanf(str, MOD_FMT, mod) == 1) {
                         add_mod(mod);
                         if (have_mod == 0)
                                 have_mod = 1;
@@ -283,17 +290,21 @@ void parse_cfg(void)
                 if (have_mod == 0)
                         continue;
 
-                if (sscanf(str, format[1], key, value) == 2) {
+#define         KEY_FMT_1 " %63[a-zA-Z0-9_-] = \"%127[^\"]\" "
+#define         KEY_FMT_2 " %63[a-zA-Z0-9_-] = '%127[^\']' "
+#define         KEY_FMT_3 " %63[a-zA-Z0-9_-] = %127[^;\n] "
+#define         KEY_FMT_4 " %63[a-zA-Z0-9_-] "
+                if (sscanf(str, KEY_FMT_1, key, value) == 2) {
                         add_key(mod, key, value);
-                } else if (sscanf(str, format[2], key, value) == 2) {
+                } else if (sscanf(str, KEY_FMT_2, key, value) == 2) {
                         add_key(mod, key, value);
-                } else if (sscanf(str, format[3], key, value) == 2) {
+                } else if (sscanf(str, KEY_FMT_3, key, value) == 2) {
                         trim_t(value);
                         if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
                                 add_key(mod, key, NULL);
                         else
                                 add_key(mod, key, value);
-                } else if (sscanf(str, format[4], key) == 1) {
+                } else if (sscanf(str, KEY_FMT_4, key) == 1) {
                         add_key(mod, key, "True");
                 }
         }
@@ -301,7 +312,7 @@ void parse_cfg(void)
         fclose(cfg_file);
 }
 
-/** 
+/**
  * @brief Load configuration. We check for the local configuration, usually
  *        ~/.donkyrc, then if not found, we try to open the system wide
  *        configuration. If none are found, we blow this joint.
@@ -321,34 +332,57 @@ static FILE *get_cfg_file(void)
                 stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
                 file = fopen(path, "r");
                 if (file == NULL)
-                        fprintf(stderr, "Error: Also can't open system config "
-                                        "file %s. Exiting.\n", path);
-                        exit(EXIT_FAILURE);
+                        goto error;
         }
 
         free(path);
         return file;
+
+error:
+        fprintf(stderr, "Error: Also can't open system config file %s. "
+                        "Exiting.\n", path);
+        exit(EXIT_FAILURE);
 }
 
 /** 
- * @brief Frees the contents of the cfg struct passed to it.
- * 
- * @param cur cfg struct to clean
+ * @brief Free everything in the configuration list.
  */
-void clear_cfg(struct cfg *cur)
+void clear_cfg(void)
 {
-        free(cur->mod);
-        del_list(cur->setting_ls, &clear_settings);
+        extern struct cfg_ls *cfg_ls;
+        struct cfg *cur;
+        struct cfg *next;
+
+        cur = cfg_ls->first;
+        while (cur != NULL) {
+                next = cur->next;
+                free(cur->mod);
+                clear_settings(cur->setting_ls);
+                free(cur);
+                cur = next;
+        }
+
+        free(cfg_ls);
+        cfg_ls = NULL;
 }
 
 /** 
- * @brief Frees the contents of the setting struct passed to it.
- * 
- * @param cur_s setting struct to clean
+ * @brief Helper function to clear_cfg(). Frees a mod's settings list.
  */
-static void clear_settings(struct setting *cur_s)
+static void clear_settings(struct setting_ls *ls)
 {
-        free(cur_s->key);
-        free(cur_s->value);
+        struct setting *cur;
+        struct setting *next;
+
+        cur = ls->first;
+        while (cur != NULL) {
+                next = cur->next;
+                free(cur->key);
+                free(cur->value);
+                free(cur);
+                cur = next;
+        }
+        
+        free(ls);
 }
 

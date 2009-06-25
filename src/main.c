@@ -144,10 +144,8 @@ static void initialize_stuff(void)
  */
 static void clean_up_everything(void)
 {
-        extern struct list *cfg_ls;
-
         DEBUGF(("Clearing config list..."));
-        del_list(cfg_ls, &clear_cfg);
+        clear_cfg();
         DEBUGF((" done.\n"));
 
         DEBUGF(("Clearing modules..."));
