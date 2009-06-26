@@ -82,3 +82,10 @@ wifi_la_SOURCES     = wifi.c
 wifi_la_LIBADD      = $(DEPS_LIBS) -liw
 module_LTLIBRARIES += wifi.la
 endif
+
+if ENABLE_WEATHER
+weather_la_LDFLAGS  = -module -avoid-version --std=gnu89
+weather_la_SOURCES  = weather.c
+weather_la_LIBADD   = $(DEPS_LIBS)
+module_LTLIBRARIES += weather.la
+endif

@@ -19,21 +19,18 @@
 
 #include "mem.h"
 #include "util.h"
-#include "lists.h"
 
-/* Spewns: do not mess with this.  I'm planning on doing that context thing
- * I spoke of some time in the future.  By don't mess with this I mean, don't
- * delete this because it only has one ptr in it which could obviously just
- * be pointed to by the data ptr in the linked list crap */
 struct mem_data {
         void *ptr;
+        struct mem_data *next;
 };
 
 /* internal prototypes */
 static void mem_list_add(void *ptr);
 
 /* Globals. */
-static struct list *mem_ls = NULL;
+static struct mem_data *mem_start = NULL;
+static struct mem_data *mem_end = NULL;
 
 /**
  * @brief Malloc wrapper.
@@ -44,7 +41,9 @@ static struct list *mem_ls = NULL;
  */
 void *m_malloc(size_t size)
 {
-        void *ptr = malloc(size);
+        void *ptr;
+
+        ptr = malloc(size);
         mem_list_add(ptr);
         return ptr;
 }
@@ -59,7 +58,9 @@ void *m_malloc(size_t size)
  */
 void *m_calloc(size_t nelem, size_t size)
 {
-        void *ptr = calloc(nelem, size);
+        void *ptr;
+
+        ptr = calloc(nelem, size);
         mem_list_add(ptr);
         return ptr;
 }
@@ -106,23 +107,21 @@ void *m_freelater(void *ptr)
  */
 static void mem_list_add(void *ptr)
 {
-        struct mem_data *n = malloc(sizeof(struct mem_data));
+        struct mem_data *n;
+
+        n = malloc(sizeof(struct mem_data));
 
         n->ptr = ptr;
+        n->next = NULL;
 
         /* Add to linked list. */
-        if (mem_ls == NULL)
-                mem_ls = init_list();
-
-        add_node(mem_ls, n);
-}
-
-/**
- * @brief Callback for the del_list thinger!
- */
-static void mem_list_clear_cb(struct mem_data *cur)
-{
-        freenull(cur->ptr);
+        if (mem_end == NULL) {
+                mem_start = n;
+                mem_end = n;
+        } else {
+                mem_end->next = n;
+                mem_end = n;
+        }
 }
 
 /**
@@ -130,6 +129,18 @@ static void mem_list_clear_cb(struct mem_data *cur)
  */
 void mem_list_clear(void)
 {
-        del_list(mem_ls, &mem_list_clear_cb);
-        mem_ls = NULL;
+        struct mem_data *cur;
+        struct mem_data *next;
+
+        cur = mem_start;
+
+        while (cur != NULL) {
+                next = cur->next;
+                free(cur->ptr);
+                free(cur);
+                cur = next;
+        }
+
+        mem_start = NULL;
+        mem_end = NULL;
 }

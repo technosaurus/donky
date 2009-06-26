@@ -19,11 +19,17 @@
 
 #include <stddef.h>
 
-/* Function prototypes. */
+/**
+ * These functions should be used in modules that wish for memory management
+ * to be taken care of after each variable update.  It is highly recommended
+ * that modules utilize these functions.
+ */
 void *m_malloc(size_t size);
 void *m_calloc(size_t nelem, size_t size);
 char *m_strdup(char *str);
 void *m_freelater(void *ptr);
+
+/* Free and clear the memory list. */
 void mem_list_clear(void);
 
 #endif /* MEM_H */

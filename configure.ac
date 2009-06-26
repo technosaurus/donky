@@ -1,4 +1,3 @@
-#AC_PREREQ([2.63])
 AC_PREREQ([2.59])
 AC_INIT([donky], [2009.5], [lobo@ircage.org])
 AC_CONFIG_SRCDIR([config.h.in])
@@ -271,6 +270,19 @@ else
         AC_MSG_RESULT([no])
 fi
 
+dnl weather support...
+AC_MSG_CHECKING([whether to build the weather module])
+AC_ARG_ENABLE(weather,
+              AC_HELP_STRING([--enable-weather],
+                             [enable the weather module [default=yes]]), ,
+              [enable_weather=yes])
+if test "x$enable_weather" = "xyes"; then
+        AC_MSG_RESULT([yes])
+        MODULES="$MODULES weather"
+else
+        AC_MSG_RESULT([no])
+fi
+
 dnl Am conditionals
 AM_CONDITIONAL(ENABLE_WIFI, test "x$enable_wifi" = "xyes")
 AM_CONDITIONAL(ENABLE_BATTERY, test "x$enable_battery" = "xyes")
@@ -285,6 +297,7 @@ AM_CONDITIONAL(ENABLE_PCPUINFO, test "x$enable_pcpuinfo" = "xyes")
 AM_CONDITIONAL(ENABLE_SCPUINFO, test "x$enable_scpuinfo" = "xyes")
 AM_CONDITIONAL(ENABLE_SYSINFO, test "x$enable_sysinfo" = "xyes")
 AM_CONDITIONAL(ENABLE_VOLUME, test "x$enable_volume" = "xyes")
+AM_CONDITIONAL(ENABLE_WEATHER, test "x$enable_weather" = "xyes")
 
 dnl Our Makefiles.
 AC_CONFIG_FILES([Makefile
