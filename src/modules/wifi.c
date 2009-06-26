@@ -22,7 +22,6 @@
 #include "../cfg.h"
 #include "../mem.h"
 #include "../module.h"
-#include "../util.h"
 
 char module_name[] = "wifi_pwn_edition";
 

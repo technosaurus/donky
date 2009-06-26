@@ -25,7 +25,6 @@
 #include "cfg.h"
 #include "module.h"
 #include "util.h"
-#include "lists.h"
 
 /* Globals. */
 struct module *m_start = NULL;

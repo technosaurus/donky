@@ -29,7 +29,6 @@
 #include "../mem.h"
 #include "../module.h"
 #include "../net.h"
-#include "../util.h"
 
 #ifdef HAVE_MPDSCROB
 #include "mpdscrob.h"

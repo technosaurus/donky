@@ -15,7 +15,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <sys/sysinfo.h>
 
 #include "../mem.h"
