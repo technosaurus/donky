@@ -176,7 +176,8 @@ double get_time(void)
 #define KILO 1024.0
 #define MEGA 1048576.0
 #define GIGA 1073741824.0
-char *bytes_to_bigger(unsigned long bytes)
+#define TERA 109951162776.0
+char *bytes_to_bigger(long double bytes)
 {
         char str[16];
 
@@ -189,9 +190,12 @@ char *bytes_to_bigger(unsigned long bytes)
         } else if (bytes < GIGA) {
                 float_to_str(str, bytes / MEGA, 2, sizeof(str));
                 strfcat(str, "MiB", sizeof(str));
-        } else {
+        } else if (bytes < TERA) {
                 float_to_str(str, bytes / GIGA, 2, sizeof(str));
                 strfcat(str, "GiB", sizeof(str));
+        } else {
+                float_to_str(str, bytes / TERA, 2, sizeof(str));
+                strfcat(str, "TiB", sizeof(str));
         }
 
         return dstrdup(str);

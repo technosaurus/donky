@@ -53,7 +53,7 @@ char *chop(char *str);
 char *chomp(char *str);
 char *substr(char *str, int offset, size_t len);
 double get_time(void);
-char *bytes_to_bigger(unsigned long bytes);
+char *bytes_to_bigger(long double bytes);
 int random_range(int min, int max);
 unsigned int get_str_sum(const char *str);
 double pown(double x, double y);
