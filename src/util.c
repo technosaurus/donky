@@ -173,9 +173,9 @@ double get_time(void)
  *
  * @return Formatted string
  */
-#define KILO 1024
-#define MEGA 1048576
-#define GIGA 1073741824
+#define KILO 1024.0
+#define MEGA 1048576.0
+#define GIGA 1073741824.0
 char *bytes_to_bigger(unsigned long bytes)
 {
         char str[16];
