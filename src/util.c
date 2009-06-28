@@ -668,7 +668,7 @@ unsigned long int get_unix_time(void)
         time_t t2;
         struct tm tms_utime;
         struct tm *tms_now;
-        long int ret;
+        unsigned long int ret;
 
         tms_utime.tm_sec = 0;
         tms_utime.tm_min = 0;
@@ -684,7 +684,7 @@ unsigned long int get_unix_time(void)
         tms_now = gmtime(&t1);
         t1 = mktime(tms_now);
 
-        ret = (long int) difftime(t1, t2);
+        ret = (unsigned long int) difftime(t1, t2);
 
         return ret;
 }
