@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../lists.h"
 #include "../mem.h"
 #include "../module.h"
 #include "../util.h"
@@ -29,27 +28,32 @@ char module_name[] = "battery";
 /* My function data structures and prototypes */
 struct batt {
         char *number;           /* battery number ("0" for BATT0) */
+        char *remaining;        /* remaining charge in mAh */
+        char *maximum;          /* maximum charge capacity in mAh */
 
-        char *remaining; /* remaining charge in mAh */
-        char *maximum;   /* maximum charge capacity in mAh */
+        struct batt *next;
 };
 
-static void clear_remaining(struct batt *batt);
+struct batt_ls {
+        struct batt *first;
+        struct batt *last;
+};
 
+static void init_batt_list(void);
+void batt_cron(void);
 static struct batt *prepare_batt(char *args);
-static int find_batt(struct batt *cur, char *args);
-static struct batt *add_batt(char *args);
+static struct batt *get_batt(char *batt_number);
+static struct batt *add_batt(char *batt_number);
 static char *get_remaining_charge(char *args);
 static char *get_maximum_charge(char *args);
 
-static void clear_batt(void *cur);
-
 /* Globals */
-struct list *batt_ls = NULL;
+struct batt_ls *batt_ls = NULL;
 
-/* These run on module startup */
+/* This runs on module startup */
 void module_init(const struct module *mod)
 {
+        init_batt_list();
         module_var_add(mod, "battper", "get_battper", 30.0, VARIABLE_STR | ARGSTR);
         module_var_add(mod, "battrem", "get_battrem", 30.0, VARIABLE_STR | ARGSTR);
         module_var_add(mod, "battmax", "get_battmax", 30.0, VARIABLE_STR | ARGSTR);
@@ -57,42 +61,57 @@ void module_init(const struct module *mod)
         module_var_add(mod, "batt_cron", "batt_cron", 30.0, VARIABLE_CRON);
 }
 
-/* These run on module unload */
+/* This runs on module unload */
 void module_destroy(void)
 {
-        del_list(batt_ls, &clear_batt);
+        extern struct batt_ls *batt_ls;
+        struct batt *cur;
+        struct batt *next;
+
+        cur = batt_ls->first;
+        while (cur != NULL) {
+                next = cur->next;
+                free(cur->number);
+                free(cur->remaining);
+                free(cur->maximum);
+                cur = next;
+        }
+
+        freenull(batt_ls);
 }
 
-/** 
- * @brief Frees the recorded remaining charges for all batteries, forcing the
- *        next method(s) that call them to update their values until cron
- *        clears them again.
+/**
+ * @brief Initializes the module's global battery list
+ */
+static void init_batt_list(void)
+{
+        extern struct batt_ls *batt_ls;
+
+        batt_ls = malloc(sizeof(struct batt_ls));
+        batt_ls->first = NULL;
+        batt_ls->last = NULL;
+}
+
+/**
+ * @brief This clears the "remaining charge" of every battery in the
+ *        list, forcing the next function that wants the value to
+ *        update it first.
  */
 void batt_cron(void)
 {
-        if (batt_ls == NULL)
-                batt_ls = init_list();
+        extern struct batt_ls *batt_ls;
+        struct batt *cur;
 
-        act_on_list(batt_ls, &clear_remaining);
+        cur = batt_ls->first;
+        while (cur != NULL) {
+                freenull(cur->remaining);
+                cur = cur->next;
+        }
 }
 
-/** 
- * @brief Callback for act_on_list() in batt_cron(). Frees and NULLs the
- *        remaining charge of the battery node passed to it.
- * 
- * @param batt Battery node to act upon.
- */
-static void clear_remaining(struct batt *batt)
-{
-        freenull(batt->remaining);
-}
-
-/** 
- * @brief Returns the remaining battery charge in percentage format.
- * 
- * @param args Module arguments from .donkyrc (e.g. ${battper 0} for BATT0)
- * 
- * @return Result as a string
+/**
+ * @brief Calculate and return the remaining charge of a battery in
+ *        percentage format.
  */
 char *get_battper(char *args)
 {
@@ -111,12 +130,8 @@ char *get_battper(char *args)
         return m_strdup(battper);
 }
 
-/** 
- * @brief Returns the remaining battery charge in raw mAh format.
- * 
- * @param args Module arguments from .donkyrc (e.g. ${battrem 0} for BATT0)
- * 
- * @return Result as a string
+/**
+ * @brief Returns the remaining charge of a battery in raw mAh.
  */
 char *get_battrem(char *args)
 {
@@ -129,12 +144,8 @@ char *get_battrem(char *args)
         return batt->remaining;
 }
 
-/** 
- * @brief Returns the maximum battery charge in raw mAh format.
- * 
- * @param args Module arguments from .donkyrc (e.g. ${battmax 0} for BATT0)
- * 
- * @return Result as a string
+/**
+ * @brief Returns the maximum charge of a battery in raw mAh.
  */
 char *get_battmax(char *args)
 {
@@ -147,14 +158,9 @@ char *get_battmax(char *args)
         return batt->maximum;
 }
 
-/** 
- * @brief Returns the percentage of battery charge left as an int for use
- *        in drawing a bar.
- * 
- * @param args Module arguments from .donkyrc (e.g. ${battbar 50 5 0} for
- *             a 50 pixel wide, 5 pixel high bar for BATT0)
- * 
- * @return Percentage of remaining battery charge as int
+/**
+ * @brief Returns the percentage of the remaining charge of a battery
+ *        as in int for use in drawing a bar.
  */
 unsigned int get_battbar(char *args)
 {
@@ -171,67 +177,67 @@ unsigned int get_battbar(char *args)
         return percentage;
 }
 
-/** 
- * @brief Fetches a node for the requested battery.
- * 
- * @param batt_num Battery number to prepare.
- * 
- * @return NULL if a battery's remaining or maximum charge could not be
- *         determined. Otherwise, a pointer to the battery is returned.
+/**
+ * @brief Finds a battery in the list and updates its remaining charge
+ *        if need be.
  */
 static struct batt *prepare_batt(char *batt_number)
 {
         struct batt *batt;
 
-        batt = get_node(batt_ls, &find_batt, batt_number, &add_batt);
+        batt = get_batt(batt_number);
         if (batt->remaining == NULL)
                 batt->remaining = get_remaining_charge(batt->number);
 
         return batt;
 }
 
-/** 
- * @brief Adds a new battery node to the list.
- * 
- * @param batt_num Battery number to add. 
- * 
- * @return Pointer to the new node.
+/**
+ * @brief Used by prepare_batt() to find the requested battery. If it
+ *        cannot be found, add_batt() is called to add the battery to
+ *        the list and then return the newly created battery node.
+ */
+static struct batt *get_batt(char *batt_number)
+{
+        extern struct batt_ls *batt_ls;
+        struct batt *cur;
+
+        cur = batt_ls->first;
+        while (cur != NULL) {
+                if (!strcmp(cur->number, batt_number))
+                        return cur;
+                cur = cur->next;
+        }
+
+        return add_batt(batt_number);
+}
+
+/**
+ * @brief Adds a new battery to the list.
  */
 static struct batt *add_batt(char *batt_number)
 {
+        extern struct batt_ls *batt_ls;
         struct batt *new;
 
         new = malloc(sizeof(struct batt));
-
         new->number = dstrdup(batt_number);
         new->remaining = NULL;
         new->maximum = get_maximum_charge(new->number);
 
-        return add_node(batt_ls, new);
+        if (batt_ls->last != NULL) {
+                batt_ls->last->next = new;
+                batt_ls->last = new;
+        } else {
+                batt_ls->first = new;
+                batt_ls->last = new;
+        }
+
+        return batt_ls->last;
 }
 
-/** 
- * @brief Callback for get_node() in lists.h
- * 
- * @param batt Battery node whose name we match against
- * @param match The name of the node we're looking for
- * 
- * @return 1 if match succeeds, 0 if fails
- */
-static int find_batt(struct batt *cur, char *match)
-{
-        if (!strcmp(cur->number, match))
-                return 1;
-
-        return 0;
-}
-
-/** 
+/**
  * @brief Retrieves the remaining charge for a battery from /sys
- * 
- * @param args Battery name (number) whose charge we want.
- * 
- * @return Remaining mAh charge in string format.
  */
 static char *get_remaining_charge(char *args)
 {
@@ -263,14 +269,10 @@ static char *get_remaining_charge(char *args)
         return dstrdup(remaining);
 }
 
-/** 
+/**
  * @brief Retrieves the maximum charge for a battery from /sys.
  *        This is only invoked once per battery in add_batt()
  *        because it never changes, obviously.
- * 
- * @param args Battery name (number) whose charge we want.
- * 
- * @return Maximum mAh charge in string format.
  */
 static char *get_maximum_charge(char *args)
 {
@@ -300,19 +302,5 @@ static char *get_maximum_charge(char *args)
         chomp(maximum);
 
         return dstrdup(maximum);
-}
-
-/** 
- * @brief Frees the contents of a battery node.
- * 
- * @param batt Battery node to clear.
- */
-static void clear_batt(void *cur)
-{
-        struct batt *batt = cur;
-
-        free(batt->number);
-        free(batt->remaining);
-        free(batt->maximum);
 }
 

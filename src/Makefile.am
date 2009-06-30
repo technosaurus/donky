@@ -11,7 +11,6 @@ donky_SOURCES = \
         util.c util.h \
         module.c module.h \
         mem.c mem.h \
-        lists.c lists.h \
         daemon.c daemon.h \
         protocol.c protocol.h \
         request.c request.h \
