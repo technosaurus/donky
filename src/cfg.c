@@ -36,38 +36,38 @@ struct setting_ls {
         struct setting *last;
 };
 
-struct cfg {
+struct mod {
         char *mod;
         struct setting_ls *setting_ls;
 
-        struct cfg *next;
+        struct mod *next;
 };
 
-struct cfg_ls {
-        struct cfg *first;
-        struct cfg *last;
+struct mod_ls {
+        struct mod *first;
+        struct mod *last;
 };
 
-static void init_cfg_ls(void);
+static void init_mod_ls(void);
 static void add_mod(const char *mod);
-static struct cfg *find_mod(const char *mod);
-static void add_key(const char *mod, const char *key, const char *value);
-static struct setting *find_key(const char *mod, const char *key);
+static struct mod *find_mod(const char *mod);
+static void add_setting(const char *mod, const char *key, const char *value);
+static struct setting *find_setting(const char *mod, const char *key);
 static FILE *get_cfg_file(void);
 static void clear_settings(struct setting_ls *ls);
 
-static struct cfg_ls *cfg_ls;
+static struct mod_ls *cfg;
 
 /** 
  * @brief Return an initialized configuration list
  */
-static void init_cfg_ls(void)
+static void init_cfg(void)
 {
-        extern struct cfg_ls *cfg_ls;
+        extern struct mod_ls *cfg;
 
-        cfg_ls = malloc(sizeof(struct cfg_ls));
-        cfg_ls->first = NULL;
-        cfg_ls->last = NULL;
+        cfg = malloc(sizeof(struct mod_ls));
+        cfg->first = NULL;
+        cfg->last = NULL;
 }
 
 /** 
@@ -75,22 +75,22 @@ static void init_cfg_ls(void)
  */
 static void add_mod(const char *mod)
 {
-        extern struct cfg_ls *cfg_ls;
-        struct cfg *new;
+        extern struct mod_ls *cfg;
+        struct mod *new;
 
-        new = malloc(sizeof(struct cfg));
+        new = malloc(sizeof(struct mod));
         new->next = NULL;
         new->mod = dstrdup(mod);
         new->setting_ls = malloc(sizeof(struct setting_ls));
         new->setting_ls->first = NULL;
         new->setting_ls->last = NULL;
 
-        if (cfg_ls->last) {
-                cfg_ls->last->next = new;
-                cfg_ls->last = new;
+        if (cfg->last) {
+                cfg->last->next = new;
+                cfg->last = new;
         } else {
-                cfg_ls->first = new;
-                cfg_ls->last = new;
+                cfg->first = new;
+                cfg->last = new;
         }
 }
 
@@ -98,17 +98,14 @@ static void add_mod(const char *mod)
  * @brief Search for and return a mod from the configuration list.
  *        Return NULL if it isn't found.
  */
-static struct cfg *find_mod(const char *mod)
+static struct mod *find_mod(const char *mod)
 {
-        extern struct cfg_ls *cfg_ls;
-        struct cfg *cur;
+        extern struct mod_ls *cfg;
+        struct mod *cur;
 
-        cur = cfg_ls->first;
-        while (cur != NULL) {
+        for (cur = cfg->first; cur != NULL; cur = cur->next)
                 if (!dstrcasecmp(cur->mod, mod))
                         return cur;
-                cur = cur->next;
-        }
 
         return NULL;
 }
@@ -116,9 +113,9 @@ static struct cfg *find_mod(const char *mod)
 /** 
  * @brief Add key and its value to a mod's list of settings
  */
-static void add_key(const char *mod, const char *key, const char *value)
+static void add_setting(const char *mod, const char *key, const char *value)
 {
-        struct cfg *cur;
+        struct mod *cur;
         struct setting *new_set;
 
         cur = find_mod(mod);
@@ -153,21 +150,18 @@ static void add_key(const char *mod, const char *key, const char *value)
 /** 
  * @brief Search for a mod's setting by name and return the setting struct.
  */
-static struct setting *find_key(const char *mod, const char *key)
+static struct setting *find_setting(const char *mod, const char *key)
 {
-        struct cfg *cur_mod;
-        struct setting *cur_set;
+        struct mod *mcur;
+        struct setting *scur;
 
-        cur_mod = find_mod(mod);
-        if (cur_mod == NULL)
+        mcur = find_mod(mod);
+        if (mcur == NULL)
                 return NULL;
 
-        cur_set = cur_mod->setting_ls->first;
-        while (cur_set != NULL) {
-                if (!dstrcasecmp(cur_set->key, key))
-                        return cur_set;
-                cur_set = cur_set->next;
-        }
+        for (scur = mcur->setting_ls->first; scur != NULL; scur = scur->next)
+                if (!dstrcasecmp(scur->key, key))
+                        return scur;
 
         return NULL;
 }
@@ -187,7 +181,7 @@ const char *get_char_key(const char *mod,
 {
         struct setting *cur;
 
-        cur = find_key(mod, key);
+        cur = find_setting(mod, key);
         if ((cur == NULL) || (cur->value == NULL))
                 return otherwise;
 
@@ -203,7 +197,7 @@ int get_int_key(const char *mod, const char *key, int otherwise)
 {
         struct setting *cur;
 
-        cur = find_key(mod, key);
+        cur = find_setting(mod, key);
         if ((cur == NULL) || (cur->value == NULL))
                 return otherwise;
 
@@ -219,7 +213,7 @@ double get_double_key(const char *mod, const char *key, double otherwise)
 {
         struct setting *cur;
 
-        cur = find_key(mod, key);
+        cur = find_setting(mod, key);
         if ((cur == NULL) || (cur->value == NULL))
                 return otherwise;
 
@@ -244,7 +238,7 @@ int get_bool_key(const char *mod, const char *key, int otherwise)
 {
         struct setting *cur;
 
-        cur = find_key(mod, key);
+        cur = find_setting(mod, key);
         if ((cur == NULL) || (cur->value == NULL))
                 goto out;
 
@@ -269,7 +263,7 @@ void parse_cfg(void)
         int have_mod;   /* bool - do we have a mod? */
 
         cfg_file = get_cfg_file();
-        init_cfg_ls();  /* initialize the cfg list */
+        init_cfg();     /* initialize the cfg list */
         have_mod = 0;   /* set this to 1 when we get our first mod */
 
         while ((fgets(str, sizeof(str), cfg_file)) != NULL) {
@@ -295,17 +289,17 @@ void parse_cfg(void)
 #define         KEY_FMT_3 " %63[a-zA-Z0-9_-] = %127[^;\n] "
 #define         KEY_FMT_4 " %63[a-zA-Z0-9_-] "
                 if (sscanf(str, KEY_FMT_1, key, value) == 2) {
-                        add_key(mod, key, value);
+                        add_setting(mod, key, value);
                 } else if (sscanf(str, KEY_FMT_2, key, value) == 2) {
-                        add_key(mod, key, value);
+                        add_setting(mod, key, value);
                 } else if (sscanf(str, KEY_FMT_3, key, value) == 2) {
                         trim_t(value);
                         if (!strcmp(value, "\"\"") || !strcmp(value, "''"))
-                                add_key(mod, key, NULL);
+                                add_setting(mod, key, NULL);
                         else
-                                add_key(mod, key, value);
+                                add_setting(mod, key, value);
                 } else if (sscanf(str, KEY_FMT_4, key) == 1) {
-                        add_key(mod, key, "True");
+                        add_setting(mod, key, "True");
                 }
         }
 
@@ -349,21 +343,18 @@ error:
  */
 void clear_cfg(void)
 {
-        extern struct cfg_ls *cfg_ls;
-        struct cfg *cur;
-        struct cfg *next;
+        extern struct mod_ls *cfg;
+        struct mod *cur;
+        struct mod *next;
 
-        cur = cfg_ls->first;
-        while (cur != NULL) {
+        for (cur = cfg->first; cur != NULL; cur = next) {
                 next = cur->next;
                 free(cur->mod);
                 clear_settings(cur->setting_ls);
                 free(cur);
-                cur = next;
         }
 
-        free(cfg_ls);
-        cfg_ls = NULL;
+        freenull(cfg);
 }
 
 /** 
@@ -374,15 +365,13 @@ static void clear_settings(struct setting_ls *ls)
         struct setting *cur;
         struct setting *next;
 
-        cur = ls->first;
-        while (cur != NULL) {
+        for (cur = ls->first; cur != NULL; cur = next) {
                 next = cur->next;
                 free(cur->key);
                 free(cur->value);
                 free(cur);
-                cur = next;
         }
-        
+
         free(ls);
 }
 

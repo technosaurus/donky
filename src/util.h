@@ -21,8 +21,6 @@
 
 #include <stddef.h>
 
-#define DMAXPATHLEN 256
-
 /** 
  * @brief Debugging printf. This must be used with double parenthesis due to
  *        the limitations of ANSI C not supporting variadic macros.

@@ -25,10 +25,12 @@
 /* Module name */
 char module_name[] = "battery";
 
-/* My function data structures and prototypes */
+/* Data structures and prototypes */
 struct batt {
-        char *number;           /* battery number ("0" for BATT0) */
+        long number;            /* battery number. BAT0 is 0 */
+        char *file_remaining;   /* file name of "remaining charge" file */
         char *remaining;        /* remaining charge in mAh */
+        char *file_maximum;     /* file name of "maximum charge" file */
         char *maximum;          /* maximum charge capacity in mAh */
 
         struct batt *next;
@@ -41,11 +43,9 @@ struct batt_ls {
 
 static void init_batt_list(void);
 void batt_cron(void);
-static struct batt *prepare_batt(char *args);
-static struct batt *get_batt(char *batt_number);
-static struct batt *add_batt(char *batt_number);
-static char *get_remaining_charge(char *args);
-static char *get_maximum_charge(char *args);
+static struct batt *prepare_batt(const char *args);
+static struct batt *add_batt(const char *batt_number, long batt_number_int);
+static char *get_charge(const char *path);
 
 /* Globals */
 struct batt_ls *batt_ls = NULL;
@@ -68,28 +68,16 @@ void module_destroy(void)
         struct batt *cur;
         struct batt *next;
 
-        cur = batt_ls->first;
-        while (cur != NULL) {
+        for (cur = batt_ls->first; cur != NULL; cur = next) {
                 next = cur->next;
-                free(cur->number);
+                free(cur->file_remaining);
                 free(cur->remaining);
+                free(cur->file_maximum);
                 free(cur->maximum);
-                cur = next;
+                free(cur);
         }
 
         freenull(batt_ls);
-}
-
-/**
- * @brief Initializes the module's global battery list
- */
-static void init_batt_list(void)
-{
-        extern struct batt_ls *batt_ls;
-
-        batt_ls = malloc(sizeof(struct batt_ls));
-        batt_ls->first = NULL;
-        batt_ls->last = NULL;
 }
 
 /**
@@ -102,42 +90,39 @@ void batt_cron(void)
         extern struct batt_ls *batt_ls;
         struct batt *cur;
 
-        cur = batt_ls->first;
-        while (cur != NULL) {
+        for (cur = batt_ls->first; cur != NULL; cur = cur->next)
                 freenull(cur->remaining);
-                cur = cur->next;
-        }
 }
 
 /**
  * @brief Calculate and return the remaining charge of a battery in
- *        percentage format.
+ *        percentage format as a string.
  */
 char *get_battper(char *args)
 {
         struct batt *batt;
-        int percentage;
+        unsigned int percentage;
         char battper[4];
 
-        batt = prepare_batt((args) ? args : "0");
+        batt = prepare_batt(args);
         if ((batt == NULL) ||
             (batt->remaining == NULL) || (batt->maximum == NULL))
                 return "n/a";
 
         percentage = (atof(batt->remaining) / atof(batt->maximum)) * 100;
-        snprintf(battper, sizeof(battper), "%d", percentage);
+        uint_to_str(battper, percentage, sizeof(battper));
 
         return m_strdup(battper);
 }
 
 /**
- * @brief Returns the remaining charge of a battery in raw mAh.
+ * @brief Returns the remaining charge of a battery in raw mAh as a string.
  */
 char *get_battrem(char *args)
 {
         struct batt *batt;
         
-        batt = prepare_batt((args) ? args : "0");
+        batt = prepare_batt(args);
         if ((batt == NULL) || (batt->remaining == NULL))
                 return "n/a";
 
@@ -145,13 +130,13 @@ char *get_battrem(char *args)
 }
 
 /**
- * @brief Returns the maximum charge of a battery in raw mAh.
+ * @brief Returns the maximum charge of a battery in raw mAh as a string.
  */
 char *get_battmax(char *args)
 {
         struct batt *batt;
-        
-        batt = prepare_batt((args) ? args : "0");
+
+        batt = prepare_batt(args);
         if ((batt == NULL) || (batt->maximum == NULL))
                 return "n/a";
 
@@ -167,7 +152,7 @@ unsigned int get_battbar(char *args)
         struct batt *batt;
         int percentage;
 
-        batt = prepare_batt((args) ? args : "0");
+        batt = prepare_batt(args);
         if ((batt == NULL) ||
             (batt->remaining == NULL) || (batt->maximum == NULL))
                 return 0;
@@ -178,52 +163,70 @@ unsigned int get_battbar(char *args)
 }
 
 /**
- * @brief Finds a battery in the list and updates its remaining charge
- *        if need be.
+ * @brief Initializes the module's global battery list
  */
-static struct batt *prepare_batt(char *batt_number)
+static void init_batt_list(void)
 {
-        struct batt *batt;
+        extern struct batt_ls *batt_ls;
 
-        batt = get_batt(batt_number);
-        if (batt->remaining == NULL)
-                batt->remaining = get_remaining_charge(batt->number);
-
-        return batt;
+        batt_ls = malloc(sizeof(struct batt_ls));
+        batt_ls->first = NULL;
+        batt_ls->last = NULL;
 }
 
 /**
- * @brief Used by prepare_batt() to find the requested battery. If it
- *        cannot be found, add_batt() is called to add the battery to
- *        the list and then return the newly created battery node.
+ * @brief Looks for a battery in the list and updates its remaining charge if
+ *        needed. If the battery isn't in the list, it is added.
  */
-static struct batt *get_batt(char *batt_number)
+static struct batt *prepare_batt(const char *args)
 {
         extern struct batt_ls *batt_ls;
         struct batt *cur;
+        const char *batt_number;
+        long batt_number_int;
 
-        cur = batt_ls->first;
-        while (cur != NULL) {
-                if (!strcmp(cur->number, batt_number))
-                        return cur;
-                cur = cur->next;
-        }
+        batt_number = (args !=  NULL) ? args : "0";
+        batt_number_int = strtol(batt_number, NULL, 10);
 
-        return add_batt(batt_number);
+        for (cur = batt_ls->first; cur != NULL; cur = cur->next)
+                if (cur->number == batt_number_int)
+                        break;
+
+        if (cur == NULL)
+                cur = add_batt(batt_number, batt_number_int);
+        if (cur->remaining == NULL)
+                cur->remaining = get_charge(cur->file_remaining);
+
+        return cur;
 }
 
 /**
  * @brief Adds a new battery to the list.
  */
-static struct batt *add_batt(char *batt_number)
+#define BAT_PATH "/sys/class/power_supply/BAT"
+#define REM_FILE "/charge_now"
+#define MAX_FILE "/charge_full"
+static struct batt *add_batt(const char *batt_number, long batt_number_int)
 {
         extern struct batt_ls *batt_ls;
         struct batt *new;
 
         new = malloc(sizeof(struct batt));
-        new->number = dstrdup(batt_number);
-        new->remaining = NULL;
-        new->maximum = get_maximum_charge(new->number);
+        new->number = batt_number_int;
+        new->next = NULL;
+
+        /* build path of remaining charge file */
+        new->file_remaining = dstrdup(BAT_PATH);
+        stracat(&new->file_remaining, batt_number);
+        stracat(&new->file_remaining, REM_FILE);
+
+        /* build path of maximum charge file */
+        new->file_maximum = dstrdup(BAT_PATH);
+        stracat(&new->file_maximum, batt_number);
+        stracat(&new->file_maximum, MAX_FILE);
+
+        new->remaining = NULL;  /* to be filled by prepare_batt() */
+        new->maximum = get_charge(new->file_maximum);
 
         if (batt_ls->last != NULL) {
                 batt_ls->last->next = new;
@@ -233,27 +236,17 @@ static struct batt *add_batt(char *batt_number)
                 batt_ls->last = new;
         }
 
-        return batt_ls->last;
+        return batt_ls->last;   /* return the new node */
 }
 
 /**
- * @brief Retrieves the remaining charge for a battery from /sys
+ * @brief Retrieves the charge for a battery from a /sys file
  */
-static char *get_remaining_charge(char *args)
+static char *get_charge(const char *path)
 {
-        char path[DMAXPATHLEN];
-        int read;
         FILE *fptr;
         char remaining[16];
         char *fgets_check;
-
-        read = snprintf(path, sizeof(path), 
-                        "/sys/class/power_supply/BAT%s/charge_now", args);
-
-        if (read >= DMAXPATHLEN)
-                printf("WARNING: [battery:get_remaining_charge] "
-                       "snprintf truncation! read = %d, DMAXPATHLEN = %d!\n",
-                       read, DMAXPATHLEN);
 
         fptr = fopen(path, "r");
         if (fptr == NULL)
@@ -267,40 +260,5 @@ static char *get_remaining_charge(char *args)
         chomp(remaining);
 
         return dstrdup(remaining);
-}
-
-/**
- * @brief Retrieves the maximum charge for a battery from /sys.
- *        This is only invoked once per battery in add_batt()
- *        because it never changes, obviously.
- */
-static char *get_maximum_charge(char *args)
-{
-        char path[DMAXPATHLEN];
-        int read;
-        FILE *fptr;
-        char maximum[16];
-        char *fgets_check;
-
-        read = snprintf(path, sizeof(path), 
-                        "/sys/class/power_supply/BAT%s/charge_full", args);
-
-        if (read >= DMAXPATHLEN)
-                printf("WARNING: [battery:get_remaining_charge] "
-                       "snprintf truncation! read = %d, DMAXPATHLEN = %d!\n",
-                       read, DMAXPATHLEN);
-
-        fptr = fopen(path, "r");
-        if (fptr == NULL)
-                return NULL;
-
-        fgets_check = fgets(maximum, sizeof(maximum), fptr);
-        fclose(fptr);
-        if (fgets_check == NULL)
-                return NULL;
-
-        chomp(maximum);
-
-        return dstrdup(maximum);
 }
 
