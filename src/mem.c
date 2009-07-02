@@ -16,9 +16,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mem.h"
-#include "util.h"
 
 struct mem_data {
         void *ptr;
@@ -79,7 +79,7 @@ char *m_strdup(char *str)
         if (str == NULL)
                 return NULL;
 
-        ret = dstrdup(str);
+        ret = strdup(str);
         mem_list_add(ret);
 
         return ret;

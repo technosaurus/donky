@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include "cfg.h"
 #include "default_settings.h"
@@ -80,7 +81,7 @@ static void add_mod(const char *mod)
 
         new = malloc(sizeof(struct mod));
         new->next = NULL;
-        new->mod = dstrdup(mod);
+        new->mod = strdup(mod);
         new->setting_ls = malloc(sizeof(struct setting_ls));
         new->setting_ls->first = NULL;
         new->setting_ls->last = NULL;
@@ -104,7 +105,7 @@ static struct mod *find_mod(const char *mod)
         struct mod *cur;
 
         for (cur = cfg->first; cur != NULL; cur = cur->next)
-                if (!dstrcasecmp(cur->mod, mod))
+                if (!strcasecmp(cur->mod, mod))
                         return cur;
 
         return NULL;
@@ -124,9 +125,9 @@ static void add_setting(const char *mod, const char *key, const char *value)
 
         new_set = malloc(sizeof(struct setting));
         new_set->next = NULL;
-        new_set->key = dstrdup(key);
+        new_set->key = strdup(key);
         if (value != NULL)
-                new_set->value = dstrdup(value);
+                new_set->value = strdup(value);
         else
                 new_set->value = NULL;
 
@@ -160,7 +161,7 @@ static struct setting *find_setting(const char *mod, const char *key)
                 return NULL;
 
         for (scur = mcur->setting_ls->first; scur != NULL; scur = scur->next)
-                if (!dstrcasecmp(scur->key, key))
+                if (!strcasecmp(scur->key, key))
                         return scur;
 
         return NULL;
@@ -309,33 +310,31 @@ void parse_cfg(void)
 /**
  * @brief Load configuration. We check for the local configuration, usually
  *        ~/.donkyrc, then if not found, we try to open the system wide
- *        configuration. If none are found, we blow this joint.
+ *        configuration (ETC_CONF). If none are found, we blow this joint.
  *
  * @return Pointer to an open .donkyrc file, if successful.
  */
+#define ETC_CONF \
+        SYSCONFDIR "/" DEFAULT_CONF_GLOBAL
 static FILE *get_cfg_file(void)
 {
-        char *path = NULL;
+        char *path;
         FILE *file;
 
-        stracpy(&path, getenv("HOME"));
-        stracat(&path, "/" DEFAULT_CONF);
+        asprintf(&path, "%s/%s", getenv("HOME"), DEFAULT_CONF);
         file = fopen(path, "r");
+        free(path);
         if (file == NULL) {
                 fprintf(stderr, "Warning: Can't open config file %s.\n", path);
-                stracpy(&path, SYSCONFDIR "/" DEFAULT_CONF_GLOBAL); 
-                file = fopen(path, "r");
-                if (file == NULL)
-                        goto error;
+                file = fopen(ETC_CONF, "r");
+                if (file == NULL) {
+                        fprintf(stderr, "Error: Also can't open system config "
+                                        "file %s. Exiting.\n", ETC_CONF);
+                        exit(EXIT_FAILURE);
+                }
         }
 
-        free(path);
         return file;
-
-error:
-        fprintf(stderr, "Error: Also can't open system config file %s. "
-                        "Exiting.\n", path);
-        exit(EXIT_FAILURE);
 }
 
 /** 

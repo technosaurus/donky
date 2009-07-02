@@ -309,7 +309,7 @@ static char *scrob_utime(char *dst, size_t sz)
         unsigned long int utime;
 
         utime = get_unix_time();
-        uint_to_str(dst, utime, sz);
+        snprintf(dst, sz, "%lu", utime);
 
         return dst;
 }
@@ -335,7 +335,7 @@ static void scrob_submit(int sock, const char *artist, const char *title,
 
         scrob_utime(utm, sizeof(utm));
 
-        uint_to_str(sttime, ttime, sizeof(sttime));
+        snprintf(sttime, sizeof(sttime), "%d", ttime);
 
         /* Assemble request string. */
         strfcpy(snd, "s=", sizeof(snd));
@@ -382,7 +382,7 @@ static void scrob_nowplay(int sock, const char *artist, const char *title,
         DEBUGF(("Sending now playing (%s - %s) to (%s)!\n",
                 artist, title, scrob_nowplayurl));
 
-        uint_to_str(sttime, ttime, sizeof(sttime));
+        snprintf(sttime, sizeof(sttime), "%d", ttime);
 
         /* Assemble request string. */
         strfcpy(snd, "s=", sizeof(snd));

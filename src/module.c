@@ -250,7 +250,7 @@ static struct module *module_add(const char *name,
         DEBUGF(("-- Loading module: %s...\n", name));
 
         strfcpy(n->name, name, sizeof(n->name));
-        n->path = dstrdup(path);
+        n->path = strdup(path);
         n->handle = handle;
         n->destroy = destroy;
         n->clients = 0;

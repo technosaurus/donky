@@ -110,7 +110,7 @@ char *get_battper(char *args)
                 return "n/a";
 
         percentage = (atof(batt->remaining) / atof(batt->maximum)) * 100;
-        uint_to_str(battper, percentage, sizeof(battper));
+        snprintf(battper, sizeof(battper), "%u", percentage);
 
         return m_strdup(battper);
 }
@@ -215,15 +215,9 @@ static struct batt *add_batt(const char *batt_number, long batt_number_int)
         new->number = batt_number_int;
         new->next = NULL;
 
-        /* build path of remaining charge file */
-        new->file_remaining = dstrdup(BAT_PATH);
-        stracat(&new->file_remaining, batt_number);
-        stracat(&new->file_remaining, REM_FILE);
-
-        /* build path of maximum charge file */
-        new->file_maximum = dstrdup(BAT_PATH);
-        stracat(&new->file_maximum, batt_number);
-        stracat(&new->file_maximum, MAX_FILE);
+        /* build paths of /sys battery charge file */
+        asprintf(&new->file_remaining, BAT_PATH "%s" REM_FILE, batt_number);
+        asprintf(&new->file_maximum, BAT_PATH "%s" MAX_FILE, batt_number);
 
         new->remaining = NULL;  /* to be filled by prepare_batt() */
         new->maximum = get_charge(new->file_maximum);
@@ -259,6 +253,6 @@ static char *get_charge(const char *path)
 
         chomp(remaining);
 
-        return dstrdup(remaining);
+        return strdup(remaining);
 }
 

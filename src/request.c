@@ -14,6 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <math.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -258,7 +259,7 @@ static void request_handler_sleep_setup(struct timespec *tspec)
         /* Setup minimum sleep time. */
         min_sleep = get_double_key("daemon", "global_sleep", DEFAULT_GLOBAL_SLEEP);
         min_seconds = (int) min_sleep;
-        min_nanoseconds = (min_sleep - min_seconds) * pown(10, 9);
+        min_nanoseconds = (min_sleep - min_seconds) * pow(10, 9);
         tspec->tv_sec = min_seconds;
         tspec->tv_nsec = min_nanoseconds;
 }
@@ -279,7 +280,7 @@ int request_list_add(const donky_conn *conn, const char *buf, int remove)
         char *args;
         struct module_var *mv;
 
-        str = dstrdup(buf);
+        str = strdup(buf);
 
         /* Get the variable name... */
         var = strchr(str, ':');

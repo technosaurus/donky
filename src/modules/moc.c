@@ -32,7 +32,7 @@ static char *home;
 void module_init(const struct module *mod)
 {
         module_var_add(mod, "moc", "get_moc", 10.0, VARIABLE_STR | ARGSTR);
-        home = dstrdup(getenv("HOME"));
+        home = strdup(getenv("HOME"));
 }
 
 /* These run on module unload */
@@ -45,16 +45,9 @@ char *get_moc(char *args)
 {
         FILE *mocp;
         char pipe[160];
-        size_t size;
         char *mocp_line;
 
-        size = strlen(args) + strlen(home) + (sizeof(char) * 19);
-        mocp_line = malloc(size);
-
-        snprintf(mocp_line,
-                 size,
-                 "HOME=\"%s\" mocp -Q \"%s\"",
-                 home, args);
+        asprintf(&mocp_line, "HOME=\"%s\" mocp -Q \"%s\"", home, args);
 
         mocp = popen(mocp_line, "r");
         free(mocp_line);

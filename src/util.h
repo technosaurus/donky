@@ -54,20 +54,8 @@ double get_time(void);
 char *bytes_to_bigger(long double bytes);
 int random_range(int min, int max);
 unsigned int get_str_sum(const char *str);
-double pown(double x, double y);
-char *uint_to_str(char *dst, unsigned long int src, size_t siz);
-char *float_to_str(char *dst,
-                   long double src,
-                   unsigned int precision,
-                   size_t siz);
-int dstrcasecmp(const char *s1, const char *s2);
 void strfcpy(char *dst, const char *src, size_t siz);
 void strfcat(char *dst, const char *src, size_t siz);
-char *dstrdup(const char *str);
-int stracpy(char **dst, const char *src);
-int stracat(char **dst, const char *src);
-int strancpy(char **dst, const char *src, size_t n);
-int strancat(char **dst, const char *src, size_t n);
 unsigned long int get_unix_time(void);
 
 #endif /* UTIL_H */
