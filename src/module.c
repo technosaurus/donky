@@ -119,7 +119,9 @@ int module_var_add(const struct module *parent,
  */
 struct module_var *module_var_find_by_name(const char *name)
 {
-        struct module_var *cur = mv_start;
+        struct module_var *cur;
+
+        cur = mv_start;
 
         while (cur) {
                 if (!strcmp(cur->name, name))
@@ -183,7 +185,9 @@ void module_var_loadsym(struct module_var *mv)
  */
 void module_var_cron_exec(void)
 {
-        struct module_var *cur = mv_start;
+        struct module_var *cur;
+
+        cur = mv_start;
 
         while (cur) {
                 if (cur->type == VARIABLE_CRON &&
@@ -205,7 +209,9 @@ void module_var_cron_exec(void)
  */
 void module_var_cron_init(struct module *parent)
 {
-        struct module_var *cur = mv_start;
+        struct module_var *cur;
+
+        cur = mv_start;
 
         while (cur) {
                 if (cur->parent == parent) {
@@ -235,8 +241,11 @@ static struct module *module_add(const char *name,
                                  void *handle,
                                  void *destroy)
 {
-        struct module *find = module_find_by_name(name);
-        struct module *n = (find) ? find : malloc(sizeof(struct module));
+        struct module *find;
+        struct module *n;
+
+        find = module_find_by_name(name);
+        n = (find) ? find : malloc(sizeof(struct module));
 
         DEBUGF(("-- Loading module: %s...\n", name));
 
@@ -278,7 +287,9 @@ static struct module *module_add(const char *name,
  */
 static struct module *module_find_by_name(const char *name)
 {
-        struct module *cur = m_start;
+        struct module *cur;
+
+        cur = m_start;
 
         while (cur) {
                 if (!strcmp(cur->name, name))
@@ -422,11 +433,13 @@ void module_load_all(void)
  */
 void *module_get_sym(void *handle, char *name)
 {
-        void *location = dlsym(handle, name);
+        void *location;
         const char *error;
 
         /* Clear any existing errors. */
         dlerror();
+
+        location = dlsym(handle, name);
 
         if ((error = dlerror())) {
                 fprintf(stderr, "module_get_sym: problem finding %s: %s\n", name, error);
@@ -442,10 +455,12 @@ void *module_get_sym(void *handle, char *name)
 void clear_module(void)
 {
         void *(*destroy)(void);
-        struct module *m = m_start;
+        struct module *m;
         struct module *mn;
-        struct module_var *mv = mv_start;
+        struct module_var *mv;
         struct module_var *mvn;
+
+        m = m_start;
 
         while (m) {
                 mn = m->next;
@@ -459,6 +474,8 @@ void clear_module(void)
                 
                 m = mn;
         }
+
+        mv = mv_start;
 
         while (mv) {
                 mvn = mv->next;

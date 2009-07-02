@@ -48,7 +48,7 @@ struct mod_ls {
         struct mod *last;
 };
 
-static void init_mod_ls(void);
+static void init_cfg(void);
 static void add_mod(const char *mod);
 static struct mod *find_mod(const char *mod);
 static void add_setting(const char *mod, const char *key, const char *value);
