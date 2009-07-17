@@ -1,17 +1,13 @@
-/*
- * Copyright (c) 2009 Matt Hayes, Jake LeMaster
+/**
+ * The CC0 1.0 Universal is applied to this work.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * To the extent possible under law, Matt Hayes and Jake LeMaster have
+ * waived all copyright and related or neighboring rights to donky.
+ * This work is published from the United States.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Please see the copy of the CC0 included with this program for complete
+ * information including limitations and disclaimers. If no such copy
+ * exists, see <http://creativecommons.org/publicdomain/zero/1.0/legalcode>.
  */
 
 #include <ctype.h>
@@ -195,11 +191,6 @@ char *bytes_to_bigger(long double bytes)
 
 /**
  * @brief Return a random number between min and max.
- *
- * @param min
- * @param max
- *
- * @return
  */
 int random_range(int min, int max)
 {
@@ -218,16 +209,12 @@ int random_range(int min, int max)
 
 /**
  * @brief Return the sum of all characters in a string.
- *
- * @param str String to get sum of
- *
- * @return Sum
  */
 unsigned int get_str_sum(const char *str)
 {
-        unsigned int sum = 0;
-        
-        for (; *str; str++)
+        unsigned int sum;
+
+        for (sum = 0; *str != '\0'; str++)
                 sum += *str;
 
         return sum;
@@ -238,21 +225,15 @@ unsigned int get_str_sum(const char *str)
  *        to be NUL terminated.  This has no truncation checking or any of that
  *        other pansy stuff.  Intended for hardcore c0d3rs only.  The 'f' stands
  *        for fast and furious.
- *
- * @param dst Destination string
- * @param src Source string
- * @param siz Size of destination string
  */
 void strfcpy(char *dst, const char *src, size_t siz)
 {
         size_t n = siz;
 
-        /* Copy as many bytes as will fit */
         while (--n > 0)
                 if ((*dst++ = *src++) == '\0')
                         return;
 
-        /* Not enough room in dst, add NUL */
         if ((n == 0) && (siz != 0))
                 *dst = '\0';
 }
@@ -262,17 +243,12 @@ void strfcpy(char *dst, const char *src, size_t siz)
  *        Guaranteed to be NUL terminated.  This has no truncation checking or
  *        any of that other pansy stuff.  Intended for hardcore c0d3rs only.
  *        The 'f' stands for fast and furious.
- *
- * @param dst Destination string
- * @param src Source string
- * @param siz Size of destination string
  */
 void strfcat(char *dst, const char *src, size_t siz)
 {
         char *d = dst;
         size_t n = siz;
 
-        /* Find the end of dst and adjust bytes left but don't go past end */
         while ((n-- != 0) && (*d != '\0'))
                 d++;
 
